@@ -4,7 +4,9 @@
       "Bash(npm:*)",
       "Bash(pkill:*)",
       "Bash(rg:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
     ],
     "deny": []
   }
