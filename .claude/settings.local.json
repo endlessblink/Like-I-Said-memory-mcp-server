@@ -18,7 +18,8 @@
       "Bash(ls:*)",
       "Bash(killall:*)",
       "Bash(rm:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

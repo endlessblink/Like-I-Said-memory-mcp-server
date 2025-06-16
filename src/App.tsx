@@ -597,8 +597,7 @@ Respond with JSON format:
               <div className="flex items-center gap-1 bg-gray-700 rounded-lg p-1">
                 {[
                   { id: "dashboard", label: "📊 Dashboard", icon: "📊" },
-                  { id: "memories", label: "🧠 Memories", icon: "🧠" },
-                  { id: "graph", label: "🕸️ Graph", icon: "🕸️" }
+                  { id: "memories", label: "🧠 Memories", icon: "🧠" }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -799,7 +798,6 @@ Respond with JSON format:
               <h2 className="text-xl font-semibold text-white">
                 {currentTab === "dashboard" && "📊 Dashboard"}
                 {currentTab === "memories" && "🧠 Memories"}
-                {currentTab === "graph" && "🕸️ Graph Visualization"}
               </h2>
               {currentTab === "memories" && (
                 <div className="flex items-center gap-2">
@@ -997,21 +995,6 @@ Respond with JSON format:
               </>
             )}
 
-            {currentTab === "graph" && (
-              <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden h-full">
-                <ModernGraph
-                  memories={memories}
-                  selectedNode={selectedNode}
-                  onNodeClick={setSelectedNode}
-                  graphType={graphViewType}
-                  tagFilter={graphTagFilter}
-                  extractTitle={extractTitle}
-                  generateSummary={generateSummary}
-                  extractTags={extractTags}
-                  getTagColor={getTagColor}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
