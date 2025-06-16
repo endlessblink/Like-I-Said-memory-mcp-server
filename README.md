@@ -1,107 +1,132 @@
-# Like I Said - MCP Memory Server
+# Like-I-Said MCP v2
 
-A Model Context Protocol (MCP) server for persistent AI assistant memory with **web dashboard interface**.
+> **MCP memory server for AI assistants** - Remember conversations across sessions
+
+Give your AI assistants persistent memory! Store information, preferences, and context that survives conversation restarts.
 
 ## ✨ Features
 
-- 🧠 **Persistent Memory**: Store and retrieve memories across conversations
-- 🌐 **Web Dashboard**: Modern React interface to view and manage memories  
-- 🔄 **Real-time Updates**: Live dashboard with search and filtering
-- ⚡ **Easy Setup**: Multiple deployment options
-- 🔧 **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
+- 🧠 **Persistent Memory** - AI remembers across conversations
+- 🚀 **One-Command Install** - Auto-configures all AI clients
+- 🌍 **Cross-Platform** - Windows, macOS, Linux
+- 📊 **Web Dashboard** - Visual memory management
+- 🔧 **6 Memory Tools** - Complete memory management suite
 
-## 🚀 Quick Start
+## 🚀 Quick Install
 
-### 1. Install Dependencies
 ```bash
-npm install
+npx @endlessblink/like-i-said-v2 install
 ```
 
-### 2. Development Mode (Frontend + Backend)
-```bash
-npm run dev:full
-```
-- **Frontend**: http://localhost:5173 (React dashboard)
-- **Backend**: http://localhost:3001 (API server)
+That's it! The installer will:
+- ✅ Auto-detect your AI clients (Claude Desktop, Cursor, Windsurf)
+- ✅ Configure MCP settings automatically  
+- ✅ Test server functionality
+- ✅ Preserve existing MCP servers
 
-### 3. Production Mode (MCP Server Only)
-```bash
-npm start
-```
+## 🎯 Supported AI Clients
 
-## 🔧 MCP Configuration
-
-### Claude Desktop Setup
-1. Copy `claude-desktop-config.template.json` to your Claude config directory
-2. Update the path to point to your project location
-3. Rename to `claude_desktop_config.json`
-
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "like-i-said-memory": {
-      "command": "node",
-      "args": ["PATH_TO_YOUR_PROJECT/server.js"]
-    }
-  }
-}
-```
+| Client | Status | Platform |
+|--------|--------|----------|
+| **Claude Desktop** | ✅ Full Support | Windows, macOS, Linux |
+| **Cursor** | ✅ Full Support | Windows, macOS, Linux |  
+| **Windsurf** | ✅ Full Support | Windows, macOS, Linux |
+| **Claude Code (VS Code)** | ✅ Full Support | Windows, macOS, Linux |
+| **Continue** | ✅ Full Support | Windows, macOS, Linux |
+| **Zed Editor** | ✅ Full Support | Windows, macOS, Linux |
 
 ## 🛠️ Available Tools
 
-- `add_memory(key, value, context?)`: Store a memory with optional context
-- `get_memory(key)`: Retrieve a memory by key
-- `list_memories(prefix?)`: List all memory keys (with optional prefix filter)
-- `delete_memory(key)`: Delete a memory by key
+After installation, your AI assistant will have these tools:
 
-## 📱 Web Dashboard
+- **`add_memory`** - Store information with optional tags
+- **`get_memory`** - Retrieve specific memory by ID
+- **`list_memories`** - Show all stored memories
+- **`delete_memory`** - Remove specific memory
+- **`search_memories`** - Search through memories by content
+- **`test_tool`** - Verify MCP connection
 
-The dashboard provides:
-- **Memory Browser**: View all stored memories in a searchable table
-- **Search & Filter**: Find memories by key, value, or tags
-- **Add/Edit**: Create and modify memories through the UI
-- **Real-time**: Automatically syncs with the MCP server data
+## 📋 Usage Examples
 
-## 🗂️ Data Storage
+**Store a preference:**
+> "Remember that I prefer TypeScript over JavaScript for new projects"
 
-Memories are stored in `memory.json` with structure:
-```json
-{
-  "memory_key": {
-    "value": "The actual memory content",
-    "context": {
-      "type": "category",
-      "tags": ["tag1", "tag2"]
-    },
-    "timestamp": "2025-01-01T00:00:00.000Z"
-  }
-}
+**Recall information:**  
+> "What did I tell you about my TypeScript preference?"
+
+**Project context:**
+> "Store that this React app uses Tailwind CSS and shadcn/ui components"
+
+**Search memories:**
+> "Find all memories about React projects"
+
+## 🔧 Advanced Setup
+
+### Custom Installation
+```bash
+npx @endlessblink/like-i-said-v2 init
 ```
 
-## 📜 Scripts
+### Web Dashboard
+```bash
+npm install @endlessblink/like-i-said-v2
+cd node_modules/@endlessblink/like-i-said-v2  
+npm run dev:full
+```
+Visit `http://localhost:3001` for visual memory management.
 
-- `npm start` - Start MCP server only
-- `npm run dashboard` - Start web dashboard only  
-- `npm run dev:full` - Start both servers for development
-- `npm run build` - Build frontend for production
-- `npm run pm2:start` - Start with PM2 process manager
+### Manual Server Start
+```bash
+npx @endlessblink/like-i-said-v2 start
+```
 
-## 🔧 PM2 Deployment (Optional)
+## 🔄 After Installation
 
-1. Copy and customize `ecosystem.config.template.json`
-2. Install PM2: `npm install -g pm2`
-3. Start: `npm run pm2:start`
+1. **Restart your AI client:**
+   - **Claude Desktop**: Close completely and restart
+   - **Cursor**: Press `Ctrl+Shift+P` → "Reload Window"
+   - **Windsurf**: Auto-detects changes
 
-## 📋 Development
+2. **Test the installation:**
+   > "What MCP tools do you have available?"
 
-Built with:
-- **Backend**: Node.js, Express
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS
-- **UI**: Shadcn/ui components
+3. **Start using memory:**
+   > "Remember that I'm working on a Next.js project called MyApp"
 
-## 📄 License
+## 🆘 Troubleshooting
+
+### Tools don't appear?
+- Ensure you fully restarted your AI client
+- Wait 2-3 minutes for detection
+- Check client-specific logs
+
+### Config locations:
+- **Claude Desktop**: `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
+- **Cursor**: `%USERPROFILE%\.cursor\mcp.json` (Windows)  
+- **Windsurf**: `%USERPROFILE%\.codeium\windsurf\mcp_config.json` (Windows)
+
+### Reset installation:
+```bash
+npx @endlessblink/like-i-said-v2 install
+```
+
+## 📊 Memory Storage
+
+- **Format**: JSON-based persistent storage
+- **Location**: `memories.json` in package directory
+- **Backup**: Automatic backup creation
+- **Migration**: Preserves existing memories
+
+## 🤝 Contributing
+
+Found a bug or want to contribute?
+- **Issues**: [GitHub Issues](https://github.com/endlessblink/like-i-said-mcp-server/issues)
+- **Repository**: [GitHub](https://github.com/endlessblink/like-i-said-mcp-server)
+
+## 📜 License
 
 MIT License - see LICENSE file for details.
+
+---
+
+**Made for AI enthusiasts who want their assistants to remember! 🧠✨**

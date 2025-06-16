@@ -1,41 +1,74 @@
 {
-  "name": "like-i-said-mcp-server",
-  "version": "1.0.0",
+  "name": "@endlessblink/like-i-said-v2",
+  "version": "2.0.0",
+  "description": "MCP memory server for AI assistants - remember conversations across sessions",
   "main": "server.js",
-  "type": "commonjs",
+  "type": "module",
+  "keywords": ["mcp", "memory", "ai", "claude", "cursor", "windsurf", "assistant", "context"],
+  "author": "endlessblink",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/endlessblink/like-i-said-mcp-server.git"
+  },
+  "homepage": "https://github.com/endlessblink/like-i-said-mcp-server",
+  "bugs": {
+    "url": "https://github.com/endlessblink/like-i-said-mcp-server/issues"
+  },
+  "bin": {
+    "like-i-said-v2": "./cli.js",
+    "like-i-said": "./cli.js"
+  },
   "scripts": {
-    "start": "node server.js",
-<<<<<<< HEAD
+    "start": "node server-wrapper.js",
+    "start:mcp": "node server.js",
+    "start:dashboard": "node dashboard-server.js",
     "dashboard": "node dashboard-server.js",
-=======
-    "dashboard": "node dashboard-server.js", 
->>>>>>> d6f8cad (Initial commit: Like-I-Said MCP Memory Server)
+    "setup:v2": "node setup-v2-parallel.js",
     "dev": "vite",
-    "dev:full": "concurrently \"npm run dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"cyan,magenta\"",
+    "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"cyan,magenta\"",
     "build": "vite build",
     "preview": "vite preview",
-    "pm2:start": "pm2 start ecosystem.config.json",
-    "pm2:stop": "pm2 stop like-i-said-mcp-server",
-<<<<<<< HEAD
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop like-i-said-v2",
     "pm2:status": "pm2 status",
-    "pm2:logs": "pm2 logs like-i-said-mcp-server"
-=======
-    "pm2:status": "pm2 status"
->>>>>>> d6f8cad (Initial commit: Like-I-Said MCP Memory Server)
+    "pm2:logs": "pm2 logs like-i-said-v2",
+    "setup": "node cli.js init",
+    "configure": "node cli.js init",
+    "migrate": "node migrate.js run",
+    "migrate:preview": "node migrate.js preview",
+    "install-service": "node install-service.js",
+    "uninstall-service": "pm2 delete ecosystem.config.js && pm2 unstartup",
+    "logs": "tail -f logs/wrapper.log",
+    "docker:build": "docker build -t like-i-said-v2 .",
+    "docker:run": "docker run -d -p 3001:3001 -p 3002:3002 -v $(pwd)/memories:/app/memories --name like-i-said-v2 like-i-said-v2",
+    "docker:setup": "npm run docker:build && npm run docker:run",
+    "docker:stop": "docker stop like-i-said-v2 && docker rm like-i-said-v2",
+    "docker:logs": "docker logs -f like-i-said-v2",
+    "docker:compose": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down",
+    "debug:cursor": "node debug-cursor.js",
+    "debug:config": "node cli.js debug:cursor",
+    "configure:auto": "node auto-configure.js",
+    "validate:cursor": "node validate-cursor-config.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "d3": "^7.8.5",
     "express": "^4.18.2",
     "lucide-react": "^0.511.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.3",

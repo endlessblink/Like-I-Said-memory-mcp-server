@@ -1,0 +1,29 @@
+# NPM Package - Only essential files
+
+# Development files to exclude
+.git/
+.gitignore
+.claude/
+.like-i-said/
+node_modules/
+memories/
+memory.json
+memories.json
+*.log
+
+# Build artifacts
+dist/
+*.tmp
+temp-*
+
+# IDE files
+.vscode/
+.cursor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.backup*
+*.tgz

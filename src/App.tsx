@@ -19,65 +19,92 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { MemoryGraph } from "@/components/MemoryGraph"
 
-interface Memory {
-  value: string
-  context: Record<string, any>
-  timestamp: string
+// Extract tags helper function
+function extractTags(memory: any) {
+  if (memory.tags && Array.isArray(memory.tags)) {
+    return memory.tags
+  }
+  if (memory.context?.tags && Array.isArray(memory.context.tags)) {
+    return memory.context.tags
+  }
+  return []
 }
 
-function extractTags(memory: Memory) {
-  const tags: string[] = []
-  if (memory.context) {
-    if (Array.isArray(memory.context.tags)) tags.push(...memory.context.tags)
-    if (memory.context.category) tags.push(memory.context.category)
-    if (memory.context.type) tags.push(memory.context.type)
-    Object.entries(memory.context).forEach(([key, value]) => {
-      if (key.toLowerCase().includes("tag") && typeof value === "string" && !tags.includes(value)) {
-        tags.push(value)
-      }
-    })
+interface Memory {
+  key: string
+  content: string
+  metadata: {
+    id: string
+    title: string
+    created: string
+    updated: string
+    scope: string
+    project: string
+    tags: string[]
+    links: string[]
+    backlinks?: string[]
   }
-  return tags
+  path: string
 }
 
 export default function App() {
-  const [memories, setMemories] = useState<Record<string, Memory>>({})
+  const [memories, setMemories] = useState<Memory[]>([])
   const [search, setSearch] = useState("")
   const [tagFilter, setTagFilter] = useState("all")
+  const [scopeFilter, setScopeFilter] = useState("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [newKey, setNewKey] = useState("")
   const [newValue, setNewValue] = useState("")
-  const [newContext, setNewContext] = useState("")
-  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [newTitle, setNewTitle] = useState("")
+  const [newTags, setNewTags] = useState("")
+  const [newLinks, setNewLinks] = useState("")
+  const [newScope, setNewScope] = useState("project")
+  const [editingMemory, setEditingMemory] = useState<Memory | null>(null)
   const [editingValue, setEditingValue] = useState("")
-  const [editingContext, setEditingContext] = useState("")
+  const [editingTitle, setEditingTitle] = useState("")
+  const [editingTags, setEditingTags] = useState("")
+  const [editingLinks, setEditingLinks] = useState("")
+  const [editingScope, setEditingScope] = useState("project")
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories">("memories")
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "graph">("memories")
+  const [projects, setProjects] = useState<string[]>([])
+  const [currentProject, setCurrentProject] = useState<string>("")
 
   useEffect(() => {
     loadMemories()
+    loadProjects()
   }, [])
 
   const loadMemories = async () => {
-    const data = await fetch("/api/memories").then(res => res.json())
-    setMemories(data)
+    const data = await fetch(`/api/memories?scope=${scopeFilter}`).then(res => res.json())
+    setMemories(Array.isArray(data) ? data : [])
+  }
+
+  const loadProjects = async () => {
+    const data = await fetch("/api/projects").then(res => res.json())
+    setProjects(data.projects || [])
+    setCurrentProject(data.current || "")
   }
 
   const addMemory = async () => {
     if (!newKey || !newValue) return
-    let context = {}
-    if (newContext) {
-      try { context = JSON.parse(newContext) }
-      catch { alert("Invalid JSON in context"); return }
+    
+    const context = {
+      scope: newScope,
+      title: newTitle || newKey,
+      tags: newTags ? newTags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      links: newLinks ? newLinks.split(',').map(l => l.trim()).filter(Boolean) : []
     }
+    
     await fetch("/api/memories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: newKey, value: newValue, context })
     })
     setShowAddDialog(false)
-    setNewKey(""); setNewValue(""); setNewContext("")
+    setNewKey(""); setNewValue(""); setNewTitle(""); setNewTags(""); setNewLinks("")
     loadMemories()
   }
 

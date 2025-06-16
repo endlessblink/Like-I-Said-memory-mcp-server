@@ -1,146 +1,294 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+import fs from 'fs';
+import path from 'path';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 
-// Use environment variable or default to current directory
-const DB_FILE = process.env.MEMORY_FILE_PATH || path.join(__dirname, 'memory.json');
+// Memory storage
+const MEMORY_FILE = path.join(process.cwd(), 'memories.json');
 
-// Ensure the directory exists
-const dbDir = path.dirname(DB_FILE);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
-
-// Create empty DB file if it doesn't exist
-if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(DB_FILE, '{}');
-  console.error(`Created new memory file at: ${DB_FILE}`);
-}
-
-function readDB() {
-  try { 
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); 
-  }
-  catch { 
-    return {}; 
+// Initialize memory storage
+function initMemoryStorage() {
+  if (!fs.existsSync(MEMORY_FILE)) {
+    fs.writeFileSync(MEMORY_FILE, JSON.stringify([], null, 2));
   }
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+// Load memories
+function loadMemories() {
+  try {
+    return JSON.parse(fs.readFileSync(MEMORY_FILE, 'utf8'));
+  } catch {
+    return [];
+  }
 }
 
-function sendResponse(id, result) {
-  const response = { jsonrpc: "2.0", id, result };
-  process.stdout.write(JSON.stringify(response) + '\n');
+// Save memories
+function saveMemories(memories) {
+  fs.writeFileSync(MEMORY_FILE, JSON.stringify(memories, null, 2));
 }
 
-function sendError(id, code, message) {
-  const response = { jsonrpc: "2.0", id, error: { code, message } };
-  process.stdout.write(JSON.stringify(response) + '\n');
-}
+// Initialize storage
+initMemoryStorage();
 
-const handlers = {
-  "initialize": (id) => sendResponse(id, {
-    protocolVersion: "2024-11-05",
-    capabilities: { tools: { listChanged: false } },
-    serverInfo: { name: "like-i-said-memory", version: "1.0.0" }
-  }),
-  "tools/list": (id) => sendResponse(id, {
+console.error('Like-I-Said Memory Server v2 - Simple JSON Mode');
+
+// Create MCP server
+const server = new Server(
+  {
+    name: 'like-i-said-memory-v2',
+    version: '2.0.0',
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// Add tool handlers
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
     tools: [
       {
-        name: "add_memory",
-        description: "Store a memory",
+        name: 'add_memory',
+        description: 'Store a new memory',
         inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" }, value: { type: "string" }, context: { type: "object" } },
-          required: ["key", "value"]
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              description: 'The memory content to store'
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Optional tags for the memory'
+            }
+          },
+          required: ['content']
         }
       },
       {
-        name: "get_memory",
-        description: "Retrieve a memory",
+        name: 'get_memory',
+        description: 'Retrieve a memory by ID',
         inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" } },
-          required: ["key"]
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'The memory ID to retrieve'
+            }
+          },
+          required: ['id']
         }
       },
       {
-        name: "list_memories",
-        description: "List memory keys",
+        name: 'list_memories',
+        description: 'List all stored memories',
         inputSchema: {
-          type: "object",
-          properties: { prefix: { type: "string" } }
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Maximum number of memories to return'
+            }
+          }
         }
       },
       {
-        name: "delete_memory",
-        description: "Delete a memory",
+        name: 'delete_memory',
+        description: 'Delete a memory by ID',
         inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" } },
-          required: ["key"]
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'The memory ID to delete'
+            }
+          },
+          required: ['id']
+        }
+      },
+      {
+        name: 'search_memories',
+        description: 'Search memories by content',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query'
+            }
+          },
+          required: ['query']
+        }
+      },
+      {
+        name: 'test_tool',
+        description: 'Simple test tool to verify MCP is working',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              description: 'Test message'
+            }
+          },
+          required: ['message']
         }
       }
-    ]
-  }),
-  "tools/call": (id, params) => {
-    if (!params || !params.name || !params.arguments) {
-      sendError(id, -32602, "Invalid params: missing name or arguments");
-      return;
-    }
-    const { name, arguments: args } = params;
-    try {
-      if (name === "add_memory") {
-        if (!args.key || !args.value) {
-          sendError(id, -32602, "Missing required parameters: key and value");
-          return;
-        }
-        const db = readDB();
-        db[args.key] = { value: args.value, context: args.context || {}, timestamp: new Date().toISOString() };
-        writeDB(db);
-        sendResponse(id, { content: [{ type: "text", text: `Stored: ${args.key}` }] });
-      } else if (name === "get_memory") {
-        if (!args.key) {
-          sendError(id, -32602, "Missing required parameter: key");
-          return;
-        }
-        const db = readDB();
-        sendResponse(id, { content: [{ type: "text", text: db[args.key] ? db[args.key].value : "Not found" }] });
-      } else if (name === "list_memories") {
-        const db = readDB();
-        const prefix = args.prefix || '';
-        const keys = Object.keys(db).filter(k => k.startsWith(prefix));
-        sendResponse(id, { content: [{ type: "text", text: keys.join(', ') }] });
-      } else if (name === "delete_memory") {
-        if (!args.key) {
-          sendError(id, -32602, "Missing required parameter: key");
-          return;
-        }
-        const db = readDB();
-        if (db[args.key]) {
-          delete db[args.key];
-          writeDB(db);
-          sendResponse(id, { content: [{ type: "text", text: `Deleted: ${args.key}` }] });
-        } else {
-          sendResponse(id, { content: [{ type: "text", text: "Not found" }] });
-        }
-      } else {
-        sendError(id, -32601, "Unknown tool");
-      }
-    } catch (e) {
-      sendError(id, -32603, e.message);
-    }
-  },
-  "resources/list": (id) => sendResponse(id, { resources: [] }),
-  "prompts/list": (id) => sendResponse(id, { prompts: [] })
-};
+    ],
+  };
+});
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
-rl.on('line', (line) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
   try {
-    const msg = JSON.parse(line.trim());
-    if (!msg.method || typeof msg.id === 'undefined
+    switch (name) {
+      case 'test_tool':
+        return {
+          content: [{
+            type: 'text',
+            text: `✅ MCP Test successful! Message: ${args.message || 'No message provided'}`
+          }]
+        };
+
+      case 'add_memory': {
+        const memories = loadMemories();
+        const newMemory = {
+          id: Date.now().toString(),
+          content: args.content,
+          tags: args.tags || [],
+          timestamp: new Date().toISOString()
+        };
+        memories.push(newMemory);
+        saveMemories(memories);
+        return {
+          content: [{
+            type: 'text',
+            text: `✅ Memory stored with ID: ${newMemory.id}\nContent: ${newMemory.content}`
+          }]
+        };
+      }
+
+      case 'get_memory': {
+        const memories = loadMemories();
+        const memory = memories.find(m => m.id === args.id);
+        if (!memory) {
+          return {
+            content: [{
+              type: 'text',
+              text: `❌ Memory with ID ${args.id} not found`
+            }]
+          };
+        }
+        return {
+          content: [{
+            type: 'text',
+            text: `📝 Memory: ${memory.content}\n🏷️ Tags: ${memory.tags.join(', ') || 'none'}\n⏰ Created: ${memory.timestamp}`
+          }]
+        };
+      }
+
+      case 'list_memories': {
+        const memories = loadMemories();
+        const limit = args.limit || 10;
+        const limitedMemories = memories.slice(-limit);
+        if (memories.length === 0) {
+          return {
+            content: [{
+              type: 'text',
+              text: '📝 No memories stored yet. Use add_memory to create your first memory'
+            }]
+          };
+        }
+        const memoryList = limitedMemories.map(m => 
+          `🆔 ${m.id} | 📝 ${m.content.substring(0, 50)}${m.content.length > 50 ? '...' : ''} | ⏰ ${new Date(m.timestamp).toLocaleDateString()}`
+        ).join('\n');
+        return {
+          content: [{
+            type: 'text',
+            text: `📚 Total memories: ${memories.length}\n\n📋 Recent memories:\n${memoryList}`
+          }]
+        };
+      }
+
+      case 'delete_memory': {
+        const memories = loadMemories();
+        const initialLength = memories.length;
+        const filteredMemories = memories.filter(m => m.id !== args.id);
+        if (filteredMemories.length === initialLength) {
+          return {
+            content: [{
+              type: 'text',
+              text: `❌ Memory with ID ${args.id} not found`
+            }]
+          };
+        }
+        saveMemories(filteredMemories);
+        return {
+          content: [{
+            type: 'text',
+            text: `🗑️ Successfully deleted memory with ID: ${args.id}`
+          }]
+        };
+      }
+
+      case 'search_memories': {
+        const memories = loadMemories();
+        const query = args.query.toLowerCase();
+        const results = memories.filter(m => 
+          m.content.toLowerCase().includes(query) ||
+          m.tags.some(tag => tag.toLowerCase().includes(query))
+        );
+        if (results.length === 0) {
+          return {
+            content: [{
+              type: 'text',
+              text: `🔍 No memories found matching "${args.query}"`
+            }]
+          };
+        }
+        const resultList = results.map(m => 
+          `🆔 ${m.id} | 📝 ${m.content} | 🏷️ ${m.tags.join(', ') || 'no tags'}`
+        ).join('\n');
+        return {
+          content: [{
+            type: 'text',
+            text: `🔍 Found ${results.length} memories matching "${args.query}":\n\n${resultList}`
+          }]
+        };
+      }
+
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+  } catch (error) {
+    return {
+      content: [{
+        type: 'text',
+        text: `❌ Error executing ${name}: ${error.message}`
+      }],
+      isError: true
+    };
+  }
+});
+
+// Start the server
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error('Like I Said Memory MCP Server v2 started successfully');
+}
+
+main().catch((error) => {
+  console.error('Server failed to start:', error);
+  process.exit(1);
+});
