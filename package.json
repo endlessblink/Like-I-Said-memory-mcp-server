@@ -1,10 +1,19 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "MCP memory server for AI assistants - remember conversations across sessions",
   "main": "server.js",
   "type": "module",
-  "keywords": ["mcp", "memory", "ai", "claude", "cursor", "windsurf", "assistant", "context"],
+  "keywords": [
+    "mcp",
+    "memory",
+    "ai",
+    "claude",
+    "cursor",
+    "windsurf",
+    "assistant",
+    "context"
+  ],
   "author": "endlessblink",
   "license": "MIT",
   "repository": {
