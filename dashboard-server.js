@@ -33,6 +33,18 @@ app.get('/', (req, res) => {
   }
 });
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 
 console.log(`Dashboard API Server starting...`);
@@ -75,15 +87,8 @@ app.get('/api/memories', async (req, res) => {
       return;
     }
 
-    // Fallback to memory manager
-    const { scope = 'all', search } = req.query;
-    if (search) {
-      const results = await memoryManager.searchMemories(search, scope);
-      res.json(results);
-    } else {
-      const memories = await memoryManager.listMemories('', scope);
-      res.json(memories);
-    }
+    // Return empty array if no JSON memories found
+    res.json([]);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -112,64 +117,82 @@ app.post('/api/memories', async (req, res) => {
       return;
     }
     
-    // Fallback to old format
-    const memory = await memoryManager.addMemory(key, value, context);
-    res.json({ success: true, memory });
+    // Fallback: return error for old format
+    throw new Error('Legacy memory format not supported');
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.put('/api/memories/:key', async (req, res) => {
+app.put('/api/memories/:id', async (req, res) => {
   try {
-    const { key } = req.params;
-    const { value, context } = req.body;
+    const { id } = req.params;
+    const { content, tags } = req.body;
     
-    // Delete existing and create new (for simplicity)
-    const deleted = await memoryManager.deleteMemory(key, context?.scope);
-    if (!deleted) {
+    const memories = loadMemoriesFromJSON();
+    const memoryIndex = memories.findIndex(m => m.id === id);
+    
+    if (memoryIndex === -1) {
       return res.status(404).json({ success: false, error: 'Memory not found' });
     }
     
-    const memory = await memoryManager.addMemory(key, value, context);
-    res.json({ success: true, memory });
+    memories[memoryIndex] = {
+      ...memories[memoryIndex],
+      content: content || memories[memoryIndex].content,
+      tags: tags || memories[memoryIndex].tags,
+      timestamp: new Date().toISOString()
+    };
+    
+    if (saveMemoriesToJSON(memories)) {
+      res.json({ success: true, memory: memories[memoryIndex] });
+    } else {
+      throw new Error('Failed to update memory');
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.delete('/api/memories/:key', async (req, res) => {
+app.delete('/api/memories/:id', async (req, res) => {
   try {
-    const { key } = req.params;
-    const { scope } = req.query;
+    const { id } = req.params;
     
-    const deleted = await memoryManager.deleteMemory(key, scope);
-    if (!deleted) {
+    const memories = loadMemoriesFromJSON();
+    const memoryIndex = memories.findIndex(m => m.id === id);
+    
+    if (memoryIndex === -1) {
       return res.status(404).json({ success: false, error: 'Memory not found' });
     }
     
-    res.json({ success: true });
+    memories.splice(memoryIndex, 1);
+    
+    if (saveMemoriesToJSON(memories)) {
+      res.json({ success: true });
+    } else {
+      throw new Error('Failed to delete memory');
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// New endpoints for enhanced functionality
-app.get('/api/memories/graph', async (req, res) => {
+// Enhanced endpoints (simplified)
+app.get('/api/memories/graph', (req, res) => {
   try {
-    const graph = await memoryManager.getMemoryGraph();
+    const memories = loadMemoriesFromJSON();
+    const graph = {
+      nodes: memories.map(m => ({ id: m.id, content: m.content.substring(0, 50) + '...' })),
+      links: []
+    };
     res.json(graph);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Removed broken memoryManager route - using simple version below
-
-app.post('/api/projects/:project/switch', async (req, res) => {
+app.post('/api/projects/:project/switch', (req, res) => {
   try {
     const { project } = req.params;
-    memoryManager.setProject(project);
     res.json({ success: true, project });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

@@ -6,7 +6,19 @@
       "Bash(rg:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(ss:*)",
+      "Bash(true)",
+      "Bash(fuser:*)",
+      "Bash(node:*)",
+      "Bash(npx:*)",
+      "Bash(hostname:*)",
+      "Bash(ls:*)",
+      "Bash(killall:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

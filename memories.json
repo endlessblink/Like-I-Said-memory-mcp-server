@@ -6,9 +6,12 @@
       "development-plan",
       "like-i-said-mcp",
       "dashboard",
-      "roadmap"
+      "roadmap",
+      "hi",
+      "title:AI Memory Dashboard Development Plan",
+      "summary:Phase 1: Add categories, visual layout, search, quick actions. Phase 2: Analytics, export/import, batch operations, relationships. Publishing and benefits outlined."
     ],
-    "timestamp": "2025-06-16T10:30:05.292Z"
+    "timestamp": "2025-06-16T21:48:59.238Z"
   },
   {
     "id": "1750070286524",
@@ -17,8 +20,80 @@
       "current-state",
       "development",
       "like-i-said-mcp",
-      "january-2025"
+      "january-2025",
+      "title:Project Update: MCP Server V2",
+      "summary:Updates on MCP server v2 project location, NPM package, tools, dashboard backend, and TODO list for fixes and improvements."
     ],
-    "timestamp": "2025-06-16T10:38:06.524Z"
+    "timestamp": "2025-06-16T21:50:17.381Z"
+  },
+  {
+    "id": "1750072700000",
+    "content": "Advanced Dashboard Features Implementation Plan: 1) Advanced Content Editor: Rich text editor with markdown support, syntax highlighting for code blocks, live preview, auto-save, version history, collaborative editing. 2) Structured Memory View: Hierarchical memory organization, metadata panels (created/modified dates, usage stats, relationships), visual memory map with connections, expandable/collapsible tree view, drag-drop reorganization. 3) Enhanced Editing: Monaco Editor integration (VS Code editor), language-specific syntax highlighting, auto-completion, error detection, split-view editing. 4) Content Types: Support for code snippets, documentation, images, links, structured data (JSON/YAML), tables/lists. 5) Memory Relationships: Visual connection mapping, automatic link detection, bidirectional references, dependency tracking. Current Status: React dashboard basic functionality working, API endpoints fixed, v2.0.2 ready for NPM publish (requires login). Next: Implement memory cards layout, then advanced editor features.",
+    "tags": [
+      "dashboard-features",
+      "advanced-editor",
+      "structured-view",
+      "development-plan",
+      "like-i-said-mcp",
+      "title:Advanced Dashboard Features Implementation Plan",
+      "summary:Plan to implement rich text editor, structured memory view, enhanced editing, content types, memory relationships in React dashboard."
+    ],
+    "timestamp": "2025-06-16T21:49:18.237Z"
+  },
+  {
+    "id": "1750072800000",
+    "content": "CURRENT SESSION STATE (June 16, 2025): React dashboard API connection fixed, all missing state variables added (newContext, editingContext, editingKey), data structure corrected from object to array format, memory.value changed to memory.content, table rendering fixed, button handlers updated to use memory.id. NPM package bumped to v2.0.2 with all fixes. Dashboard servers running: API on port 3001, React on port 5173. Key remaining: npm login required for publishing, implement visual improvements (memory cards, categories, advanced editor). Commands: 'npm run dev:full' starts both servers, 'curl http://localhost:3001/api/memories' tests API. Advanced features planned: Monaco editor integration, structured memory view with metadata, visual relationship mapping, rich text editing with syntax highlighting.",
+    "tags": [
+      "session-state",
+      "current-progress",
+      "react-fixes",
+      "like-i-said-mcp",
+      "june-2025",
+      "title:Dashboard API Connection Fixed and Enhanced",
+      "summary:React dashboard API connection fixed, missing state variables added, data structure corrected, table rendering fixed, button handlers updated, NPM package bumped, servers running on specific ports. Remaining tasks: npm login, visual improvements. Advanced features planned."
+    ],
+    "timestamp": "2025-06-16T21:49:20.726Z"
+  },
+  {
+    "id": "1750093902418",
+    "content": "DASHBOARD LOADING FIX - COMPLETE SOLUTION: The dashboard was not loading due to mixed old Cytoscape.js code conflicting with new React-Force-Graph implementation. SOLUTION: 1) Complete code rewrite - Rewrote App.tsx from scratch removing 500+ lines of broken code, 2) Fixed syntax errors - Resolved missing brackets and malformed JavaScript, 3) Modern architecture - Implemented React-Force-Graph with WebGL, proper TypeScript, modular helpers, 4) Proper server startup - Use npm run dev:full to start both API (3001) and React (5173) servers, kill existing processes first with pkill -f vite, 5) Verification - npm run build should complete, access http://localhost:5173/. KEY LESSON: Complete rewrite was faster than incremental fixes when mixing old/new code. Final result: Modern dashboard with Cards/Table/Graph views, WebGL visualization, Monaco editor, LLM integration, full CRUD operations.",
+    "tags": [
+      "dashboard-fix",
+      "react-force-graph",
+      "debugging",
+      "troubleshooting",
+      "solution",
+      "like-i-said-mcp",
+      "title:Dashboard Loading Fix: Complete Solution",
+      "summary:Resolved dashboard loading issue by rewriting code, fixing syntax errors, implementing modern architecture, and ensuring proper server startup. Lesson learned: Complete rewrite was faster than incremental fixes."
+    ],
+    "timestamp": "2025-06-16T21:49:22.805Z"
+  },
+  {
+    "id": "1750094838950",
+    "content": "CANVAS GRADIENT FIX - ModernGraph Error Resolution: Fixed canvas DOMException errors in graph visualization. PROBLEM: CanvasGradient.addColorStop Invalid color errors caused by improper color concatenation (node.color + 99). SOLUTION: 1) Added proper color validation and null checks, 2) Replaced complex gradient with solid colors for stability, 3) Added coordinate validation (node.x, node.y), 4) Added try-catch error handling in graph data generation, 5) Added fallback values for all node properties. KEY CHANGES: Removed gradient.addColorStop with invalid colors, added proper null/undefined checks, simplified canvas rendering for better performance. RESULT: Graph view now loads without canvas errors and displays nodes properly.",
+    "tags": [
+      "canvas-fix",
+      "graph-errors",
+      "modernGraph",
+      "debugging",
+      "react-force-graph",
+      "like-i-said-mcp",
+      "title:Canvas Gradient Error Resolution",
+      "summary:Fixed canvas DOMException errors in graph visualization by validating colors, coordinates, and adding error handling."
+    ],
+    "timestamp": "2025-06-16T21:49:24.595Z"
+  },
+  {
+    "id": "1750100143060",
+    "content": "Dashboard API Test: UPDATED content to verify PUT operations work",
+    "tags": [
+      "dashboard-test",
+      "crud",
+      "updated",
+      "title:Dashboard API PUT Operations Verification",
+      "summary:Testing updated content to ensure PUT operations function correctly"
+    ],
+    "timestamp": "2025-06-16T21:49:27.034Z"
   }
 ]
