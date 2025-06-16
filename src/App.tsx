@@ -57,12 +57,15 @@ export default function App() {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [newKey, setNewKey] = useState("")
   const [newValue, setNewValue] = useState("")
+  const [newContext, setNewContext] = useState("")
   const [newTitle, setNewTitle] = useState("")
   const [newTags, setNewTags] = useState("")
   const [newLinks, setNewLinks] = useState("")
   const [newScope, setNewScope] = useState("project")
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null)
+  const [editingKey, setEditingKey] = useState("")
   const [editingValue, setEditingValue] = useState("")
+  const [editingContext, setEditingContext] = useState("")
   const [editingTitle, setEditingTitle] = useState("")
   const [editingTags, setEditingTags] = useState("")
   const [editingLinks, setEditingLinks] = useState("")
@@ -104,14 +107,16 @@ export default function App() {
       body: JSON.stringify({ key: newKey, value: newValue, context })
     })
     setShowAddDialog(false)
-    setNewKey(""); setNewValue(""); setNewTitle(""); setNewTags(""); setNewLinks("")
+    setNewKey(""); setNewValue(""); setNewContext(""); setNewTitle(""); setNewTags(""); setNewLinks("")
     loadMemories()
   }
 
-  const handleEdit = (key: string) => {
-    setEditingKey(key)
-    setEditingValue(memories[key].value)
-    setEditingContext(JSON.stringify(memories[key].context, null, 2))
+  const handleEdit = (id: string) => {
+    const memory = memories.find(m => m.id === id)
+    if (!memory) return
+    setEditingKey(id)
+    setEditingValue(memory.content)
+    setEditingContext(JSON.stringify({tags: memory.tags}, null, 2))
     setShowEditDialog(true)
   }
 
@@ -128,7 +133,7 @@ export default function App() {
       body: JSON.stringify({ value: editingValue, context })
     })
     setShowEditDialog(false)
-    setEditingKey(null)
+    setEditingKey(""); setEditingValue(""); setEditingContext("")
     loadMemories()
   }
 
@@ -146,25 +151,24 @@ export default function App() {
     )
   )
 
-  const filtered = Object.entries(memories).filter(([key, memory]) => {
+  const filtered = memories.filter((memory) => {
     const tags = extractTags(memory)
     const matchesSearch =
-      key.toLowerCase().includes(search.toLowerCase()) ||
-      memory.value.toLowerCase().includes(search.toLowerCase()) ||
+      (memory.id || "").toLowerCase().includes(search.toLowerCase()) ||
+      (memory.content || "").toLowerCase().includes(search.toLowerCase()) ||
       tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
     const matchesTag = tagFilter === "all" || tags.includes(tagFilter)
     return matchesSearch && matchesTag
   })
 
   // Stats
-  const memoryEntries = Object.entries(memories)
-  const total = memoryEntries.length
+  const total = memories.length
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
-  const recent = memoryEntries.filter(([_, memory]) =>
-    new Date(memory.timestamp) > yesterday
+  const recent = memories.filter(memory =>
+    new Date(memory.timestamp || memory.metadata?.created || Date.now()) > yesterday
   ).length
   const avgSize = total > 0
-    ? Math.round(memoryEntries.reduce((sum, [_, memory]) => sum + memory.value.length, 0) / total)
+    ? Math.round(memories.reduce((sum, memory) => sum + (memory.content || memory.metadata?.title || "").length, 0) / total)
     : 0
 
   return (
@@ -265,11 +269,11 @@ export default function App() {
             <div className="bg-[#232329] rounded-lg p-6 border border-[#35353b]">
               <h3 className="text-xl font-semibold text-white mb-4">Recent Memories</h3>
               <div className="space-y-3">
-                {memoryEntries.slice(0, 5).map(([key, memory]) => (
-                  <div key={key} className="flex justify-between items-center p-3 bg-[#2a2a30] rounded-lg">
+                {memories.slice(0, 5).map((memory) => (
+                  <div key={memory.id} className="flex justify-between items-center p-3 bg-[#2a2a30] rounded-lg">
                     <div className="flex-1">
-                      <div className="font-mono text-blue-400 text-sm">{key}</div>
-                      <div className="text-gray-300 text-sm truncate max-w-md">{memory.value}</div>
+                      <div className="font-mono text-blue-400 text-sm">{memory.id}</div>
+                      <div className="text-gray-300 text-sm truncate max-w-md">{memory.content}</div>
                     </div>
                     <div className="text-gray-500 text-xs">
                       {new Date(memory.timestamp).toLocaleDateString()}
@@ -318,11 +322,11 @@ export default function App() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(([key, memory]) => (
-                    <TableRow key={key} className="border-b border-[#2a2a30] hover:bg-[#2a2a30] transition-colors">
-                      <TableCell className="p-4 font-mono text-blue-400">{key}</TableCell>
+                  {filtered.map((memory) => (
+                    <TableRow key={memory.id} className="border-b border-[#2a2a30] hover:bg-[#2a2a30] transition-colors">
+                      <TableCell className="p-4 font-mono text-blue-400">{memory.id}</TableCell>
                       <TableCell className="p-4 max-w-lg">
-                        <div className="truncate text-gray-200">{memory.value}</div>
+                        <div className="truncate text-gray-200">{memory.content}</div>
                       </TableCell>
                       <TableCell className="p-4">
                         <div className="flex gap-1 flex-wrap">
@@ -341,7 +345,7 @@ export default function App() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEdit(key)}
+                            onClick={() => handleEdit(memory.id)}
                             className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                           >
                             ✏️
@@ -349,7 +353,7 @@ export default function App() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteMemory(key)}
+                            onClick={() => deleteMemory(memory.id)}
                             className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                           >
                             🗑️

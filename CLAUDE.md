@@ -336,58 +336,91 @@ npm run dev:full        # Start dashboard + API
 npm start              # Start MCP server only
 ```
 
-## Two-File Distribution System ✅
+## NPM Package Distribution ✅
 
-This project now uses a **simplified two-file approach** for end users:
+The project is now distributed as an NPM package for easy installation:
 
-### 1. `install.bat` - Smart Installer (Install + Reinstall)
-**Dual-Mode Operation:**
-- ✅ **Install Mode**: When run from source directory (first time)
-- ✅ **Reinstall Mode**: When run from installation directory (config updates)
-- ✅ Automatically detects current mode based on directory location
+### **NPM Package: @endlessblink/like-i-said-v2**
+```bash
+npx @endlessblink/like-i-said-v2 install
+```
 
-**Installation Features:**
-- ✅ Checks Node.js requirement
-- ✅ Creates installation directory: `%USERPROFILE%\mcp-servers\like-i-said-v2`
-- ✅ Copies essential files (server.js, dashboard-server.js, simple-dashboard.html, package.json, start.bat, install.bat)
-- ✅ Installs dependencies with `npm install --omit=optional`
-- ✅ Tests server functionality with 6 tools
-- ✅ Configures Cursor IDE MCP settings (with cmd.exe wrapper)
-- ✅ Configures Claude Desktop MCP settings (proper JSON format)
-- ✅ Verifies all configurations created successfully
-- ✅ No admin privileges required (user directory install)
+**Package Features:**
+- ✅ One-command installation for all platforms
+- ✅ Auto-detects AI clients (Claude Desktop, Cursor, Windsurf)
+- ✅ Creates proper MCP configurations
+- ✅ Tests server functionality
+- ✅ Cross-platform (Windows, macOS, Linux)
 
-**Reinstall Features:**
-- ✅ Skips file copying (preserves existing installation)
-- ✅ Updates MCP client configurations only
-- ✅ Useful for fixing broken configs or adding new clients
-- ✅ Context-aware completion message
+## Current Development Status (January 2025)
 
-### 2. `start.bat` - Launch Dashboard
-- ✅ Validates installation directory
-- ✅ Starts dashboard server on port 3001
-- ✅ Opens browser to http://localhost:3001
-- ✅ Shows simple HTML dashboard (no build errors)
-- ✅ Provides API access at /api/memories
+### **✅ Working Features**
+1. **MCP Server** - 6 tools working perfectly
+2. **CLI Installer** - Auto-configures all AI clients
+3. **Dashboard Backend** - Express API on port 3001
+4. **Simple Dashboard** - HTML fallback interface
+5. **React Frontend** - Built but needs UI improvements
 
-### Usage Scenarios
-**First-time Installation:**
-1. Download/clone source code
-2. Run `install.bat` from source directory
-3. Files copied to `%USERPROFILE%\mcp-servers\like-i-said-v2`
-4. MCP clients configured automatically
+### **🚧 TODO Issues**
+1. **Dashboard-MCP Connection** - Dashboard can't connect to MCP server running via AI clients
+   - Current: Dashboard expects its own server instance
+   - Needed: Connect to existing MCP server stdio instance
+   - Solution: Share memory.json file between instances
 
-**Configuration Updates:**
-1. Navigate to installation directory: `cd %USERPROFILE%\mcp-servers\like-i-said-v2`
-2. Run `install.bat` (now in reinstall mode)
-3. Only MCP configs updated, no file operations
+2. **React Dashboard UI** - Missing features:
+   - Memory categories (Personal/Work/Projects)
+   - Visual card layout instead of table
+   - Enhanced search and filters
+   - Analytics and insights
 
-### Key Design Principles
-- **Simplicity**: Only 2 files for end users ("it should function for installing and reinstalling")
-- **No Fix Files**: Installation works correctly the first time
-- **Self-Contained**: All functionality in main files, installer copies itself
-- **Intelligent**: Detects install vs reinstall mode automatically
-- **Reliable**: Proper error handling and verification
-- **Cross-Platform Paths**: Uses forward slashes in JSON configs
-- **No Admin Required**: Installs to user directory
-- **User-Friendly**: Clear success messages for each mode
+3. **Test Script** - CLI test hangs, needs timeout handling
+
+### **📦 Publishing Status**
+- Package name: `@endlessblink/like-i-said-v2`
+- Version: 2.0.1 (ready to publish)
+- Size: ~40KB (cleaned from 150+ files to 44 essential)
+- Command: `npm publish --access public`
+
+### **🎯 Development Roadmap**
+
+**Phase 1 (2-3 days):**
+- Fix dashboard-MCP server connection
+- Add memory categories
+- Implement card-based UI
+- Add search filters
+
+**Phase 2 (1 week):**
+- Memory analytics
+- Export/Import functionality
+- Batch operations
+- Memory relationships
+
+**Phase 3 (2 weeks):**
+- AI auto-save functionality
+- Smart memory suggestions
+- Project-specific scoping
+- Cloud sync options
+
+### **🔧 Development Commands**
+
+```bash
+# Test everything
+test-everything.bat
+
+# Run dashboard
+npm run dev:full
+
+# Build for production
+npm run build
+
+# Publish updates
+git add . && git commit -m "Update" && npm version patch && npm publish
+```
+
+### **📍 Key Files**
+- `server.js` - MCP server implementation
+- `cli.js` - NPX installer
+- `dashboard-server.js` - Express API
+- `src/App.tsx` - React dashboard
+- `PROJECT-STATUS-AND-ROADMAP.md` - Detailed development plan
+- `NPM-MANAGEMENT-GUIDE.md` - NPM package management guide

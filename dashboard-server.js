@@ -164,17 +164,7 @@ app.get('/api/memories/graph', async (req, res) => {
   }
 });
 
-app.get('/api/projects', async (req, res) => {
-  try {
-    const projects = memoryManager.listProjects();
-    res.json({ 
-      projects, 
-      current: memoryManager.currentProject 
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+// Removed broken memoryManager route - using simple version below
 
 app.post('/api/projects/:project/switch', async (req, res) => {
   try {
@@ -184,6 +174,14 @@ app.post('/api/projects/:project/switch', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Projects endpoint (simple version)
+app.get('/api/projects', (req, res) => {
+  res.json({ 
+    projects: ['default'], 
+    current: 'default' 
+  });
 });
 
 app.listen(PORT, () => {

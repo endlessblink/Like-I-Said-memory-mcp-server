@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm:*)"
+      "Bash(npm:*)",
+      "Bash(pkill:*)",
+      "Bash(rg:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

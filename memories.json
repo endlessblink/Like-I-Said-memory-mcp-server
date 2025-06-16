@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "1750069805292",
+    "content": "Phase 1 Dashboard Development (2-3 days): 1) Add memory categories sidebar (Personal/Work/Projects), 2) Replace table with visual memory cards grid layout, 3) Add enhanced search with filters and sorting, 4) Add quick actions (Edit/Delete/Duplicate buttons). Phase 2 (Next week): 1) Memory analytics with usage stats, 2) Export/Import functionality, 3) Batch operations for multiple memories, 4) Memory relationships to link related content. Publishing plan: 1) Test everything with test-everything.bat, 2) Publish to NPM with npm publish --access public, 3) Create 2-3 minute demo video, 4) Share on Reddit r/LocalLLaMA and r/ClaudeAI. Key project benefits: One-command setup, works on all platforms, visual dashboard, persistent AI memory across conversations, multi-client support.",
+    "tags": [
+      "development-plan",
+      "like-i-said-mcp",
+      "dashboard",
+      "roadmap"
+    ],
+    "timestamp": "2025-06-16T10:30:05.292Z"
+  },
+  {
+    "id": "1750070286524",
+    "content": "Project location: D:\\APPSNospaces\\Like-I-said-mcp-server-v2. NPM package: @endlessblink/like-i-said-v2 (v2.0.1 ready to publish). Working: MCP server (6 tools), CLI installer, dashboard backend. TODO: 1) Fix dashboard-MCP connection issue (dashboard can't connect to MCP server running via clients), 2) Add loading indicators to test script, 3) Implement dashboard UI improvements (categories, card layout, filters). Test stuck on CLI installation - needs timeout. Run 'npm run dev:full' for dashboard. Files cleaned from 150+ to 44 essential. Key docs: CLAUDE.md, PROJECT-STATUS-AND-ROADMAP.md, NPM-MANAGEMENT-GUIDE.md.",
+    "tags": [
+      "current-state",
+      "development",
+      "like-i-said-mcp",
+      "january-2025"
+    ],
+    "timestamp": "2025-06-16T10:38:06.524Z"
+  }
+]

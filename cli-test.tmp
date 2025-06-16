@@ -1,0 +1,21 @@
+[34m
+🚀 Like-I-Said MCP v2 - Quick Install[0m
+[34m=====================================[0m
+[34m
+🧪 Testing MCP server...[0m
+[32m✅ Server working with 6 tools[0m
+[32m✅ Claude Desktop configured[0m
+[32m✅ Cursor configured[0m
+[32m✅ Windsurf configured[0m
+[32m
+✅ Installation Complete! Configured 3 client(s)[0m
+[33m
+⚠️  Restart Required:[0m
+[33m• Claude Desktop: Close and restart completely[0m
+[33m• Cursor: Ctrl+Shift+P → "Reload Window"[0m
+[33m• Windsurf: Auto-detects changes[0m
+[34m
+🚀 Test: Ask "What MCP tools do you have available?"[0m
+[34m
+📊 Web Dashboard: Run "npm run dev:full" for browser interface[0m
+^C
