@@ -60,10 +60,14 @@ function detectEnvironment() {
       configKey: 'mcpServers',
       isWSL: isWSL,
       altPaths: [
-        // Alternative paths to check
+        // WSL paths
         path.join(homeDir, '.cursor', 'mcp_servers.json'),
         path.join(homeDir, '.cursor', 'config.json'),
         path.join(homeDir, '.cursor-server', 'data', 'User', 'settings.json'),
+        // Windows paths accessible from WSL
+        '/mnt/c/Users/*/AppData/Roaming/Cursor/User/globalStorage/storage.json',
+        '/mnt/c/Users/*/AppData/Roaming/Cursor/User/settings.json',
+        // Standard paths
         path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json'),
         path.join(process.env.APPDATA || '', 'Cursor', 'User', 'settings.json'),
         path.join(homeDir, '.config', 'Cursor', 'User', 'settings.json')
