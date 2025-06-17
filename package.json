@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.0.10",
+  "version": "2.0.11",
   "description": "MCP memory server for AI assistants - remember conversations across sessions",
   "main": "server.js",
   "type": "module",
