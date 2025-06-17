@@ -503,6 +503,60 @@ async function quickInstall() {
   log('\n📊 Web Dashboard: Run "npm run dev:full" for browser interface', 'blue');
 }
 
+// Setup command - copy files and install
+async function setupAndInstall() {
+  log('\n📦 Like-I-Said MCP v2 - Complete Setup', 'blue');
+  log('=====================================', 'blue');
+  
+  const isNpxInstall = __dirname.includes('npm-cache/_npx') || __dirname.includes('node_modules');
+  if (!isNpxInstall) {
+    log('❌ This command is for NPX installations only', 'red');
+    log('💡 Use "npm run install" for local projects', 'yellow');
+    return;
+  }
+
+  log('\n📁 Setting up project files...', 'blue');
+  const projectPath = process.cwd();
+  
+  // Essential files to copy
+  const filesToCopy = [
+    'server-markdown.js',
+    'package.json',
+    'README.md'
+  ];
+  
+  let copied = 0;
+  for (const file of filesToCopy) {
+    const sourcePath = path.join(__dirname, file);
+    const destPath = path.join(projectPath, file);
+    
+    if (fs.existsSync(sourcePath)) {
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(sourcePath, destPath);
+        log(`✓ Copied ${file}`, 'green');
+        copied++;
+      } else {
+        log(`- Skipped ${file} (already exists)`, 'yellow');
+      }
+    }
+  }
+  
+  // Create memories directory
+  const memoriesDir = path.join(projectPath, 'memories');
+  if (!fs.existsSync(memoriesDir)) {
+    fs.mkdirSync(memoriesDir, { recursive: true });
+    log('✓ Created memories directory', 'green');
+  }
+  
+  if (copied > 0) {
+    log(`\n📋 Copied ${copied} files to current directory`, 'green');
+  }
+  
+  // Now run the install
+  log('\n🔧 Configuring MCP clients...', 'blue');
+  await quickInstall();
+}
+
 // Handle commands
 async function handleCommand() {
   const command = process.argv[2];
@@ -510,6 +564,9 @@ async function handleCommand() {
   switch (command) {
     case 'install':
       quickInstall().catch(console.error);
+      break;
+    case 'setup':
+      setupAndInstall().catch(console.error);
       break;
     case 'init':
       main().catch(console.error);
@@ -536,13 +593,14 @@ async function handleCommand() {
       log('  • Zed Editor, Codeium, Docker', 'yellow');
       
       log('\n📋 Commands:', 'blue');
-      log('  npx @endlessblink/like-i-said-v2 install - Quick install for all clients', 'yellow');
+      log('  npx @endlessblink/like-i-said-v2 setup   - Copy files + configure clients (recommended)', 'yellow');
+      log('  npx @endlessblink/like-i-said-v2 install - Quick install (requires existing project)', 'yellow');
       log('  npx @endlessblink/like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
       log('  npx @endlessblink/like-i-said-v2 start   - Start the MCP server manually', 'yellow');
       
       log('\n🚀 Quick Start:', 'green');
-      log('  1. npx @endlessblink/like-i-said-v2 install', 'yellow');
-      log('  2. Restart your AI client', 'yellow');
+      log('  1. npx @endlessblink/like-i-said-v2 setup', 'yellow');
+      log('  2. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
       log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
       
       log('\n📖 More info: https://github.com/endlessblink/like-i-said-mcp-server', 'blue');
