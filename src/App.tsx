@@ -23,14 +23,12 @@ import Editor from '@monaco-editor/react'
 import { ModernGraph } from '@/components/ModernGraph'
 import { ModernGraphTest } from '@/components/ModernGraphTest'
 import { SimpleGraph } from '@/components/SimpleGraph'
-
-// === TYPES ===
-interface Memory {
-  id: string
-  content: string
-  tags?: string[]
-  timestamp: string
-}
+import { MemoryCard } from '@/components/MemoryCard'
+import { AdvancedSearch } from '@/components/AdvancedSearch'
+import { ProjectTabs } from '@/components/ProjectTabs'
+import { ExportImport } from '@/components/ExportImport'
+import { Memory, MemoryCategory, ViewMode, AdvancedFilters } from '@/types'
+import { searchMemories } from '@/utils/helpers'
 
 // === HELPER FUNCTIONS ===
 function extractTags(memory: Memory): string[] {
@@ -175,6 +173,7 @@ export default function App() {
   // === STATE ===
   const [memories, setMemories] = useState<Memory[]>([])
   const [search, setSearch] = useState("")
+  const [searchFilters, setSearchFilters] = useState<AdvancedFilters>({})
   const [tagFilter, setTagFilter] = useState("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [newValue, setNewValue] = useState("")
@@ -196,6 +195,12 @@ export default function App() {
   const [llmApiKey, setLlmApiKey] = useState("")
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [enhancingMemories, setEnhancingMemories] = useState<Set<string>>(new Set())
+  const [currentProject, setCurrentProject] = useState("all")
+  const [selectedMemories, setSelectedMemories] = useState<Set<string>>(new Set())
+  const [newCategory, setNewCategory] = useState<MemoryCategory | undefined>(undefined)
+  const [newProject, setNewProject] = useState("")
+  const [editingCategory, setEditingCategory] = useState<MemoryCategory | undefined>(undefined)
+  const [editingProject, setEditingProject] = useState("")
 
   // === EFFECTS ===
   useEffect(() => {
@@ -231,9 +236,14 @@ export default function App() {
   const addMemory = async () => {
     if (!newValue.trim()) return
 
+    const tags = newTags.split(',').map(tag => tag.trim()).filter(Boolean)
+    const category = newCategory || autoAssignCategory(newValue, tags)
+
     const memory = {
       content: newValue,
-      tags: newTags.split(',').map(tag => tag.trim()).filter(Boolean)
+      tags: tags,
+      category: category,
+      project: newProject.trim() || undefined
     }
 
     try {
@@ -245,6 +255,8 @@ export default function App() {
       
       setNewValue("")
       setNewTags("")
+      setNewCategory(undefined)
+      setNewProject("")
       setShowAddDialog(false)
       loadMemories()
     } catch (error) {
@@ -255,9 +267,14 @@ export default function App() {
   const updateMemory = async () => {
     if (!editingMemory) return
 
+    const tags = editingTags.split(',').map(tag => tag.trim()).filter(Boolean)
+    const category = editingCategory || autoAssignCategory(editingValue, tags)
+
     const updatedMemory = {
       content: editingValue,
-      tags: editingTags.split(',').map(tag => tag.trim()).filter(Boolean)
+      tags: tags,
+      category: category,
+      project: editingProject.trim() || undefined
     }
 
     try {
@@ -292,7 +309,141 @@ export default function App() {
       setEditingMemory(memory)
       setEditingValue(memory.content)
       setEditingTags(extractTags(memory).join(', '))
+      setEditingCategory(memory.category)
+      setEditingProject(memory.project || "")
       setShowEditDialog(true)
+    }
+  }
+
+  // === CATEGORIZATION ===
+  const suggestCategory = (content: string, tags: string[]): MemoryCategory | undefined => {
+    const lowerContent = content.toLowerCase()
+    const lowerTags = tags.map(tag => tag.toLowerCase())
+    
+    // Check for code-related content
+    if (
+      lowerTags.some(tag => ["code", "programming", "dev", "tech", "javascript", "typescript", "python", "react", "node", "api", "database", "sql"].includes(tag)) ||
+      content.includes("```") ||
+      content.includes("function") ||
+      content.includes("npm ") ||
+      content.includes("git ") ||
+      content.includes("const ") ||
+      content.includes("import ") ||
+      content.includes("export ") ||
+      /\b(bug|fix|debug|error|exception|variable|method|class)\b/i.test(content)
+    ) {
+      return 'code'
+    }
+    
+    // Check for work-related content
+    if (
+      lowerTags.some(tag => ["work", "business", "meeting", "client", "job", "project", "team", "office", "deadline", "task"].includes(tag)) ||
+      /\b(meeting|deadline|project|team|client|business|work|office|manager|boss|colleague)\b/i.test(content)
+    ) {
+      return 'work'
+    }
+    
+    // Check for research-related content
+    if (
+      lowerTags.some(tag => ["research", "study", "analysis", "data", "investigation", "paper", "academic", "science"].includes(tag)) ||
+      /\b(research|study|analysis|investigation|findings|hypothesis|methodology|paper|academic)\b/i.test(content)
+    ) {
+      return 'research'
+    }
+    
+    // Check for conversation-related content
+    if (
+      lowerTags.some(tag => ["conversation", "chat", "discussion", "call", "meeting", "talk"].includes(tag)) ||
+      /\b(conversation|discussed|talked|said|mentioned|asked|told|chat|call)\b/i.test(content) ||
+      content.includes('"') ||
+      content.includes("'")
+    ) {
+      return 'conversations'
+    }
+    
+    // Check for personal content
+    if (
+      lowerTags.some(tag => ["personal", "me", "my", "self", "private", "family", "friend", "home"].includes(tag)) ||
+      /\b(my |I |me |myself|personal|family|friend|home|feel|think|believe|remember)\b/i.test(content)
+    ) {
+      return 'personal'
+    }
+    
+    // Default to undefined (no category)
+    return undefined
+  }
+
+  const autoAssignCategory = (content: string, tags: string[]) => {
+    return suggestCategory(content, tags)
+  }
+
+  // === PROJECT MANAGEMENT ===
+  const createProject = async (projectId: string) => {
+    // Projects are created dynamically when memories are assigned to them
+    console.log('Creating project:', projectId)
+  }
+
+  const deleteProject = async (projectId: string) => {
+    if (projectId === "all" || projectId === "default") return
+    
+    // Move all memories from this project to default
+    const projectMemories = memories.filter(m => m.project === projectId)
+    for (const memory of projectMemories) {
+      await updateMemoryProject(memory.id, "default")
+    }
+  }
+
+  const updateMemoryProject = async (memoryId: string, projectId: string) => {
+    const memory = memories.find(m => m.id === memoryId)
+    if (!memory) return
+
+    try {
+      await fetch(`/api/memories/${memoryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...memory,
+          project: projectId === "default" ? undefined : projectId
+        })
+      })
+      loadMemories()
+    } catch (error) {
+      console.error('Failed to update memory project:', error)
+    }
+  }
+
+  const moveSelectedMemoriesToProject = async (projectId: string) => {
+    for (const memoryId of selectedMemories) {
+      await updateMemoryProject(memoryId, projectId)
+    }
+    setSelectedMemories(new Set())
+  }
+
+  const handleMemorySelect = (memoryId: string) => {
+    setSelectedMemories(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(memoryId)) {
+        newSet.delete(memoryId)
+      } else {
+        newSet.add(memoryId)
+      }
+      return newSet
+    })
+  }
+
+  const handleImportMemories = async (newMemories: Memory[]) => {
+    try {
+      for (const memory of newMemories) {
+        await fetch('/api/memories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(memory)
+        })
+      }
+      loadMemories()
+    } catch (error) {
+      console.error('Failed to import memories:', error)
+      throw error
     }
   }
 
@@ -523,10 +674,21 @@ Respond with JSON format:
     }
   ]
 
-  const filtered = memories.filter(memory => {
+  // Combined filtering using new search function and legacy category filter
+  const filtered = searchMemories(memories, search, searchFilters).filter(memory => {
     const tags = extractTags(memory)
     
-    // Category filter
+    // Project filter
+    let matchesProject = true
+    if (currentProject !== "all") {
+      if (currentProject === "default") {
+        matchesProject = !memory.project || memory.project === "default"
+      } else {
+        matchesProject = memory.project === currentProject
+      }
+    }
+    
+    // Legacy category filter (until we fully migrate to new categories)
     let matchesCategory = true
     if (selectedCategory !== "all") {
       if (selectedCategory === "personal") {
@@ -554,19 +716,18 @@ Respond with JSON format:
       }
     }
     
-    const matchesSearch =
-      (memory.id || "").toLowerCase().includes(search.toLowerCase()) ||
-      (memory.content || "").toLowerCase().includes(search.toLowerCase()) ||
-      tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
     const matchesTag = tagFilter === "all" || tags.includes(tagFilter)
-    
-    return matchesSearch && matchesTag && matchesCategory
+    return matchesTag && matchesCategory && matchesProject
   })
 
   const graphFiltered = memories.filter(memory => {
     const tags = extractTags(memory)
     return graphTagFilter === "all" || tags.includes(graphTagFilter)
   })
+
+  // Extract available tags and projects for search filters
+  const availableTags = Array.from(new Set(memories.flatMap(memory => extractTags(memory))))
+  const availableProjects = Array.from(new Set(memories.map(memory => memory.project).filter(Boolean)))
 
   // Stats
   const total = memories.length
@@ -615,6 +776,10 @@ Respond with JSON format:
             </div>
             
             <div className="flex items-center gap-4">
+              <ExportImport
+                memories={memories}
+                onImportMemories={handleImportMemories}
+              />
               <div className="text-sm text-gray-400">
                 {memories.length} memories
               </div>
@@ -695,11 +860,65 @@ Respond with JSON format:
                         className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Category</label>
+                        <Select value={newCategory || ""} onValueChange={(value) => setNewCategory(value as MemoryCategory || undefined)}>
+                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                            <SelectValue placeholder="Auto-detect or select..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Auto-detect</SelectItem>
+                            <SelectItem value="personal">Personal</SelectItem>
+                            <SelectItem value="work">Work</SelectItem>
+                            <SelectItem value="code">Code</SelectItem>
+                            <SelectItem value="research">Research</SelectItem>
+                            <SelectItem value="conversations">Conversations</SelectItem>
+                            <SelectItem value="preferences">Preferences</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {newValue && !newCategory && (
+                          <div className="text-xs text-blue-400">
+                            Suggested: {autoAssignCategory(newValue, newTags.split(',').map(t => t.trim()).filter(Boolean)) || 'None'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Project</label>
+                        <div className="flex gap-2">
+                          <Select value={newProject} onValueChange={setNewProject}>
+                            <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                              <SelectValue placeholder="Select or create..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">General</SelectItem>
+                              {availableProjects.map((project) => (
+                                <SelectItem key={project} value={project}>
+                                  {project.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={newProject}
+                            onChange={e => setNewProject(e.target.value)}
+                            placeholder="Or type new project..."
+                            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={addMemory} className="bg-violet-600 hover:bg-violet-700">
                         Add Memory
                       </Button>
-                      <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-gray-600 text-gray-300">
+                      <Button variant="outline" onClick={() => {
+                        setShowAddDialog(false)
+                        setNewValue("")
+                        setNewTags("")
+                        setNewCategory(undefined)
+                        setNewProject("")
+                      }} className="border-gray-600 text-gray-300">
                         Cancel
                       </Button>
                     </div>
@@ -738,6 +957,18 @@ Respond with JSON format:
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Projects */}
+          <div className="p-6 border-t border-gray-700">
+            <ProjectTabs
+              memories={memories}
+              currentProject={currentProject}
+              onProjectChange={setCurrentProject}
+              onCreateProject={createProject}
+              onDeleteProject={deleteProject}
+              onMoveMemories={moveSelectedMemoriesToProject}
+            />
           </div>
 
           {/* Search & Filters */}
@@ -836,79 +1067,85 @@ Respond with JSON format:
 
             {currentTab === "memories" && (
               <>
+                {/* Advanced Search */}
+                {/* Bulk Operations Toolbar */}
+                {selectedMemories.size > 0 && (
+                  <div className="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-blue-300 font-medium">
+                          {selectedMemories.size} memory{selectedMemories.size !== 1 ? 'ies' : ''} selected
+                        </span>
+                        <Select onValueChange={moveSelectedMemoriesToProject}>
+                          <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
+                            <SelectValue placeholder="Move to project..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">General</SelectItem>
+                            {availableProjects.map((project) => (
+                              <SelectItem key={project} value={project}>
+                                {project.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ExportImport
+                          memories={memories}
+                          selectedMemories={selectedMemories}
+                          onImportMemories={handleImportMemories}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Delete ${selectedMemories.size} selected memories?`)) {
+                              selectedMemories.forEach(id => deleteMemory(id))
+                              setSelectedMemories(new Set())
+                            }
+                          }}
+                          className="border-red-600 text-red-300 hover:bg-red-900/20"
+                        >
+                          Delete
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedMemories(new Set())}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          Clear Selection
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <AdvancedSearch
+                    query={search}
+                    filters={searchFilters}
+                    onQueryChange={setSearch}
+                    onFiltersChange={setSearchFilters}
+                    availableTags={availableTags}
+                    availableProjects={availableProjects}
+                  />
+                </div>
+
                 {/* Cards View */}
                 {viewMode === "cards" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filtered.map((memory) => {
-                      const memoryTags = extractVisibleTags(memory)
-                      const title = extractTitle(memory.content, memory)
-                      const summary = generateSummary(memory.content, memory)
-                      
-                      return (
-                        <div key={memory.id} className="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-violet-500 transition-colors">
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="font-semibold text-white text-lg leading-tight flex-1">
-                              {title}
-                            </h3>
-                            <div className="flex gap-2 ml-3">
-                              {llmProvider !== "none" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => enhanceMemoryWithLLM(memory)}
-                                  disabled={enhancingMemories.has(memory.id)}
-                                  className="text-green-400 hover:text-green-300 p-1"
-                                >
-                                  {enhancingMemories.has(memory.id) ? "🔄" : "✨"}
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(memory.id)}
-                                className="text-gray-400 hover:text-white p-1"
-                              >
-                                ✏️
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteMemory(memory.id)}
-                                className="text-gray-400 hover:text-red-400 p-1"
-                              >
-                                🗑️
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                            {summary}
-                          </p>
-                          
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {memoryTags.map((tag, i) => {
-                              const colors = getTagColor(tag)
-                              return (
-                                <span
-                                  key={i}
-                                  className="px-2 py-1 rounded-full text-xs font-medium"
-                                  style={{
-                                    backgroundColor: colors.bg,
-                                    color: colors.text
-                                  }}
-                                >
-                                  {tag}
-                                </span>
-                              )
-                            })}
-                          </div>
-                          
-                          <div className="text-xs text-gray-500">
-                            {new Date(memory.timestamp).toLocaleString()}
-                          </div>
-                        </div>
-                      )
-                    })}
+                    {filtered.map((memory) => (
+                      <MemoryCard
+                        key={memory.id}
+                        memory={memory}
+                        selected={selectedMemories.has(memory.id)}
+                        onSelect={handleMemorySelect}
+                        onEdit={() => handleEdit(memory.id)}
+                        onDelete={deleteMemory}
+                      />
+                    ))}
                   </div>
                 )}
 
@@ -1050,6 +1287,54 @@ Respond with JSON format:
                 onChange={e => setEditingTags(e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Category</label>
+                <Select value={editingCategory || ""} onValueChange={(value) => setEditingCategory(value as MemoryCategory || undefined)}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue placeholder="Auto-detect or select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Auto-detect</SelectItem>
+                    <SelectItem value="personal">Personal</SelectItem>
+                    <SelectItem value="work">Work</SelectItem>
+                    <SelectItem value="code">Code</SelectItem>
+                    <SelectItem value="research">Research</SelectItem>
+                    <SelectItem value="conversations">Conversations</SelectItem>
+                    <SelectItem value="preferences">Preferences</SelectItem>
+                  </SelectContent>
+                </Select>
+                {editingValue && !editingCategory && (
+                  <div className="text-xs text-blue-400">
+                    Suggested: {autoAssignCategory(editingValue, editingTags.split(',').map(t => t.trim()).filter(Boolean)) || 'None'}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Project</label>
+                <div className="flex gap-2">
+                  <Select value={editingProject} onValueChange={setEditingProject}>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                      <SelectValue placeholder="Select or create..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">General</SelectItem>
+                      {availableProjects.map((project) => (
+                        <SelectItem key={project} value={project}>
+                          {project.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={editingProject}
+                    onChange={e => setEditingProject(e.target.value)}
+                    placeholder="Or type new project..."
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 flex-1"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button onClick={updateMemory} className="bg-violet-600 hover:bg-violet-700">

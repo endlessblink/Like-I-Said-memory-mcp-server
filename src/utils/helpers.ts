@@ -164,3 +164,153 @@ export function daysSince(timestamp: string | Date): number {
   const diffTime = Math.abs(now.getTime() - date.getTime())
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
+
+/**
+ * Format a date string to show relative time (e.g., "2 hours ago")
+ */
+export function formatDistanceToNow(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMs = now.getTime() - date.getTime()
+  
+  const minute = 60 * 1000
+  const hour = minute * 60
+  const day = hour * 24
+  const week = day * 7
+  const month = day * 30
+  const year = day * 365
+  
+  if (diffInMs < minute) {
+    return "just now"
+  } else if (diffInMs < hour) {
+    const minutes = Math.floor(diffInMs / minute)
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
+  } else if (diffInMs < day) {
+    const hours = Math.floor(diffInMs / hour)
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+  } else if (diffInMs < week) {
+    const days = Math.floor(diffInMs / day)
+    return `${days} day${days !== 1 ? 's' : ''} ago`
+  } else if (diffInMs < month) {
+    const weeks = Math.floor(diffInMs / week)
+    return `${weeks} week${weeks !== 1 ? 's' : ''} ago`
+  } else if (diffInMs < year) {
+    const months = Math.floor(diffInMs / month)
+    return `${months} month${months !== 1 ? 's' : ''} ago`
+  } else {
+    const years = Math.floor(diffInMs / year)
+    return `${years} year${years !== 1 ? 's' : ''} ago`
+  }
+}
+
+/**
+ * Truncate text to specified length with ellipsis
+ */
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + "..."
+}
+
+/**
+ * Generate a random UUID v4
+ */
+export function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c == 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
+/**
+ * Calculate content size in bytes
+ */
+export function calculateContentSize(content: string): number {
+  return new Blob([content]).size
+}
+
+/**
+ * Detect content type based on content
+ */
+export function detectContentType(content: string): 'text' | 'code' | 'structured' {
+  // Check for code patterns
+  const codePatterns = [
+    /```[\s\S]*```/,  // Code blocks
+    /function\s+\w+\s*\(/,  // Function declarations
+    /class\s+\w+/,  // Class declarations
+    /import\s+.*from/,  // Import statements
+    /export\s+(default\s+)?/,  // Export statements
+    /<\w+[^>]*>/,  // HTML tags
+    /\{\s*"[\w"]+\s*:/  // JSON-like patterns
+  ]
+  
+  if (codePatterns.some(pattern => pattern.test(content))) {
+    return 'code'
+  }
+  
+  // Check for structured data
+  try {
+    JSON.parse(content)
+    return 'structured'
+  } catch {
+    // Not JSON
+  }
+  
+  // Check for YAML-like patterns
+  if (/^[\w\-]+:\s*/.test(content) || content.includes('---\n')) {
+    return 'structured'
+  }
+  
+  return 'text'
+}
+
+/**
+ * Search memories with advanced filters
+ */
+export function searchMemories(memories: Memory[], query: string, filters?: any): Memory[] {
+  let results = memories
+  
+  // Text search
+  if (query.trim()) {
+    const searchTerm = query.toLowerCase()
+    results = results.filter(memory => 
+      memory.content.toLowerCase().includes(searchTerm) ||
+      (memory.tags && memory.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm))) ||
+      (memory.project && memory.project.toLowerCase().includes(searchTerm))
+    )
+  }
+  
+  // Apply filters
+  if (filters) {
+    if (filters.category) {
+      results = results.filter(memory => memory.category === filters.category)
+    }
+    
+    if (filters.project) {
+      results = results.filter(memory => memory.project === filters.project)
+    }
+    
+    if (filters.tags && filters.tags.length > 0) {
+      results = results.filter(memory => 
+        memory.tags && filters.tags.some((tag: string) => memory.tags.includes(tag))
+      )
+    }
+    
+    if (filters.contentType) {
+      results = results.filter(memory => 
+        memory.metadata?.contentType === filters.contentType
+      )
+    }
+    
+    if (filters.dateRange) {
+      const startDate = new Date(filters.dateRange.start)
+      const endDate = new Date(filters.dateRange.end)
+      results = results.filter(memory => {
+        const memoryDate = new Date(memory.metadata?.created || memory.timestamp)
+        return memoryDate >= startDate && memoryDate <= endDate
+      })
+    }
+  }
+  
+  return results
+}

@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "MCP memory server for AI assistants - remember conversations across sessions",
   "main": "server.js",
   "type": "module",
@@ -18,7 +18,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/endlessblink/like-i-said-mcp-server.git"
+    "url": "git+https://github.com/endlessblink/like-i-said-mcp-server.git"
   },
   "homepage": "https://github.com/endlessblink/like-i-said-mcp-server",
   "bugs": {
@@ -29,37 +29,18 @@
     "like-i-said": "./cli.js"
   },
   "scripts": {
-    "start": "node server-wrapper.js",
-    "start:mcp": "node server.js",
-    "start:dashboard": "node dashboard-server.js",
-    "dashboard": "node dashboard-server.js",
-    "setup:v2": "node setup-v2-parallel.js",
+    "start": "node server-markdown.js",
+    "start:mcp": "node server-markdown.js",
+    "start:legacy": "node server.js",
+    "start:dashboard": "node dashboard-server-bridge.js",
     "dev": "vite --host 0.0.0.0",
-    "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"cyan,magenta\"",
+    "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"green,magenta\"",
     "build": "vite build",
     "preview": "vite preview",
-    "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:stop": "pm2 stop like-i-said-v2",
-    "pm2:status": "pm2 status",
-    "pm2:logs": "pm2 logs like-i-said-v2",
-    "setup": "node cli.js init",
+    "install-mcp": "node cli.js install",
     "configure": "node cli.js init",
-    "migrate": "node migrate.js run",
-    "migrate:preview": "node migrate.js preview",
-    "install-service": "node install-service.js",
-    "uninstall-service": "pm2 delete ecosystem.config.js && pm2 unstartup",
-    "logs": "tail -f logs/wrapper.log",
-    "docker:build": "docker build -t like-i-said-v2 .",
-    "docker:run": "docker run -d -p 3001:3001 -p 3002:3002 -v $(pwd)/memories:/app/memories --name like-i-said-v2 like-i-said-v2",
-    "docker:setup": "npm run docker:build && npm run docker:run",
-    "docker:stop": "docker stop like-i-said-v2 && docker rm like-i-said-v2",
-    "docker:logs": "docker logs -f like-i-said-v2",
-    "docker:compose": "docker-compose up -d",
-    "docker:compose:down": "docker-compose down",
-    "debug:cursor": "node debug-cursor.js",
-    "debug:config": "node cli.js debug:cursor",
-    "configure:auto": "node auto-configure.js",
-    "validate:cursor": "node validate-cursor-config.js"
+    "test:mcp": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}' | node server-markdown.js",
+    "test:api": "curl -s http://localhost:3001/api/status"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
@@ -69,6 +50,7 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "@types/cytoscape": "^3.21.9",
+    "chokidar": "^4.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
@@ -84,6 +66,7 @@
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.177.0",
+    "ws": "^8.18.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {

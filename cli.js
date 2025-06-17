@@ -30,6 +30,7 @@ function log(message, color = 'reset') {
 // Detect OS and MCP client configurations
 function detectEnvironment() {
   const platform = process.platform;
+  const isWSL = process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP;
   const homeDir = process.env.HOME || process.env.USERPROFILE;
   
   const configs = {
@@ -45,19 +46,24 @@ function detectEnvironment() {
       darwin: path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
       win32: path.join(process.env.APPDATA || '', 'Code', 'User', 'settings.json'),
       linux: path.join(homeDir, '.config', 'Code', 'User', 'settings.json'),
+      wsl: path.join(homeDir, '.vscode-server', 'data', 'User', 'settings.json'),
       configKey: 'claude.mcpServers',
-      isVSCode: true
+      isVSCode: true,
+      isWSL: isWSL
     },
     'cursor': {
       name: 'Cursor',
       darwin: path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'globalStorage', 'storage.json'),
       win32: path.join(process.env.APPDATA || '', 'Cursor', 'User', 'globalStorage', 'storage.json'),
       linux: path.join(homeDir, '.config', 'Cursor', 'User', 'globalStorage', 'storage.json'),
+      wsl: path.join(homeDir, '.cursor', 'mcp.json'), // WSL-specific path
       configKey: 'mcpServers',
+      isWSL: isWSL,
       altPaths: [
         // Alternative paths to check
         path.join(homeDir, '.cursor', 'mcp_servers.json'),
         path.join(homeDir, '.cursor', 'config.json'),
+        path.join(homeDir, '.cursor-server', 'data', 'User', 'settings.json'),
         path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json'),
         path.join(process.env.APPDATA || '', 'Cursor', 'User', 'settings.json'),
         path.join(homeDir, '.config', 'Cursor', 'User', 'settings.json')
@@ -68,8 +74,10 @@ function detectEnvironment() {
       darwin: path.join(homeDir, 'Library', 'Application Support', 'Windsurf', 'User', 'settings.json'),
       win32: path.join(process.env.APPDATA || '', 'Windsurf', 'User', 'settings.json'),
       linux: path.join(homeDir, '.config', 'Windsurf', 'User', 'settings.json'),
+      wsl: path.join(homeDir, '.codeium', 'windsurf', 'mcp_config.json'), // WSL-specific path
       configKey: 'mcp.servers',
-      isVSCode: true
+      isVSCode: true,
+      isWSL: isWSL
     },
     'continue': {
       name: 'Continue (VS Code)',
@@ -97,7 +105,14 @@ function detectEnvironment() {
   const detectedConfigs = {};
   Object.keys(configs).forEach(client => {
     const config = configs[client];
+    
+    // Handle WSL-specific paths for supported clients
     let configPath = config[platform];
+    if (isWSL && config.wsl) {
+      configPath = config.wsl;
+      log(`🐧 WSL detected, using WSL path for ${config.name}`, 'blue');
+    }
+    
     let exists = false;
 
     // Check main path

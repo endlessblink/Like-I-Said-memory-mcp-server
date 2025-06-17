@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "like-i-said-memory": {
-      "command": "node",
-      "args": ["server.js"],
-      "cwd": "PATH_TO_YOUR_PROJECT"
-    }
-  }
-}
