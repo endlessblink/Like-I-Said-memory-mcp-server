@@ -32,13 +32,11 @@ claude-desktop-config.json
 
 # Personal configuration
 ecosystem.config.json
-<<<<<<< HEAD
 
 # GitHub-specific ignores
-node_modules/
 .env
 .env.local
-=======
->>>>>>> d6f8cad (Initial commit: Like-I-Said MCP Memory Server)
-"docs/" 
-"docs/" 
+
+# Documentation (local only)
+Docs/
+docs/ 
