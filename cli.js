@@ -72,11 +72,11 @@ function detectEnvironment() {
     'windsurf': {
       name: 'Windsurf',
       darwin: path.join(homeDir, 'Library', 'Application Support', 'Windsurf', 'User', 'settings.json'),
-      win32: path.join(process.env.APPDATA || '', 'Windsurf', 'User', 'settings.json'),
+      win32: path.join(homeDir, '.codeium', 'windsurf', 'mcp_config.json'), // Correct Windows path
       linux: path.join(homeDir, '.config', 'Windsurf', 'User', 'settings.json'),
       wsl: path.join(homeDir, '.codeium', 'windsurf', 'mcp_config.json'), // WSL-specific path
-      configKey: 'mcp.servers',
-      isVSCode: true,
+      configKey: 'mcpServers', // Fixed - should be mcpServers not mcp.servers
+      isVSCode: false, // Windsurf uses standard MCP format
       isWSL: isWSL
     },
     'continue': {
