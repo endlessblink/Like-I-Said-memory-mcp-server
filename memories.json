@@ -365,5 +365,19 @@
       "complete"
     ],
     "timestamp": "2025-06-17T21:10:19.415Z"
+  },
+  {
+    "id": "1750202928866",
+    "content": "# 🎉 SUCCESS! Version 2.0.14 with NPX Fix is LIVE!\n\n## ✅ Published Successfully:\n\n**📦 Package Details:**\n- Version: @endlessblink/like-i-said-v2@2.0.14\n- Package Size: 80.9 kB\n- Status: ✅ Live on npm registry\n\n## 🔧 NPX Fix Applied:\n\n**Problem:** Hyphenated bin names caused Windows issues\n**Solution:** Used camelCase bin names (likeiSaidV2, likeisaid)\n**Result:** Cross-platform compatibility achieved\n\n## 🚀 NEW User Commands (Windows-Compatible):\n\n**Primary Command:**\n```bash\nnpx @endlessblink/like-i-said-v2 likeisaid install\n```\n\n**Alternative:**\n```bash\nnpx @endlessblink/like-i-said-v2 likeiSaidV2 install\n```\n\n## ✅ Benefits:\n- ✅ **Windows Compatible:** No more \"command not recognized\" errors\n- ✅ **Cross-Platform:** Works on Windows, macOS, Linux\n- ✅ **Cleaner Syntax:** No confusing hyphens\n- ✅ **Reliable:** Consistent behavior across environments\n\n## 🎯 Complete Installation Process:\n\nThe NPX installer now:\n1. **Auto-detects NPX environment**\n2. **Copies files to user's current directory** (server-markdown.js, package.json, README.md)\n3. **Creates memories/ directory**\n4. **Tests server functionality** (6 MCP tools)\n5. **Configures all MCP clients** (Claude Desktop, Cursor, Windsurf)\n6. **Uses correct local paths** (not NPX cache paths)\n\n## 🏆 Final Status:\n\nThe NPX command issue is now **completely resolved!** Users on all platforms can successfully install the MCP server with the new command. The installation is robust, reliable, and user-friendly across Windows, macOS, and Linux environments.\n\n**Ready for production use!** 🎊🚀",
+    "tags": [
+      "like-i-said-mcp",
+      "v2.0.14",
+      "npx-fix",
+      "windows-compatibility",
+      "production-ready",
+      "success",
+      "cross-platform"
+    ],
+    "timestamp": "2025-06-17T23:28:48.866Z"
   }
 ]
