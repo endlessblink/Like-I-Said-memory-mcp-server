@@ -404,7 +404,24 @@ async function quickInstall() {
 
   // Test if server works
   log('\n🧪 Testing MCP server...', 'blue');
-  const serverPath = path.join(__dirname, 'server-markdown.js');
+  
+  // Detect if running from NPX cache vs local project
+  const isNpxInstall = __dirname.includes('npm-cache/_npx') || __dirname.includes('node_modules');
+  const projectPath = isNpxInstall ? process.cwd() : __dirname;
+  const serverPath = path.join(isNpxInstall ? __dirname : projectPath, 'server-markdown.js');
+  
+  if (isNpxInstall) {
+    log('🔍 NPX installation detected', 'blue');
+    // Check if we're in a project with server-markdown.js
+    const localServerPath = path.join(projectPath, 'server-markdown.js');
+    if (!fs.existsSync(localServerPath)) {
+      log('❌ No local server found. Please run this from a like-i-said-v2 project directory.', 'red');
+      log('💡 Either:', 'yellow');
+      log('   1. Clone: git clone https://github.com/endlessblink/like-i-said-mcp-server.git', 'yellow');
+      log('   2. Download the project files to current directory', 'yellow');
+      return;
+    }
+  }
   
   const serverTest = new Promise((resolve) => {
     const child = spawn('node', [serverPath], { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -453,7 +470,7 @@ async function quickInstall() {
         
         clientConfig.mcpServers['like-i-said-memory'] = {
           command: 'node',
-          args: [serverPath]
+          args: [path.join(projectPath, 'server-markdown.js')]
         };
 
         const configDir = path.dirname(config.path);
