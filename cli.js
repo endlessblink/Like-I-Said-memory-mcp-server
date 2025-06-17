@@ -53,13 +53,16 @@ function detectEnvironment() {
     },
     'cursor': {
       name: 'Cursor',
-      darwin: path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'globalStorage', 'storage.json'),
-      win32: path.join(process.env.APPDATA || '', 'Cursor', 'User', 'globalStorage', 'storage.json'),
-      linux: path.join(homeDir, '.config', 'Cursor', 'User', 'globalStorage', 'storage.json'),
+      darwin: path.join(homeDir, '.cursor', 'mcp.json'),
+      win32: path.join(homeDir, '.cursor', 'mcp.json'), // Primary Windows path
+      linux: path.join(homeDir, '.cursor', 'mcp.json'),
       wsl: path.join(homeDir, '.cursor', 'mcp.json'), // WSL-specific path
       configKey: 'mcpServers',
       isWSL: isWSL,
       altPaths: [
+        // Alternative Windows paths
+        path.join(process.env.APPDATA || '', 'Cursor', 'User', 'globalStorage', 'storage.json'),
+        path.join(process.env.APPDATA || '', 'Cursor', 'User', 'settings.json'),
         // WSL paths
         path.join(homeDir, '.cursor', 'mcp_servers.json'),
         path.join(homeDir, '.cursor', 'config.json'),
@@ -69,7 +72,6 @@ function detectEnvironment() {
         '/mnt/c/Users/*/AppData/Roaming/Cursor/User/settings.json',
         // Standard paths
         path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json'),
-        path.join(process.env.APPDATA || '', 'Cursor', 'User', 'settings.json'),
         path.join(homeDir, '.config', 'Cursor', 'User', 'settings.json')
       ]
     },
