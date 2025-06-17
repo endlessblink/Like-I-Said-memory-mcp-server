@@ -415,11 +415,43 @@ async function quickInstall() {
     // Check if we're in a project with server-markdown.js
     const localServerPath = path.join(projectPath, 'server-markdown.js');
     if (!fs.existsSync(localServerPath)) {
-      log('❌ No local server found. Please run this from a like-i-said-v2 project directory.', 'red');
-      log('💡 Either:', 'yellow');
-      log('   1. Clone: git clone https://github.com/endlessblink/like-i-said-mcp-server.git', 'yellow');
-      log('   2. Download the project files to current directory', 'yellow');
-      return;
+      log('📁 Setting up project files...', 'blue');
+      
+      // Essential files to copy
+      const filesToCopy = [
+        'server-markdown.js',
+        'package.json',
+        'README.md'
+      ];
+      
+      let copied = 0;
+      for (const file of filesToCopy) {
+        const sourcePath = path.join(__dirname, file);
+        const destPath = path.join(projectPath, file);
+        
+        if (fs.existsSync(sourcePath)) {
+          if (!fs.existsSync(destPath)) {
+            fs.copyFileSync(sourcePath, destPath);
+            log(`✓ Copied ${file}`, 'green');
+            copied++;
+          } else {
+            log(`- Skipped ${file} (already exists)`, 'yellow');
+          }
+        }
+      }
+      
+      // Create memories directory
+      const memoriesDir = path.join(projectPath, 'memories');
+      if (!fs.existsSync(memoriesDir)) {
+        fs.mkdirSync(memoriesDir, { recursive: true });
+        log('✓ Created memories directory', 'green');
+      }
+      
+      if (copied > 0) {
+        log(`📋 Copied ${copied} files to current directory`, 'green');
+      }
+    } else {
+      log('✓ Project files found', 'green');
     }
   }
   
@@ -593,13 +625,13 @@ async function handleCommand() {
       log('  • Zed Editor, Codeium, Docker', 'yellow');
       
       log('\n📋 Commands:', 'blue');
-      log('  npx @endlessblink/like-i-said-v2 setup   - Copy files + configure clients (recommended)', 'yellow');
-      log('  npx @endlessblink/like-i-said-v2 install - Quick install (requires existing project)', 'yellow');
+      log('  npx @endlessblink/like-i-said-v2 install - Auto-setup and configure all clients (recommended)', 'yellow');
+      log('  npx @endlessblink/like-i-said-v2 setup   - Alternative setup command', 'yellow');
       log('  npx @endlessblink/like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
       log('  npx @endlessblink/like-i-said-v2 start   - Start the MCP server manually', 'yellow');
       
       log('\n🚀 Quick Start:', 'green');
-      log('  1. npx @endlessblink/like-i-said-v2 setup', 'yellow');
+      log('  1. npx @endlessblink/like-i-said-v2 install', 'yellow');
       log('  2. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
       log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
       
