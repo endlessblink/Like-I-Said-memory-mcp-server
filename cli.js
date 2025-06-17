@@ -224,7 +224,7 @@ async function configureMCPClient(clientKey, clientConfig) {
   // Create server configuration
   const serverConfig = {
     command: 'node',
-    args: [path.join(projectPath, 'server-wrapper.js')],
+    args: [path.join(projectPath, 'server-markdown.js')],
     env: {
       MEMORY_MODE: 'markdown',
       PROJECT_ROOT: projectPath

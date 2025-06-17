@@ -131,7 +131,8 @@ class DashboardBridge {
   parseMarkdownFile(filePath) {
     try {
       const content = fs.readFileSync(filePath, 'utf8');
-      const frontmatterRegex = /^---\n([\s\S]*?)\n---([\s\S]*)$/;
+      // Handle both Unix (\n) and Windows (\r\n) line endings
+      const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---([\s\S]*)$/;
       const match = content.match(frontmatterRegex);
       
       if (!match) {
@@ -141,7 +142,7 @@ class DashboardBridge {
       const [, frontmatter, bodyContent] = match;
       const memory = { content: bodyContent.trim(), metadata: {} };
 
-      const lines = frontmatter.split('\n');
+      const lines = frontmatter.split(/\r?\n/);
       let inMetadata = false;
 
       lines.forEach(line => {
@@ -231,6 +232,16 @@ class DashboardBridge {
       // Add filename and filepath
       memory.filename = path.basename(filePath);
       memory.filepath = filePath;
+      
+      // Ensure metadata has required fields for frontend
+      if (!memory.metadata) memory.metadata = {};
+      if (!memory.metadata.clients) memory.metadata.clients = [];
+      if (!memory.metadata.accessCount) memory.metadata.accessCount = memory.access_count || 0;
+      if (!memory.metadata.created) memory.metadata.created = memory.timestamp;
+      if (!memory.metadata.modified) memory.metadata.modified = memory.timestamp;
+      if (!memory.metadata.lastAccessed) memory.metadata.lastAccessed = memory.last_accessed || memory.timestamp;
+      if (!memory.metadata.contentType) memory.metadata.contentType = 'text';
+      if (!memory.metadata.size) memory.metadata.size = memory.content.length;
       
       return memory;
     } catch (error) {

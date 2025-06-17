@@ -164,7 +164,7 @@ export function MemoryCard({
           )}
           
           {/* Client Access */}
-          {metadata.clients.length > 0 && (
+          {metadata.clients && metadata.clients.length > 0 && (
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span>{metadata.clients.length} client{metadata.clients.length !== 1 ? 's' : ''}</span>
