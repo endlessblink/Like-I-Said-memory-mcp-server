@@ -400,7 +400,7 @@ async function quickInstall() {
 
   // Test if server works
   log('\n🧪 Testing MCP server...', 'blue');
-  const serverPath = path.join(__dirname, 'server.js');
+  const serverPath = path.join(__dirname, 'server-markdown.js');
   
   const serverTest = new Promise((resolve) => {
     const child = spawn('node', [serverPath], { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -494,7 +494,7 @@ async function handleCommand() {
       main().catch(console.error);
       break;
     case 'start':
-      import('./server.js');
+      import('./server-markdown.js');
       break;
     case 'migrate':
       const { migrateFromJson } = await import('./migrate.js');
