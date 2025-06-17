@@ -1,5 +1,9 @@
 # NPM Package - Only essential files
 
+# Documentation (local only)
+Docs/
+docs/
+
 # Development files to exclude
 .git/
 .gitignore
@@ -27,3 +31,46 @@ Thumbs.db
 # Backup files
 *.backup*
 *.tgz
+
+# Development and build tools
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+eslint.config.js
+vite.config.ts
+postcss.config.js
+tailwind.config.js
+
+# Development documentation
+DEVELOPMENT.md
+PRODUCTION-DEPLOYMENT-CHECKLIST.md
+PROJECT-STATUS-AND-ROADMAP.md
+NPM-MANAGEMENT-GUIDE.md
+
+# Test files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Runtime data files (not needed in npm package)
+claude-desktop-config.json
+
+# PM2 runtime files
+.pm2/
+ecosystem.config.js
+ecosystem.config.json
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.test
