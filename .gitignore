@@ -1,0 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Runtime data files
+memory.json
+claude-desktop-config.json
+
+# PM2 runtime files
+.pm2/
+
+# Personal configuration
+ecosystem.config.json
+
+# GitHub-specific ignores
+.env
+.env.local
+
+# Documentation (local only)
+Docs/
+docs/ 

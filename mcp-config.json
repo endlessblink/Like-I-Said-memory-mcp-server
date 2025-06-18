@@ -1,0 +1,115 @@
+{
+  "mcpServers": {
+    "perplexity-ask": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "server-perplexity-ask"
+      ],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
+    },
+    "magic-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@21st-dev/magic-mcp"
+      ],
+      "env": {
+        "TWENTY_FIRST_API_KEY": "${TWENTY_FIRST_API_KEY}",
+        "SMITHERY_KEY": "${SMITHERY_KEY}"
+      }
+    },
+    "firecrawl-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "neon": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "neon"
+      ],
+      "env": {
+        "SMITHERY_KEY": "${SMITHERY_KEY}"
+      }
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@smithery-ai/puppeteer"
+      ],
+      "env": {
+        "SMITHERY_KEY": "${SMITHERY_KEY}"
+      }
+    },
+    "playwright-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@microsoft/playwright-mcp"
+      ],
+      "env": {
+        "SMITHERY_KEY": "${SMITHERY_KEY}"
+      }
+    },
+    "like-i-said-memory-v2": {
+      "command": "node",
+      "args": [
+        "D:/APPSNospaces/Like-I-said-mcp-server-v2/server-markdown.js"
+      ],
+      "cwd": "D:/APPSNospaces/Like-I-said-mcp-server-v2",
+      "env": {
+        "NODE_PATH": "C:/Program Files/nodejs"
+      }
+    },
+    "claude-task-master": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@eyaltoledano/claude-task-master"
+      ],
+      "env": {
+        "SMITHERY_KEY": "${SMITHERY_KEY}"
+      }
+    },
+    "docker-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-l",
+        "mcp.client=cursor",
+        "--rm",
+        "-i",
+        "alpine/socat",
+        "STDIO",
+        "TCP:host.docker.internal:8811"
+      ]
+    }
+  }
+}

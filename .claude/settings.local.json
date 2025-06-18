@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(pkill:*)",
+      "Bash(rg:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(ss:*)",
+      "Bash(true)",
+      "Bash(fuser:*)",
+      "Bash(node:*)",
+      "Bash(npx:*)",
+      "Bash(hostname:*)",
+      "Bash(ls:*)",
+      "Bash(killall:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(git push:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(./install-universal.sh:*)",
+      "Bash(bash:*)",
+      "Bash(dos2unix:*)",
+      "Bash(sed:*)",
+      "Bash(cp:*)",
+      "mcp__like-i-said-memory__list_memories",
+      "mcp__like-i-said-memory__search_memories",
+      "mcp__like-i-said-memory__add_memory",
+      "mcp__like-i-said-memory__test_tool",
+      "Bash(cat:*)",
+      "mcp__firecrawl-mcp__firecrawl_scrape",
+      "mcp__firecrawl-mcp__firecrawl_search",
+      "mcp__like-i-said-v2__test_tool",
+      "mcp__like-i-said-v2__add_memory",
+      "mcp__like-i-said-v2__list_memories",
+      "mcp__like-i-said-v2__search_memories",
+      "mcp__like-i-said-v2__get_memory",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__playwright-mcp__browser_navigate"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "like-i-said-memory"
+  ],
+  "disabledMcpjsonServers": [
+    "like-i-said-memory"
+  ]
+}
