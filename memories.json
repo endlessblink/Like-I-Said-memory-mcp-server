@@ -661,5 +661,45 @@
       "v2.0.23"
     ],
     "timestamp": "2025-06-18T19:02:55.458Z"
+  },
+  {
+    "id": "1750273861318",
+    "content": "NPX Binary Execution Fix for @endlessblink/like-i-said-v2\n\nProblem: NPX prioritizes local node_modules binaries when run inside repository directory, causing Windows path handling issues.\n\nSolution implemented:\n1. Created cli.cmd wrapper:\n   @echo off\n   node \"%~dp0/cli.js\" %*\n\n2. Updated package.json:\n   - Changed bin to use ./cli.cmd instead of ./cli.js\n   - Added files array including both cli.js and cli.cmd\n\n3. Testing commands:\n   - Local testing: node cli.js install\n   - NPX testing: npx --ignore-existing @endlessblink/like-i-said-v2 install\n   - Clear cache: npx clear-npx-cache\n   - Test in clean dir: cd C:\\Temp && npx --ignore-existing @endlessblink/like-i-said-v2 install\n\nKey insights:\n- Windows needs .cmd wrapper for proper NPX execution\n- Use --ignore-existing flag to force remote package resolution\n- Local development should use direct node execution\n- Files array in package.json ensures both cli.js and cli.cmd are included in published package",
+    "tags": [
+      "npx",
+      "windows",
+      "cli",
+      "like-i-said-v2",
+      "troubleshooting",
+      "binary-execution"
+    ],
+    "timestamp": "2025-06-18T19:11:01.318Z"
+  },
+  {
+    "id": "1750273888879",
+    "content": "NPX Windows Execution - Complete Fix for @endlessblink/like-i-said-v2\n\nCRITICAL UPDATES:\n1. --ignore-existing flag is DEPRECATED in npm v7+\n2. Scoped packages require explicit binary specification\n3. Windows ignores shebang lines, requiring .cmd wrapper\n\nCORRECTED SOLUTION:\n\n1. Package.json configuration:\n{\n  \"name\": \"@endlessblink/like-i-said-v2\",\n  \"bin\": {\n    \"like-i-said-v2\": \"cli.cmd\"\n  },\n  \"files\": [\"cli.js\", \"cli.cmd\"]\n}\n\n2. cli.cmd wrapper (already created):\n@echo off\nnode \"%~dp0/cli.js\" %*\n\n3. CORRECT NPX Commands:\n- Force fresh install: npx --no-install @endlessblink/like-i-said-v2 install\n- Explicit binary: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install\n\n4. Workflow Commands:\n- Local Development: node cli.js install\n- Published Package: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install\n- Clear NPX Cache: npx clear-npx-cache\n\n5. Key Technical Reasons:\n- Windows doesn't process #!/usr/bin/env node\n- NPX requires explicit binary mapping for scoped packages\n- Local node_modules takes precedence unless forced\n\nTesting in clean environment:\ncd C:\\Temp\nnpx -p @endlessblink/like-i-said-v2 like-i-said-v2 install",
+    "tags": [
+      "npx",
+      "windows",
+      "scoped-packages",
+      "cli",
+      "like-i-said-v2",
+      "npm-v7",
+      "deprecated-flags"
+    ],
+    "timestamp": "2025-06-18T19:11:28.879Z"
+  },
+  {
+    "id": "1750274248266",
+    "content": "NPX Execution Flow - Complete Analysis for @endlessblink/like-i-said-v2\n\nVERIFIED NPX EXECUTION FLOW:\n\n1. Package Structure:\n   - Binary: cli.cmd (Windows wrapper)\n   - Entry: cli.js (ES module)\n   - Server: server-markdown.js\n\n2. NPX Execution Steps:\n   a) User runs: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install\n   b) NPX downloads package to temp cache (~/.npm/_npx/...)\n   c) NPX executes cli.cmd from cache\n   d) cli.cmd runs: node \"%~dp0/cli.js\" %*\n   e) cli.js detects NPX via path patterns\n   f) Copies essential files to current directory\n   g) Configures AI clients with local paths\n\n3. Path Resolution:\n   - context.scriptDir = NPX cache location\n   - context.currentDir = User's working directory\n   - projectPath = currentDir (for NPX)\n   - Server files copied from scriptDir to currentDir\n\n4. Configuration Output:\n   {\n     \"command\": \"node\",\n     \"args\": [\"C:\\\\Users\\\\...\\\\current-dir\\\\server-markdown.js\"],\n     \"env\": { \"MEMORY_MODE\": \"markdown\" }\n   }\n\n5. Critical Success Factors:\n   - cli.cmd uses %~dp0 for relative path resolution\n   - File copying ensures server exists locally\n   - Windows paths properly escaped in JSON configs\n   - No npm install required\n\nTESTING COMMANDS:\n- Clean test: cd %TEMP% && npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install\n- Verify: dir server-markdown.js && type claude_desktop_config.json",
+    "tags": [
+      "npx",
+      "execution-flow",
+      "windows",
+      "cli",
+      "like-i-said-v2",
+      "analysis"
+    ],
+    "timestamp": "2025-06-18T19:17:28.266Z"
   }
 ]
