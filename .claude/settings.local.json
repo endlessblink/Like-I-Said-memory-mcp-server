@@ -40,7 +40,8 @@
       "mcp__like-i-said-v2__search_memories",
       "mcp__like-i-said-v2__get_memory",
       "mcp__puppeteer__puppeteer_navigate",
-      "mcp__playwright-mcp__browser_navigate"
+      "mcp__playwright-mcp__browser_navigate",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   },

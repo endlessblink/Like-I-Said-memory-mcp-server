@@ -9,6 +9,84 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Enhanced execution context detection
+function detectExecutionContext() {
+  const isWSL = process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP;
+  const isWindows = process.platform === 'win32';
+  const isLocalExecution = __dirname.includes(process.cwd());
+  const isNpxInstall = __dirname.includes('npm-cache/_npx') || 
+                       __dirname.includes('node_modules') ||
+                       __dirname.includes('.npm/_npx');
+  
+  // Debug context detection
+  const context = {
+    platform: process.platform,
+    isWSL: !!isWSL,
+    isWindows,
+    isLocalExecution,
+    isNpxInstall,
+    currentDir: process.cwd(),
+    scriptDir: __dirname,
+    scriptPath: __filename
+  };
+  
+  return context;
+}
+
+// Windows-compatible execution wrapper
+function createWindowsCompatiblePaths(context, serverPath) {
+  // For Windows, ensure proper path handling and provide alternatives
+  if (context.isWindows || context.isWSL) {
+    // Convert paths to forward slashes for JSON configuration (required for MCP)
+    const normalizedPath = serverPath.replace(/\\/g, '/');
+    
+    // Alternative paths to try if main path fails
+    const alternatives = [
+      serverPath,
+      normalizedPath,
+      path.resolve(serverPath),
+      path.resolve(normalizedPath)
+    ];
+    
+    return {
+      primary: normalizedPath,
+      alternatives,
+      needsNodePrefix: context.isWindows && !context.isWSL
+    };
+  }
+  
+  return {
+    primary: serverPath,
+    alternatives: [serverPath],
+    needsNodePrefix: false
+  };
+}
+
+// Enhanced error handling for NPX execution
+function handleNpxExecutionError(error, context) {
+  log('\n❌ NPX Execution Error:', 'red');
+  log(`Error: ${error.message}`, 'red');
+  
+  if (context.isWindows) {
+    log('\n🔧 Windows-specific troubleshooting:', 'yellow');
+    log('1. Try: npx cmd /c like-i-said-v2 install', 'yellow');
+    log('2. Or: npx --ignore-existing @endlessblink/like-i-said-v2 install', 'yellow');
+    log('3. Alternative: node cli.js install (if in project directory)', 'yellow');
+  }
+  
+  if (context.isWSL) {
+    log('\n🐧 WSL-specific troubleshooting:', 'yellow');
+    log('1. Ensure project is in WSL filesystem for best performance', 'yellow');
+    log('2. Try: cd ~ && npx @endlessblink/like-i-said-v2 install', 'yellow');
+  }
+  
+  log('\n📋 Debug info (set DEBUG=1 for more details):', 'blue');
+  log(`Platform: ${context.platform}`, 'yellow');
+  log(`NPX Install: ${context.isNpxInstall}`, 'yellow');
+  log(`Current Dir: ${context.currentDir}`, 'yellow');
+  log(`Script Dir: ${context.scriptDir}`, 'yellow');
+}
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -404,15 +482,33 @@ async function quickInstall() {
   log('\n🚀 Like-I-Said MCP v2 - Quick Install', 'blue');
   log('=====================================', 'blue');
 
+  // Enhanced execution context detection
+  const context = detectExecutionContext();
+  
+  // Debug output for troubleshooting
+  if (process.env.DEBUG || process.argv.includes('--debug')) {
+    log('\n🔍 Execution Context Debug:', 'blue');
+    log(`Platform: ${context.platform}`, 'yellow');
+    log(`WSL: ${context.isWSL}`, 'yellow');
+    log(`Windows: ${context.isWindows}`, 'yellow');
+    log(`Local execution: ${context.isLocalExecution}`, 'yellow');
+    log(`NPX install: ${context.isNpxInstall}`, 'yellow');
+    log(`Current dir: ${context.currentDir}`, 'yellow');
+    log(`Script dir: ${context.scriptDir}`, 'yellow');
+  }
+
   // Test if server works
   log('\n🧪 Testing MCP server...', 'blue');
   
-  // Detect if running from NPX cache vs local project
-  const isNpxInstall = __dirname.includes('npm-cache/_npx') || __dirname.includes('node_modules');
-  const projectPath = isNpxInstall ? process.cwd() : __dirname;
-  const serverPath = path.join(isNpxInstall ? __dirname : projectPath, 'server-markdown.js');
+  // Smart path resolution based on context
+  const projectPath = context.isNpxInstall ? context.currentDir : context.scriptDir;
+  const baseServerPath = path.join(context.isNpxInstall ? context.scriptDir : projectPath, 'server-markdown.js');
   
-  if (isNpxInstall) {
+  // Create Windows-compatible paths
+  const pathConfig = createWindowsCompatiblePaths(context, baseServerPath);
+  const serverPath = pathConfig.primary;
+  
+  if (context.isNpxInstall) {
     log('🔍 NPX installation detected', 'blue');
     // Check if we're in a project with server-markdown.js
     const localServerPath = path.join(projectPath, 'server-markdown.js');
@@ -502,9 +598,13 @@ async function quickInstall() {
 
         if (!clientConfig.mcpServers) clientConfig.mcpServers = {};
         
+        // Use Windows-compatible path configuration
+        const serverConfigPath = path.join(projectPath, 'server-markdown.js');
+        const configPathSetup = createWindowsCompatiblePaths(context, serverConfigPath);
+        
         clientConfig.mcpServers['like-i-said-memory'] = {
           command: 'node',
-          args: [path.join(projectPath, 'server-markdown.js')]
+          args: [configPathSetup.primary]
         };
 
         const configDir = path.dirname(config.path);
@@ -542,8 +642,8 @@ async function setupAndInstall() {
   log('\n📦 Like-I-Said MCP v2 - Complete Setup', 'blue');
   log('=====================================', 'blue');
   
-  const isNpxInstall = __dirname.includes('npm-cache/_npx') || __dirname.includes('node_modules');
-  if (!isNpxInstall) {
+  const context = detectExecutionContext();
+  if (!context.isNpxInstall) {
     log('❌ This command is for NPX installations only', 'red');
     log('💡 Use "npm run install" for local projects', 'yellow');
     return;
@@ -595,30 +695,31 @@ async function setupAndInstall() {
 async function handleCommand() {
   const command = process.argv[2];
 
-  switch (command) {
-    case 'install':
-      quickInstall().catch(console.error);
-      break;
-    case 'setup':
-      setupAndInstall().catch(console.error);
-      break;
-    case 'init':
-      main().catch(console.error);
-      break;
-    case 'start':
-      import('./server-markdown.js');
-      break;
-    case 'migrate':
-      const { migrateFromJson } = await import('./migrate.js');
-      migrateFromJson().catch(console.error);
-      break;
-    case 'migrate:preview':
-      const { showPreview } = await import('./migrate.js');
-      showPreview().catch(console.error);
-      break;
-    case 'debug:cursor':
-      import('./debug-cursor.js');
-      break;
+  try {
+    switch (command) {
+      case 'install':
+        await quickInstall();
+        break;
+      case 'setup':
+        await setupAndInstall();
+        break;
+      case 'init':
+        await main();
+        break;
+      case 'start':
+        await import('./server-markdown.js');
+        break;
+      case 'migrate':
+        const { migrateFromJson } = await import('./migrate.js');
+        await migrateFromJson();
+        break;
+      case 'migrate:preview':
+        const { showPreview } = await import('./migrate.js');
+        await showPreview();
+        break;
+      case 'debug:cursor':
+        await import('./debug-cursor.js');
+        break;
     default:
       log('Like-I-Said Memory MCP Server v2.0', 'blue');
       log('\n🎯 Supported Clients:', 'green');
@@ -637,10 +738,20 @@ async function handleCommand() {
       log('  2. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
       log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
       
-      log('\n📖 More info: https://github.com/endlessblink/like-i-said-mcp-server', 'blue');
-      break;
+      log('\n🔧 Troubleshooting:', 'blue');
+      log('  • Force latest version: npx --ignore-existing @endlessblink/like-i-said-v2 install', 'yellow');
+      log('  • Windows issues: npx cmd /c like-i-said-v2 install', 'yellow');
+      log('  • Debug mode: node cli.js install --debug', 'yellow');
+      
+        log('\n📖 More info: https://github.com/endlessblink/like-i-said-mcp-server', 'blue');
+        break;
+    }
+  } catch (error) {
+    const context = detectExecutionContext();
+    handleNpxExecutionError(error, context);
+    process.exit(1);
   }
 }
 
 // Run the command handler
-handleCommand().catch(console.error);
+handleCommand();
