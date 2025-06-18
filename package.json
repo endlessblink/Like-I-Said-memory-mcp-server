@@ -24,9 +24,7 @@
   "bugs": {
     "url": "https://github.com/endlessblink/like-i-said-mcp-server/issues"
   },
-  "bin": {
-    "likeiSaidV2": "./cli.js"
-  },
+  "bin": "./cli.js",
   "scripts": {
     "start": "node server-markdown.js",
     "start:mcp": "node server-markdown.js",
