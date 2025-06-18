@@ -1,3 +1,5 @@
+![Like-I-Said MCP v2](assets/images/cover.png)
+
 # Like-I-Said MCP v2
 
 > **MCP memory server for AI assistants** - Remember conversations across sessions
