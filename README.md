@@ -16,6 +16,7 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 ## 🚀 Quick Install
 
+### Step 1: Install MCP Server
 ```bash
 # Standard installation
 npx @endlessblink/like-i-said-v2 install
@@ -24,11 +25,19 @@ npx @endlessblink/like-i-said-v2 install
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
-That's it! The installer will:
+The installer will:
 - ✅ Auto-detect your AI clients (Claude Desktop, Cursor, Windsurf)
 - ✅ Configure MCP settings automatically  
 - ✅ Test server functionality
 - ✅ Preserve existing MCP servers
+
+### Step 2: Start the Web Dashboard (Optional)
+```bash
+npm install @endlessblink/like-i-said-v2
+cd node_modules/@endlessblink/like-i-said-v2  
+npm run dev:full
+```
+Visit `http://localhost:3001` for visual memory management with AI insights, statistics, and relationship mapping.
 
 ## 🎯 Supported AI Clients
 
@@ -77,13 +86,7 @@ npx @endlessblink/like-i-said-v2 init
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init
 ```
 
-### Web Dashboard
-```bash
-npm install @endlessblink/like-i-said-v2
-cd node_modules/@endlessblink/like-i-said-v2  
-npm run dev:full
-```
-Visit `http://localhost:3001` for visual memory management.
+
 
 ### Manual Server Start
 ```bash
