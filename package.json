@@ -25,8 +25,23 @@
     "url": "https://github.com/endlessblink/like-i-said-mcp-server/issues"
   },
   "bin": {
-    "like-i-said-v2": "./cli.js"
+    "like-i-said-v2": "./cli.cmd"
   },
+  "files": [
+    "cli.js",
+    "cli.cmd",
+    "server.js",
+    "server-markdown.js",
+    "dashboard-server.js",
+    "dashboard-server-bridge.js",
+    "config-client.js",
+    "dist",
+    "src",
+    "public",
+    "memories.json",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
     "start": "node server-markdown.js",
     "start:mcp": "node server-markdown.js",

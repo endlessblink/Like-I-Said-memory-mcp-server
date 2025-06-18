@@ -17,7 +17,11 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 ## 🚀 Quick Install
 
 ```bash
+# Standard installation
 npx @endlessblink/like-i-said-v2 install
+
+# Windows users (if the above doesn't work)
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
 That's it! The installer will:
@@ -66,7 +70,11 @@ After installation, your AI assistant will have these tools:
 
 ### Custom Installation
 ```bash
+# Standard
 npx @endlessblink/like-i-said-v2 init
+
+# Windows alternative
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init
 ```
 
 ### Web Dashboard
@@ -79,7 +87,11 @@ Visit `http://localhost:3001` for visual memory management.
 
 ### Manual Server Start
 ```bash
+# Standard
 npx @endlessblink/like-i-said-v2 start
+
+# Windows alternative
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 ```
 
 ## 🔄 After Installation
@@ -109,7 +121,11 @@ npx @endlessblink/like-i-said-v2 start
 
 ### Reset installation:
 ```bash
+# Standard
 npx @endlessblink/like-i-said-v2 install
+
+# Windows alternative
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
 ## 📊 Memory Storage

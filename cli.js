@@ -70,7 +70,7 @@ function handleNpxExecutionError(error, context) {
   if (context.isWindows) {
     log('\n🔧 Windows-specific troubleshooting:', 'yellow');
     log('1. Try: npx cmd /c like-i-said-v2 install', 'yellow');
-    log('2. Or: npx --ignore-existing @endlessblink/like-i-said-v2 install', 'yellow');
+    log('2. Or: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
     log('3. Alternative: node cli.js install (if in project directory)', 'yellow');
   }
   
@@ -739,7 +739,7 @@ async function handleCommand() {
       log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
       
       log('\n🔧 Troubleshooting:', 'blue');
-      log('  • Force latest version: npx --ignore-existing @endlessblink/like-i-said-v2 install', 'yellow');
+      log('  • Force latest version: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
       log('  • Windows issues: npx cmd /c like-i-said-v2 install', 'yellow');
       log('  • Debug mode: node cli.js install --debug', 'yellow');
       
