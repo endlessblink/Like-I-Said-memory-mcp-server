@@ -1,0 +1,105 @@
+name: Claude Code Autonomous Management
+
+on:
+  # Trigger on PR events
+  pull_request:
+    types: [opened, synchronize, reopened]
+  
+  # Trigger on issue events  
+  issues:
+    types: [opened, edited]
+    
+  # Trigger on issue comments
+  issue_comment:
+    types: [created]
+    
+  # Trigger on push to main
+  push:
+    branches: [main]
+    
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task for Claude to perform'
+        required: true
+        default: 'Review and enhance the repository'
+
+jobs:
+  claude_management:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      repository-projects: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Claude Code Action
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Your Anthropic API key (add this to GitHub secrets)
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+          # Repository management prompt
+          prompt: |
+            You are the autonomous manager of the Like-I-Said v2 MCP Memory Management repository.
+            
+            Your responsibilities include:
+            1. **Repository Enhancement**: Update descriptions, topics, and documentation
+            2. **Code Quality**: Review PRs, suggest improvements, fix bugs
+            3. **Release Management**: Create releases, update changelogs, manage versions
+            4. **Issue Management**: Triage issues, create feature requests, close resolved issues
+            5. **Documentation**: Keep README, docs, and examples up to date
+            6. **Security**: Review dependencies, update packages, check for vulnerabilities
+            7. **Performance**: Optimize code, improve build processes
+            8. **Community**: Respond to contributors, manage discussions
+            
+            Current task context:
+            - Event: ${{ github.event_name }}
+            - Repository: endlessblink/Like-I-Said-Memory-V2
+            - Branch: ${{ github.ref_name }}
+            - Actor: ${{ github.actor }}
+            - Version: v2.1.1
+            
+            ${{ github.event_name == 'workflow_dispatch' && format('Manual task: {0}', github.event.inputs.task) || 'Automatic repository management based on the triggered event.' }}
+            
+            Always:
+            - Be proactive in identifying and fixing issues
+            - Follow best practices for TypeScript, React, and MCP development
+            - Maintain high code quality standards
+            - Keep documentation current and helpful
+            - Prioritize user experience and developer experience
+            
+            Analyze the current state and take appropriate autonomous actions.
+            
+          # Tools Claude can use
+          allowed_tools: |
+            - file_operations
+            - github_api
+            - npm_commands
+            - git_operations
+            - code_analysis
+            - documentation_generation
+            
+          # Conversation settings
+          max_conversation_turns: 10
+          
+          # Additional context
+          additional_context: |
+            This is a Model Context Protocol (MCP) server that provides memory management 
+            for AI assistants. It includes:
+            - TypeScript server with 6 memory tools
+            - React dashboard for visual memory management  
+            - AI enhancement with OpenAI/Anthropic integration
+            - Project-based memory organization
+            - Automated NPM publishing workflow
+            
+            Key files:
+            - server-markdown.js: Main MCP server
+            - src/: React dashboard source
+            - package.json: NPM package configuration
+            - README.md: Main documentation
