@@ -53,7 +53,9 @@
       "Bash(if [ -n \"$USER\" ])",
       "Bash(then echo \"🎉 SUCCESS! New token works - authenticated as: $USER\")",
       "Bash(else echo \"❌ New token authentication failed\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(git pull:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   },
