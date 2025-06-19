@@ -646,48 +646,10 @@ class MarkdownStorage {
     );
   }
 
-  // Migration from JSON
-  async migrateFromJSON(jsonFilePath) {
-    if (!fs.existsSync(jsonFilePath)) {
-      console.log('No JSON file to migrate from');
-      return 0;
-    }
-
-    const jsonContent = fs.readFileSync(jsonFilePath, 'utf8');
-    const memories = JSON.parse(jsonContent);
-
-    let migrated = 0;
-    for (const memory of memories) {
-      try {
-        await this.saveMemory(memory);
-        migrated++;
-      } catch (error) {
-        console.error(`Failed to migrate memory ${memory.id}:`, error);
-      }
-    }
-
-    const backupPath = jsonFilePath + '.backup';
-    fs.copyFileSync(jsonFilePath, backupPath);
-    console.log(`Migrated ${migrated} memories. JSON backup saved to ${backupPath}`);
-
-    return migrated;
-  }
 }
 
 // Initialize storage
 const storage = new MarkdownStorage();
-
-// Auto-migrate from JSON if it exists (only once)
-const jsonFile = path.join(process.cwd(), 'memories.json');
-const migrationMarker = path.join(process.cwd(), '.migration-complete');
-if (fs.existsSync(jsonFile) && !fs.existsSync(migrationMarker)) {
-  console.error('Migrating from JSON to markdown files...');
-  storage.migrateFromJSON(jsonFile).then(count => {
-    console.error(`Migration complete: ${count} memories converted to markdown`);
-    // Create marker to prevent re-migration
-    fs.writeFileSync(migrationMarker, new Date().toISOString());
-  });
-}
 
 console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
 

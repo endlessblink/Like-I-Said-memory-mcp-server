@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### MCP Server (server.js)
 - Model Context Protocol server using `@modelcontextprotocol/sdk`
-- Stores memories in `memories.json` file with structure: `[{ id, content, tags, timestamp }]`
+- Stores memories as individual markdown files in `memories/` directory organized by project
 - Exposes 6 tools: add_memory, get_memory, list_memories, delete_memory, search_memories, test_tool
 - Uses StdioServerTransport for Claude Desktop communication
 - **IMPORTANT**: Uses simplified server structure without InitializeRequestSchema for Windows compatibility
@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Dashboard Backend (dashboard-server.js)
 - Express REST API on port 3001
 - Endpoints: GET /api/memories, POST /api/memories, PUT /api/memories/:key, DELETE /api/memories/:key
-- Shares the same memory.json file with MCP server
+- Shares the same markdown files with MCP server via filesystem
 
 ### Frontend Dashboard
 - React + TypeScript + Vite application
@@ -51,7 +51,7 @@ The server implements the Model Context Protocol with:
 - Server name: "like-i-said-memory"
 - Transport: stdio (standard input/output)
 - Tools capability with 4 memory management functions
-- Memory persistence in JSON file format
+- Memory persistence in markdown file format with enhanced metadata
 
 When integrating with Claude Desktop or other MCP clients, ensure the command path points to server.js and the working directory is set correctly.
 

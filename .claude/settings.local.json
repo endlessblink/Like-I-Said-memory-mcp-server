@@ -55,7 +55,8 @@
       "Bash(else echo \"❌ New token authentication failed\")",
       "Bash(fi)",
       "Bash(git pull:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(gh auth:*)"
     ],
     "deny": []
   },
