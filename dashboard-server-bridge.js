@@ -211,20 +211,20 @@ class DashboardBridge {
             break;
           case 'tags':
             if (value.startsWith('[') && value.endsWith(']')) {
-              memory.tags = value.slice(1, -1).split(',').map(t => t.trim().replace(/['"]/g, ''));
+              memory.tags = value.slice(1, -1).split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean);
             } else {
               memory.tags = value.split(',').map(t => t.trim()).filter(Boolean);
             }
             break;
           case 'related_memories':
             if (value.startsWith('[') && value.endsWith(']')) {
-              memory.related_memories = value.slice(1, -1).split(',').map(t => t.trim().replace(/['"]/g, ''));
+              memory.related_memories = value.slice(1, -1).split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean);
             } else {
               memory.related_memories = value.split(',').map(t => t.trim()).filter(Boolean);
             }
             break;
           case 'project':
-            memory.project = value;
+            memory.project = value && value.trim() !== "" ? value : undefined;
             break;
         }
       });
@@ -337,19 +337,139 @@ class DashboardBridge {
   }
 
   async createMemory(req, res) {
-    // For now, return method not supported since MCP server handles creation
-    res.status(501).json({ 
-      error: 'Memory creation handled by MCP server. Use MCP tools to create memories.',
-      suggestion: 'Use the add_memory MCP tool from your AI client'
-    });
+    try {
+      const { content, tags = [], category, project } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+
+      // Generate unique ID
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 15);
+      const id = `${timestamp}${randomStr}`;
+      
+      // Create filename
+      const titleSlug = content.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 40);
+      const shortId = timestamp.toString().slice(-6);
+      const filename = `${new Date().toISOString().split('T')[0]}-${titleSlug}-${shortId}.md`;
+      
+      // Determine project directory
+      const projectDir = project || 'default';
+      const projectPath = path.join(this.memoriesDir, projectDir);
+      
+      // Ensure project directory exists
+      if (!fs.existsSync(projectPath)) {
+        fs.mkdirSync(projectPath, { recursive: true });
+      }
+      
+      // Build frontmatter
+      const frontmatter = [
+        '---',
+        `id: ${id}`,
+        `timestamp: ${new Date().toISOString()}`,
+        `complexity: 1`,
+        category ? `category: ${category}` : '',
+        project && project !== 'default' ? `project: ${project}` : '',
+        tags && tags.length > 0 ? `tags: [${tags.map(t => `"${t}"`).join(', ')}]` : 'tags: []',
+        'priority: medium',
+        'status: active',
+        'access_count: 0',
+        `last_accessed: ${new Date().toISOString()}`,
+        'metadata:',
+        '  content_type: text',
+        `  size: ${content.length}`,
+        '  mermaid_diagram: false',
+        '---'
+      ].filter(Boolean).join('\n');
+      
+      // Write markdown file
+      const filePath = path.join(projectPath, filename);
+      const fileContent = `${frontmatter}\n\n${content.trim()}`;
+      fs.writeFileSync(filePath, fileContent, 'utf8');
+      
+      // Return created memory
+      const memory = this.parseMarkdownFile(filePath);
+      res.status(201).json(memory);
+      
+    } catch (error) {
+      console.error('Error creating memory:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
 
   async updateMemory(req, res) {
-    // For now, return method not supported since MCP server handles updates
-    res.status(501).json({ 
-      error: 'Memory updates handled by MCP server. Use MCP tools to update memories.',
-      suggestion: 'Delete and recreate the memory using MCP tools'
-    });
+    try {
+      const { id } = req.params;
+      const { content, tags = [] } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      // Find the memory file
+      const memories = await this.getAllMemories();
+      const memory = memories.find(m => m.id === id);
+      
+      if (!memory) {
+        return res.status(404).json({ error: 'Memory not found' });
+      }
+      
+      // Read the existing file
+      const existingContent = fs.readFileSync(memory.filepath, 'utf8');
+      const match = existingContent.match(/^---\n([\s\S]*?)\n---/);
+      
+      if (!match) {
+        return res.status(500).json({ error: 'Invalid memory file format' });
+      }
+      
+      // Parse existing frontmatter
+      const existingFrontmatter = match[1];
+      const frontmatterObj = {};
+      
+      existingFrontmatter.split('\n').forEach(line => {
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > -1) {
+          const key = line.slice(0, colonIndex).trim();
+          const value = line.slice(colonIndex + 1).trim();
+          if (key && !key.startsWith(' ')) {
+            frontmatterObj[key] = value;
+          }
+        }
+      });
+      
+      // Update fields
+      frontmatterObj.timestamp = new Date().toISOString();
+      frontmatterObj.tags = tags && tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
+      frontmatterObj.last_accessed = new Date().toISOString();
+      
+      // Rebuild frontmatter
+      const newFrontmatter = [
+        '---',
+        ...Object.entries(frontmatterObj).map(([key, value]) => `${key}: ${value}`),
+        'metadata:',
+        '  content_type: text',
+        `  size: ${content.length}`,
+        '  mermaid_diagram: false',
+        '---'
+      ].join('\n');
+      
+      // Write updated file
+      const fileContent = `${newFrontmatter}\n\n${content.trim()}`;
+      fs.writeFileSync(memory.filepath, fileContent, 'utf8');
+      
+      // Return updated memory
+      const updatedMemory = this.parseMarkdownFile(memory.filepath);
+      res.json(updatedMemory);
+      
+    } catch (error) {
+      console.error('Error updating memory:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
 
   async deleteMemory(req, res) {

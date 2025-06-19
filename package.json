@@ -25,20 +25,15 @@
     "url": "https://github.com/endlessblink/like-i-said-mcp-server/issues"
   },
   "bin": {
-    "like-i-said-v2": "cli.cmd"
+    "like-i-said-v2": "./cli.js"
   },
   "files": [
     "cli.js",
-    "cli.cmd",
-    "server.js",
     "server-markdown.js",
-    "dashboard-server.js",
     "dashboard-server-bridge.js",
-    "config-client.js",
     "dist",
     "src",
     "public",
-    "memories.json",
     "package.json",
     "README.md"
   ],
@@ -46,7 +41,7 @@
     "start": "node server-markdown.js",
     "start:mcp": "node server-markdown.js",
     "start:legacy": "node server.js",
-    "start:dashboard": "node dashboard-server-bridge.js",
+    "start:dashboard": "node dashboard-server.js",
     "dev": "vite --host 0.0.0.0",
     "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"green,magenta\"",
     "build": "vite build",

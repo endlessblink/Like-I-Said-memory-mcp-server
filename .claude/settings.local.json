@@ -42,7 +42,18 @@
       "mcp__puppeteer__puppeteer_navigate",
       "mcp__playwright-mcp__browser_navigate",
       "Bash(mkdir:*)",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "Bash(jq:*)",
+      "Bash(kill:*)",
+      "mcp__like-i-said-v2__delete_memory",
+      "mcp__claude-task-master__get_tasks",
+      "Bash(mv:*)",
+      "Bash(touch:*)",
+      "Bash(source ~/.bashrc)",
+      "Bash(if [ -n \"$USER\" ])",
+      "Bash(then echo \"🎉 SUCCESS! New token works - authenticated as: $USER\")",
+      "Bash(else echo \"❌ New token authentication failed\")",
+      "Bash(fi)"
     ],
     "deny": []
   },

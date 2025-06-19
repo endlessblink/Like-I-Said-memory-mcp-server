@@ -2,6 +2,9 @@
 
 # Like-I-Said MCP v2
 
+[![npm version](https://img.shields.io/npm/v/@endlessblink/like-i-said-v2.svg)](https://www.npmjs.com/package/@endlessblink/like-i-said-v2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 > **MCP memory server for AI assistants** - Remember conversations across sessions
 
 Give your AI assistants persistent memory! Store information, preferences, and context that survives conversation restarts.
@@ -10,18 +13,18 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 - 🧠 **Persistent Memory** - AI remembers across conversations
 - 🚀 **One-Command Install** - Auto-configures all AI clients
-- 🌍 **Cross-Platform** - Windows, macOS, Linux
-- 📊 **Web Dashboard** - Visual memory management
+- 🌍 **Cross-Platform** - Windows, macOS, Linux (including WSL)
+- 📊 **React Dashboard** - Modern web interface with real-time updates
 - 🔧 **6 Memory Tools** - Complete memory management suite
+- 📝 **Markdown Storage** - Enhanced frontmatter with categories and relationships
+- 🔍 **Advanced Search** - Full-text search with filters and tags
+- 📈 **Analytics** - Memory usage statistics and insights
+- 🎨 **Modern UI** - Card-based layout with dark theme
 
 ## 🚀 Quick Install
 
 ### Step 1: Install MCP Server
 ```bash
-# Standard installation
-npx @endlessblink/like-i-said-v2 install
-
-# Windows users (if the above doesn't work)
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
@@ -33,11 +36,32 @@ The installer will:
 
 ### Step 2: Start the Web Dashboard (Optional)
 ```bash
-npm install @endlessblink/like-i-said-v2
-cd node_modules/@endlessblink/like-i-said-v2  
-npm run dev:full
+# Global installation (recommended)
+npm install -g @endlessblink/like-i-said-v2
+like-i-said-v2 start
+
+# Or run directly from npx
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 ```
 Visit `http://localhost:3001` for visual memory management with AI insights, statistics, and relationship mapping.
+
+## 📸 Dashboard Screenshots
+
+### Memory Management
+![Memory Cards View](assets/images/dashboard_1.png)
+*Modern card-based memory interface with search, filtering, and project organization*
+
+### Relationship Visualization
+![Memory Relationships](assets/images/dashboard_2.png)
+*Interactive graph visualization showing connections between memories*
+
+### Analytics Dashboard
+![Analytics Dashboard](assets/images/dashboard_3.png)
+*Comprehensive statistics and insights about your memory usage*
+
+### Enhanced Features
+![Advanced Features](assets/images/dashboard_4.png)
+*AI-powered memory enhancement, clustering, and advanced organization*
 
 ## 🎯 Supported AI Clients
 
@@ -54,12 +78,18 @@ Visit `http://localhost:3001` for visual memory management with AI insights, sta
 
 After installation, your AI assistant will have these tools:
 
-- **`add_memory`** - Store information with optional tags
+- **`add_memory`** - Store information with tags, categories, and project context
 - **`get_memory`** - Retrieve specific memory by ID
-- **`list_memories`** - Show all stored memories
+- **`list_memories`** - Show memories with complexity levels and metadata
 - **`delete_memory`** - Remove specific memory
-- **`search_memories`** - Search through memories by content
+- **`search_memories`** - Full-text search with project filtering
 - **`test_tool`** - Verify MCP connection
+
+### Enhanced Memory Features:
+- **Categories**: personal, work, code, research, conversations, preferences
+- **Complexity Levels**: L1 (Simple) → L4 (Advanced)
+- **Projects**: Organize memories by project context
+- **Relationships**: Link related memories together
 
 ## 📋 Usage Examples
 
@@ -79,10 +109,6 @@ After installation, your AI assistant will have these tools:
 
 ### Custom Installation
 ```bash
-# Standard
-npx @endlessblink/like-i-said-v2 init
-
-# Windows alternative
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init
 ```
 
@@ -90,10 +116,6 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init
 
 ### Manual Server Start
 ```bash
-# Standard
-npx @endlessblink/like-i-said-v2 start
-
-# Windows alternative
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 ```
 
@@ -114,29 +136,59 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 
 ### Tools don't appear?
 - Ensure you fully restarted your AI client
-- Wait 2-3 minutes for detection
+- Wait 2-3 minutes for detection (Claude Desktop may take up to 5 minutes)
 - Check client-specific logs
 
+### Windows-specific notes:
+- ⚠️ **Always use the full npx command format**: `npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install`
+- The simplified `npx @endlessblink/like-i-said-v2 install` will NOT work on Windows
+- For PowerShell issues, try: `cmd /c "npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install"`
+
 ### Config locations:
-- **Claude Desktop**: `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
-- **Cursor**: `%USERPROFILE%\.cursor\mcp.json` (Windows)  
-- **Windsurf**: `%USERPROFILE%\.codeium\windsurf\mcp_config.json` (Windows)
+- **Claude Desktop**: 
+  - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+  - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+  - Linux: `~/.config/Claude/claude_desktop_config.json`
+- **Cursor**: 
+  - Windows: `%USERPROFILE%\.cursor\mcp.json`
+  - macOS/Linux: `~/.cursor/mcp.json`
+- **Windsurf**: 
+  - Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
+  - macOS/Linux: `~/.codeium/windsurf/mcp_config.json`
 
 ### Reset installation:
 ```bash
-# Standard
-npx @endlessblink/like-i-said-v2 install
-
-# Windows alternative
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+```
+
+## 🔨 Development Setup
+
+If you want to run from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/endlessblink/like-i-said-mcp-server.git
+cd like-i-said-mcp-server
+
+# Install dependencies
+npm install
+
+# Run development servers
+npm run dev:full    # Start both API and React dashboard
+npm run dev         # React dashboard only
+npm run dashboard   # API server only
+
+# Build for production
+npm run build
 ```
 
 ## 📊 Memory Storage
 
-- **Format**: JSON-based persistent storage
-- **Location**: `memories.json` in package directory
-- **Backup**: Automatic backup creation
-- **Migration**: Preserves existing memories
+- **Format**: Markdown files with enhanced frontmatter
+- **Location**: `memories/` directory organized by project
+- **Structure**: 145+ memories with complexity levels, categories, and relationships
+- **Features**: Real-time file watching, automatic indexing
+- **API**: RESTful API on port 3001 for dashboard integration
 
 ## 🤝 Contributing
 

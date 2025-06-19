@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Memory, MemoryCategory } from "@/types"
 import { formatDistanceToNow } from "@/utils/helpers"
+import { ButtonSpinner } from "@/components/LoadingStates"
 import { Edit, Trash2, Eye, Clock, Users, FileText } from "lucide-react"
 
 interface MemoryCardProps {
@@ -11,6 +12,7 @@ interface MemoryCardProps {
   onEdit: (memory: Memory) => void
   onDelete: (id: string) => void
   onView?: (memory: Memory) => void
+  isDeleting?: boolean
 }
 
 const categoryColors: Record<MemoryCategory, string> = {
@@ -39,7 +41,8 @@ export function MemoryCard({
   onSelect, 
   onEdit, 
   onDelete, 
-  onView 
+  onView,
+  isDeleting = false
 }: MemoryCardProps) {
   // Ensure backward compatibility with existing memory format
   const metadata = memory.metadata || {
@@ -116,9 +119,10 @@ export function MemoryCard({
             variant="ghost"
             size="sm"
             onClick={() => onDelete(memory.id)}
-            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+            disabled={isDeleting}
+            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" />
+            {isDeleting ? <ButtonSpinner size="sm" /> : <Trash2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>

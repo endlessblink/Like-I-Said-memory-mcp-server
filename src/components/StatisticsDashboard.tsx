@@ -125,7 +125,17 @@ export function StatisticsDashboard({ memories }: StatisticsDashboardProps) {
       // Calculate memory growth over time
       const memoryGrowth: { date: string; count: number }[] = []
       const groupedByDate = filteredMemories.reduce((acc, memory) => {
-        const date = new Date(memory.timestamp).toISOString().split('T')[0]
+        // Handle invalid timestamps gracefully
+        const timestamp = memory.timestamp || new Date().toISOString()
+        const dateObj = new Date(timestamp)
+        
+        // Skip invalid dates
+        if (isNaN(dateObj.getTime())) {
+          console.warn('Invalid timestamp found:', memory.timestamp, 'for memory:', memory.id)
+          return acc
+        }
+        
+        const date = dateObj.toISOString().split('T')[0]
         acc[date] = (acc[date] || 0) + 1
         return acc
       }, {} as Record<string, number>)

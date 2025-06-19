@@ -1,7 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Enhanced Loading Animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes memory-card-enter {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 @layer base {
   :root {
@@ -102,19 +134,24 @@ body {
   background: hsl(var(--muted-foreground) / 0.6);
 }
 
-/* Modern card styles */
+/* Enhanced modern card styles with animations */
 .card-modern {
   background: var(--gradient-card);
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: memory-card-enter 0.4s ease-out;
 }
 
 .card-modern:hover {
   box-shadow: var(--shadow-medium);
   border-color: hsl(var(--border) / 0.8);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.card-modern.loading {
+  animation: pulse-soft 2s ease-in-out infinite;
 }
 
 /* Glass effect for special elements */
@@ -171,13 +208,25 @@ body {
   border: 1px solid hsl(var(--info) / 0.3);
 }
 
-/* Animation utilities */
+/* Enhanced Animation utilities */
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fade-in 0.5s ease-out;
 }
 
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-memory-enter {
+  animation: memory-card-enter 0.4s ease-out;
 }
 
 @keyframes fadeIn {

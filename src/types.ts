@@ -17,6 +17,15 @@ export interface Memory {
   }
 }
 
+// === SORTING TYPES ===
+export type SortField = 'date' | 'title' | 'length' | 'tags' | 'project' | 'category'
+export type SortDirection = 'asc' | 'desc'
+
+export interface SortOptions {
+  field: SortField
+  direction: SortDirection
+}
+
 export interface GraphNode {
   id: string
   label: string

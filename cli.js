@@ -77,7 +77,7 @@ function handleNpxExecutionError(error, context) {
   if (context.isWSL) {
     log('\n🐧 WSL-specific troubleshooting:', 'yellow');
     log('1. Ensure project is in WSL filesystem for best performance', 'yellow');
-    log('2. Try: cd ~ && npx @endlessblink/like-i-said-v2 install', 'yellow');
+    log('2. Try: cd ~ && npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
   }
   
   log('\n📋 Debug info (set DEBUG=1 for more details):', 'blue');
@@ -728,13 +728,13 @@ async function handleCommand() {
       log('  • Zed Editor, Codeium, Docker', 'yellow');
       
       log('\n📋 Commands:', 'blue');
-      log('  npx @endlessblink/like-i-said-v2 install - Auto-setup and configure all clients (recommended)', 'yellow');
-      log('  npx @endlessblink/like-i-said-v2 setup   - Alternative setup command', 'yellow');
-      log('  npx @endlessblink/like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
-      log('  npx @endlessblink/like-i-said-v2 start   - Start the MCP server manually', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install - Auto-setup and configure all clients (recommended)', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 setup   - Alternative setup command', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start   - Start the MCP server manually', 'yellow');
       
       log('\n🚀 Quick Start:', 'green');
-      log('  1. npx @endlessblink/like-i-said-v2 install', 'yellow');
+      log('  1. npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
       log('  2. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
       log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
       

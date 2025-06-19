@@ -161,7 +161,7 @@ export function MemoryRelationships({
 
   const allTags = Array.from(new Set(
     memories.flatMap(memory => extractTags(memory))
-  )).filter(tag => !tag.startsWith('title:') && !tag.startsWith('summary:')).sort()
+  )).filter(tag => tag && tag.trim() !== "" && !tag.startsWith('title:') && !tag.startsWith('summary:')).sort()
 
   const getConnectionTypeColor = (type: MemoryConnection['type']) => {
     const colors = {
@@ -223,7 +223,7 @@ export function MemoryRelationships({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All tags</SelectItem>
-                      {allTags.map(tag => (
+                      {allTags.filter(tag => tag && tag.trim() !== "").map(tag => (
                         <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                       ))}
                     </SelectContent>

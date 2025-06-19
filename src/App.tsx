@@ -26,12 +26,21 @@ import { SimpleGraph } from '@/components/SimpleGraph'
 import { MemoryCard } from '@/components/MemoryCard'
 import { AdvancedSearch } from '@/components/AdvancedSearch'
 import { ProjectTabs } from '@/components/ProjectTabs'
+import { SortControls } from '@/components/SortControls'
 import { ExportImport } from '@/components/ExportImport'
 import { StatisticsDashboard } from '@/components/StatisticsDashboard'
 import { AIEnhancement } from '@/components/AIEnhancement'
 import { MemoryRelationships } from '@/components/MemoryRelationships'
-import { Memory, MemoryCategory, ViewMode, AdvancedFilters } from '@/types'
-import { searchMemories } from '@/utils/helpers'
+import { 
+  PageLoadingSpinner, 
+  RefreshSpinner, 
+  ButtonSpinner, 
+  MemoryCardsGridSkeleton, 
+  MemoryTableSkeleton,
+  EmptyState 
+} from '@/components/LoadingStates'
+import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
+import { searchMemories, sortMemories } from '@/utils/helpers'
 
 // === HELPER FUNCTIONS ===
 function extractTags(memory: Memory): string[] {
@@ -175,6 +184,10 @@ function getTagColor(tag: string): { bg: string; text: string; border: string } 
 export default function App() {
   // === STATE ===
   const [memories, setMemories] = useState<Memory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState("")
   const [searchFilters, setSearchFilters] = useState<AdvancedFilters>({})
   const [tagFilter, setTagFilter] = useState("all")
@@ -196,12 +209,14 @@ export default function App() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [llmProvider, setLlmProvider] = useState<"openai" | "anthropic" | "none">("none")
   const [llmApiKey, setLlmApiKey] = useState("")
+  const [apiKeyEditMode, setApiKeyEditMode] = useState(false)
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [enhancingMemories, setEnhancingMemories] = useState<Set<string>>(new Set())
   const [currentProject, setCurrentProject] = useState("all")
   const [selectedMemories, setSelectedMemories] = useState<Set<string>>(new Set())
   const [showBulkTagDialog, setShowBulkTagDialog] = useState(false)
   const [bulkTagInput, setBulkTagInput] = useState("")
+  const [sortOptions, setSortOptions] = useState<SortOptions>({ field: 'date', direction: 'desc' })
   const [bulkTagAction, setBulkTagAction] = useState<"add" | "remove">("add")
   const [newCategory, setNewCategory] = useState<MemoryCategory | undefined>(undefined)
   const [newProject, setNewProject] = useState("")
@@ -218,8 +233,19 @@ export default function App() {
   const loadSettings = () => {
     const savedProvider = localStorage.getItem('llm-provider') as "openai" | "anthropic" | "none"
     const savedApiKey = localStorage.getItem('llm-api-key')
+    const savedSortOptions = localStorage.getItem('sort-options')
+    
     if (savedProvider) setLlmProvider(savedProvider)
     if (savedApiKey) setLlmApiKey(savedApiKey)
+    if (savedSortOptions) {
+      try {
+        const parsed = JSON.parse(savedSortOptions) as SortOptions
+        setSortOptions(parsed)
+      } catch (e) {
+        // Invalid JSON, use defaults
+        console.warn('Invalid sort options in localStorage, using defaults')
+      }
+    }
   }
 
   const saveSettings = () => {
@@ -228,19 +254,49 @@ export default function App() {
     setShowSettingsDialog(false)
   }
 
+  const clearApiKey = () => {
+    setLlmApiKey("")
+    localStorage.removeItem('llm-api-key')
+  }
+
+  const handleSortChange = (newSortOptions: SortOptions) => {
+    setSortOptions(newSortOptions)
+    localStorage.setItem('sort-options', JSON.stringify(newSortOptions))
+  }
+
   // === DATA MANAGEMENT ===
-  const loadMemories = async () => {
+  const loadMemories = async (isRefresh = false) => {
     try {
-      const data = await fetch('/api/memories').then(res => res.json())
+      if (isRefresh) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
+      
+      const response = await fetch('/api/memories')
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const text = await response.text()
+      if (!text.trim()) {
+        setMemories([])
+        return
+      }
+      
+      const data = JSON.parse(text)
       setMemories(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to load memories:', error)
       setMemories([])
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
   const addMemory = async () => {
-    if (!newValue.trim()) return
+    if (!newValue.trim() || isCreating) return
 
     const tags = newTags.split(',').map(tag => tag.trim()).filter(Boolean)
     const category = newCategory || autoAssignCategory(newValue, tags)
@@ -253,6 +309,7 @@ export default function App() {
     }
 
     try {
+      setIsCreating(true)
       await fetch('/api/memories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,9 +321,11 @@ export default function App() {
       setNewCategory(undefined)
       setNewProject("")
       setShowAddDialog(false)
-      loadMemories()
+      loadMemories(true) // Refresh instead of full reload
     } catch (error) {
       console.error('Failed to add memory:', error)
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -300,12 +359,20 @@ export default function App() {
 
   const deleteMemory = async (memoryId: string) => {
     if (!confirm('Are you sure you want to delete this memory?')) return
+    if (isDeleting.has(memoryId)) return
 
     try {
+      setIsDeleting(prev => new Set([...prev, memoryId]))
       await fetch(`/api/memories/${memoryId}`, { method: 'DELETE' })
-      loadMemories()
+      loadMemories(true) // Refresh instead of full reload
     } catch (error) {
       console.error('Failed to delete memory:', error)
+    } finally {
+      setIsDeleting(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(memoryId)
+        return newSet
+      })
     }
   }
 
@@ -797,6 +864,9 @@ Respond with JSON format:
     return matchesTag && matchesCategory && matchesProject
   })
 
+  // Apply sorting to filtered results  
+  const sortedAndFiltered = sortMemories(filtered, sortOptions)
+
   const graphFiltered = memories.filter(memory => {
     const tags = extractTags(memory)
     return graphTagFilter === "all" || tags.includes(graphTagFilter)
@@ -804,7 +874,7 @@ Respond with JSON format:
 
   // Extract available tags and projects for search filters
   const availableTags = Array.from(new Set(memories.flatMap(memory => extractTags(memory))))
-  const availableProjects = Array.from(new Set(memories.map(memory => memory.project).filter(Boolean)))
+  const availableProjects = Array.from(new Set(memories.map(memory => memory.project).filter(project => project && project.trim() !== "")))
 
   // Stats
   const total = memories.length
@@ -1002,7 +1072,7 @@ Respond with JSON format:
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="general">General</SelectItem>
-                              {availableProjects.map((project) => (
+                              {availableProjects.filter(p => p && p.trim() !== "").map((project) => (
                                 <SelectItem key={project} value={project}>
                                   {project.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                 </SelectItem>
@@ -1019,8 +1089,15 @@ Respond with JSON format:
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={addMemory} className="bg-violet-600 hover:bg-violet-700">
-                        Add Memory
+                      <Button onClick={addMemory} disabled={isCreating} className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50">
+                        {isCreating ? (
+                          <div className="flex items-center gap-2">
+                            <ButtonSpinner />
+                            Creating...
+                          </div>
+                        ) : (
+                          "Add Memory"
+                        )}
                       </Button>
                       <Button variant="outline" onClick={() => {
                         setShowAddDialog(false)
@@ -1132,7 +1209,7 @@ Respond with JSON format:
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600 text-white">
                   <SelectItem value="all" className="hover:bg-gray-600 focus:bg-gray-600 text-white">All tags</SelectItem>
-                  {allTags.map(tag => (
+                  {allTags.filter(tag => tag && tag.trim() !== "").map(tag => (
                     <SelectItem key={tag} value={tag} className="hover:bg-gray-600 focus:bg-gray-600 text-white">{tag}</SelectItem>
                   ))}
                 </SelectContent>
@@ -1146,7 +1223,17 @@ Respond with JSON format:
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-gray-400">
                 <span>Total memories:</span>
-                <span className="text-white">{total}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white">{total}</span>
+                  <button
+                    onClick={() => loadMemories(true)}
+                    disabled={isRefreshing}
+                    className="text-gray-400 hover:text-violet-400 transition-colors disabled:opacity-50"
+                    title="Refresh memories"
+                  >
+                    {isRefreshing ? <RefreshSpinner className="h-3 w-3" /> : "🔄"}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between text-gray-400">
                 <span>Recent (24h):</span>
@@ -1172,7 +1259,7 @@ Respond with JSON format:
                 {currentTab === "ai" && "🤖 AI Enhancement"}
               </h2>
               {currentTab === "memories" && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex bg-gray-700 rounded-lg p-1">
                     {[
                       { id: "cards", label: "Cards", icon: "🃏" },
@@ -1191,6 +1278,10 @@ Respond with JSON format:
                       </button>
                     ))}
                   </div>
+                  <SortControls 
+                    sortOptions={sortOptions}
+                    onSortChange={handleSortChange}
+                  />
                 </div>
               )}
             </div>
@@ -1258,7 +1349,7 @@ Respond with JSON format:
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="default">General</SelectItem>
-                            {availableProjects.map((project) => (
+                            {availableProjects.filter(p => p && p.trim() !== "").map((project) => (
                               <SelectItem key={project} value={project}>
                                 {project.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                               </SelectItem>
@@ -1330,46 +1421,72 @@ Respond with JSON format:
 
                 {/* Cards View */}
                 {viewMode === "cards" && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-auto">
-                    {filtered.map((memory, index) => (
-                      <div 
-                        key={memory.id} 
-                        className="animate-fade-in"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                      >
-                        <MemoryCard
-                          memory={memory}
-                          selected={selectedMemories.has(memory.id)}
-                          onSelect={handleMemorySelect}
-                          onEdit={() => handleEdit(memory.id)}
-                          onDelete={deleteMemory}
-                        />
+                  <>
+                    {isLoading ? (
+                      <MemoryCardsGridSkeleton count={6} />
+                    ) : sortedAndFiltered.length === 0 ? (
+                      <EmptyState 
+                        title="No memories found"
+                        description={search || Object.keys(searchFilters).length > 0 ? "Try adjusting your search or filters" : "Create your first memory to get started"}
+                        icon="🧠"
+                      />
+                    ) : (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-auto">
+                        {sortedAndFiltered.map((memory, index) => (
+                          <div 
+                            key={`card-${memory.id}-${index}`} 
+                            className="animate-fade-in"
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                          >
+                            <MemoryCard
+                              memory={memory}
+                              selected={selectedMemories.has(memory.id)}
+                              onSelect={handleMemorySelect}
+                              onEdit={() => handleEdit(memory.id)}
+                              onDelete={deleteMemory}
+                              isDeleting={isDeleting.has(memory.id)}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {/* Table View */}
                 {viewMode === "table" && (
                   <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300">Title</TableHead>
-                          <TableHead className="text-gray-300">Content</TableHead>
-                          <TableHead className="text-gray-300">Tags</TableHead>
-                          <TableHead className="text-gray-300">Created</TableHead>
-                          <TableHead className="text-gray-300">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filtered.map((memory) => {
+                    {isLoading ? (
+                      <div className="p-6">
+                        <MemoryTableSkeleton count={8} />
+                      </div>
+                    ) : sortedAndFiltered.length === 0 ? (
+                      <div className="p-8">
+                        <EmptyState 
+                          title="No memories found"
+                          description={search || Object.keys(searchFilters).length > 0 ? "Try adjusting your search or filters" : "Create your first memory to get started"}
+                          icon="🧠"
+                        />
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-gray-700">
+                            <TableHead className="text-gray-300">Title</TableHead>
+                            <TableHead className="text-gray-300">Content</TableHead>
+                            <TableHead className="text-gray-300">Tags</TableHead>
+                            <TableHead className="text-gray-300">Created</TableHead>
+                            <TableHead className="text-gray-300">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {sortedAndFiltered.map((memory) => {
                           const memoryTags = extractVisibleTags(memory)
                           const title = extractTitle(memory.content, memory)
                           const summary = generateSummary(memory.content, memory)
                           
                           return (
-                            <TableRow key={memory.id} className="border-gray-700 hover:bg-gray-750">
+                            <TableRow key={`table-${memory.id}`} className="border-gray-700 hover:bg-gray-750">
                               <TableCell className="text-white font-medium max-w-48">
                                 <div className="truncate">{title}</div>
                               </TableCell>
@@ -1382,7 +1499,7 @@ Respond with JSON format:
                                     const colors = getTagColor(tag)
                                     return (
                                       <Badge
-                                        key={i}
+                                        key={`${memory.id}-tag-${tag}-${i}`}
                                         className="text-xs"
                                         style={{
                                           backgroundColor: colors.bg,
@@ -1415,17 +1532,19 @@ Respond with JSON format:
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => deleteMemory(memory.id)}
-                                    className="text-gray-400 hover:text-red-400"
+                                    disabled={isDeleting.has(memory.id)}
+                                    className="text-gray-400 hover:text-red-400 disabled:opacity-50"
                                   >
-                                    🗑️
+                                    {isDeleting.has(memory.id) ? <ButtonSpinner size="sm" /> : "🗑️"}
                                   </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
                           )
                         })}
-                      </TableBody>
-                    </Table>
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
                 )}
 
@@ -1680,13 +1799,27 @@ Respond with JSON format:
             {llmProvider !== "none" && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">API Key</label>
-                <Input
-                  type="password"
-                  value={llmApiKey}
-                  onChange={e => setLlmApiKey(e.target.value)}
-                  placeholder="Enter your API key"
-                  className="bg-gray-700 border-gray-600 text-white"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    value={apiKeyEditMode ? llmApiKey : (llmApiKey ? "••••••••••••••••••••••••••••••••" : "")}
+                    onChange={e => setLlmApiKey(e.target.value)}
+                    onFocus={() => setApiKeyEditMode(true)}
+                    onBlur={() => setApiKeyEditMode(false)}
+                    placeholder="Enter your API key"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 flex-1"
+                  />
+                  {llmApiKey && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearApiKey}
+                      className="border-gray-600 text-gray-400 hover:text-red-400 hover:border-red-400"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
             <div className="flex gap-2">

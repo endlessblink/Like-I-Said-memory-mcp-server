@@ -1,4 +1,4 @@
-import type { Memory, TagColor } from '../types'
+import type { Memory, TagColor, SortField, SortDirection, SortOptions } from '../types'
 
 /**
  * Extract tags from a memory object
@@ -313,4 +313,75 @@ export function searchMemories(memories: Memory[], query: string, filters?: any)
   }
   
   return results
+}
+
+/**
+ * Sort memories by various criteria with performance optimization
+ */
+export function sortMemories(memories: Memory[], sortOptions: SortOptions): Memory[] {
+  if (!memories.length) return memories
+  
+  const { field, direction } = sortOptions
+  
+  return [...memories].sort((a, b) => {
+    let comparison = 0
+    
+    switch (field) {
+      case 'date':
+        const dateA = new Date(a.metadata?.created || a.timestamp).getTime()
+        const dateB = new Date(b.metadata?.created || b.timestamp).getTime()
+        comparison = dateA - dateB
+        break
+        
+      case 'title':
+        const titleA = extractTitle(a.content, a).toLowerCase()
+        const titleB = extractTitle(b.content, b).toLowerCase()
+        comparison = titleA.localeCompare(titleB)
+        break
+        
+      case 'length':
+        comparison = a.content.length - b.content.length
+        break
+        
+      case 'tags':
+        const tagsA = extractTags(a).length
+        const tagsB = extractTags(b).length
+        comparison = tagsA - tagsB
+        break
+        
+      case 'project':
+        const projectA = (a.project || 'default').toLowerCase()
+        const projectB = (b.project || 'default').toLowerCase()
+        comparison = projectA.localeCompare(projectB)
+        break
+        
+      case 'category':
+        const categoryA = (a.category || 'personal').toLowerCase()
+        const categoryB = (b.category || 'personal').toLowerCase()
+        comparison = categoryA.localeCompare(categoryB)
+        break
+        
+      default:
+        return 0
+    }
+    
+    // Apply sort direction
+    return direction === 'asc' ? comparison : -comparison
+  })
+}
+
+/**
+ * Get display info for sort fields (used in UI)
+ */
+export function getSortFieldInfo(field: SortField): { label: string; icon: string; description: string } {
+  const sortFieldMap = {
+    date: { label: 'Date Created', icon: '📅', description: 'When memory was created' },
+    title: { label: 'Title', icon: '📝', description: 'Alphabetical by title' },
+    length: { label: 'Content Length', icon: '📏', description: 'By amount of content' },
+    tags: { label: 'Tag Count', icon: '🏷️', description: 'By number of tags' },
+    project: { label: 'Project', icon: '📁', description: 'Alphabetical by project' },
+    category: { label: 'Category', icon: '📂', description: 'By memory category' }
+  }
+  
+  return sortFieldMap[field] || sortFieldMap.date
 }

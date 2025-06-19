@@ -125,7 +125,7 @@ export function AdvancedSearch({
           <Button
             variant="ghost"
             onClick={handleClearFilters}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-700"
+            className="flex items-center gap-2 text-gray-400 hover:text-gray-200"
           >
             <X className="h-4 w-4" />
             Clear
@@ -190,11 +190,11 @@ export function AdvancedSearch({
 
       {/* Expanded Filters Panel */}
       {showFilters && (
-        <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+        <div className="border rounded-lg p-4 bg-gray-800 border-gray-700 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Category Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Category</label>
+              <label className="text-sm font-medium text-gray-300">Category</label>
               <Select
                 value={filters.category || "any"}
                 onValueChange={(value) => 
@@ -220,7 +220,7 @@ export function AdvancedSearch({
 
             {/* Project Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Project</label>
+              <label className="text-sm font-medium text-gray-300">Project</label>
               <Select
                 value={filters.project || "any"}
                 onValueChange={(value) => 
@@ -235,7 +235,7 @@ export function AdvancedSearch({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any project</SelectItem>
-                  {availableProjects.map((project) => (
+                  {availableProjects.filter(p => p && p.trim() !== "").map((project) => (
                     <SelectItem key={project} value={project}>
                       {project}
                     </SelectItem>
@@ -246,7 +246,7 @@ export function AdvancedSearch({
 
             {/* Content Type Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Content Type</label>
+              <label className="text-sm font-medium text-gray-300">Content Type</label>
               <Select
                 value={filters.contentType || "any"}
                 onValueChange={(value) => 
@@ -273,7 +273,7 @@ export function AdvancedSearch({
 
           {/* Tags Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tags</label>
+            <label className="text-sm font-medium text-gray-300">Tags</label>
             <div className="flex gap-2">
               <Input
                 value={tagInput}
@@ -298,12 +298,12 @@ export function AdvancedSearch({
             {/* Available Tags */}
             {availableTags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                <span className="text-xs text-gray-500 mr-2">Quick add:</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Quick add:</span>
                 {availableTags.slice(0, 10).map((tag) => (
                   <Badge
                     key={tag}
                     variant="outline"
-                    className="cursor-pointer hover:bg-gray-200 text-xs"
+                    className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 text-xs"
                     onClick={() => handleAddTag(tag)}
                   >
                     {tag}
@@ -315,7 +315,7 @@ export function AdvancedSearch({
 
           {/* Date Range Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Date Range</label>
+            <label className="text-sm font-medium text-gray-300">Date Range</label>
             <div className="flex gap-2">
               <Input
                 type="date"

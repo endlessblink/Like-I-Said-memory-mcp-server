@@ -25,6 +25,8 @@ dist-ssr
 
 # Runtime data files
 memory.json
+memories.json
+memories/
 claude-desktop-config.json
 
 # PM2 runtime files
