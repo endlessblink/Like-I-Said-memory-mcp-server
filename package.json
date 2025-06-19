@@ -1,8 +1,8 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.0.27",
-  "description": "MCP memory server for AI assistants - remember conversations across sessions",
-  "main": "server.js",
+  "version": "2.1.0",
+  "description": "Enhanced MCP memory server with GitHub integration and modern React dashboard - remember conversations across sessions",
+  "main": "server-markdown.js",
   "type": "module",
   "keywords": [
     "mcp",
@@ -12,17 +12,21 @@
     "cursor",
     "windsurf",
     "assistant",
-    "context"
+    "context",
+    "github",
+    "dashboard",
+    "react",
+    "integration"
   ],
   "author": "endlessblink",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endlessblink/like-i-said-mcp-server.git"
+    "url": "git+https://github.com/endlessblink/Like-I-Said-Memory-V2.git"
   },
-  "homepage": "https://github.com/endlessblink/like-i-said-mcp-server",
+  "homepage": "https://github.com/endlessblink/Like-I-Said-Memory-V2",
   "bugs": {
-    "url": "https://github.com/endlessblink/like-i-said-mcp-server/issues"
+    "url": "https://github.com/endlessblink/Like-I-Said-Memory-V2/issues"
   },
   "bin": {
     "like-i-said-v2": "./cli.js"
