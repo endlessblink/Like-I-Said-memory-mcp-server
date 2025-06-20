@@ -33,6 +33,7 @@
   },
   "files": [
     "cli.js",
+    "cli.cmd",
     "server-markdown.js",
     "backup-system.js",
     "backup-runner.js",
