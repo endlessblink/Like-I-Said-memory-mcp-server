@@ -25,14 +25,7 @@ if (fs.existsSync(envPath)) {
   console.error('.env file loaded successfully');
 }
 
-// Auto-start backup system unless explicitly disabled
-if (process.env.NO_BACKUP !== 'true') {
-  console.error('🔄 Starting backup system...');
-  import('./backup-system.js').catch(error => {
-    console.error('⚠️  Backup system failed to start:', error.message);
-    console.error('💡 Memories will still work, but without automatic backups');
-  });
-}
+// Backup system will be started after server connection
 
 // AI Enhancement for automatic title and summary generation
 class AIEnhancer {
@@ -1140,6 +1133,17 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Like I Said Memory MCP Server v2 started successfully');
+  
+  // Auto-start backup system after server is connected
+  if (process.env.NO_BACKUP !== 'true') {
+    setTimeout(() => {
+      console.error('🔄 Starting backup system...');
+      import('./backup-system.js').catch(error => {
+        console.error('⚠️  Backup system failed to start:', error.message);
+        console.error('💡 Memories will still work, but without automatic backups');
+      });
+    }, 1000); // Start backup system after 1 second delay
+  }
 }
 
 main().catch(console.error);
