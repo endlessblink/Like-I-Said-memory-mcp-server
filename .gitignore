@@ -38,6 +38,17 @@ ecosystem.config.json
 # GitHub-specific ignores
 .env
 .env.local
+.env.*
+
+# Personal development files
+SESSION-SUMMARY-*.md
+GITHUB-AUTONOMOUS-*.md
+*.backup
+debug-*.js
+test-npx/
+
+# Claude configuration
+.claude/
 
 # Documentation (local only)
 Docs/

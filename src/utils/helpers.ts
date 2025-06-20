@@ -328,8 +328,11 @@ export function sortMemories(memories: Memory[], sortOptions: SortOptions): Memo
     
     switch (field) {
       case 'date':
-        const dateA = new Date(a.metadata?.created || a.timestamp).getTime()
-        const dateB = new Date(b.metadata?.created || b.timestamp).getTime()
+        // Use timestamp as primary, metadata.created as fallback
+        const timestampA = a.timestamp || a.metadata?.created || a.metadata?.modified || '1970-01-01'
+        const timestampB = b.timestamp || b.metadata?.created || b.metadata?.modified || '1970-01-01'
+        const dateA = new Date(timestampA).getTime()
+        const dateB = new Date(timestampB).getTime()
         comparison = dateA - dateB
         break
         
@@ -337,28 +340,58 @@ export function sortMemories(memories: Memory[], sortOptions: SortOptions): Memo
         const titleA = extractTitle(a.content, a).toLowerCase()
         const titleB = extractTitle(b.content, b).toLowerCase()
         comparison = titleA.localeCompare(titleB)
+        // If same title, secondary sort by timestamp
+        if (comparison === 0) {
+          const tsA = new Date(a.timestamp || '1970-01-01').getTime()
+          const tsB = new Date(b.timestamp || '1970-01-01').getTime()
+          comparison = tsA - tsB
+        }
         break
         
       case 'length':
         comparison = a.content.length - b.content.length
+        // If same length, secondary sort by timestamp
+        if (comparison === 0) {
+          const tsA = new Date(a.timestamp || '1970-01-01').getTime()
+          const tsB = new Date(b.timestamp || '1970-01-01').getTime()
+          comparison = tsA - tsB
+        }
         break
         
       case 'tags':
         const tagsA = extractTags(a).length
         const tagsB = extractTags(b).length
         comparison = tagsA - tagsB
+        // If same number of tags, secondary sort by timestamp
+        if (comparison === 0) {
+          const tsA = new Date(a.timestamp || '1970-01-01').getTime()
+          const tsB = new Date(b.timestamp || '1970-01-01').getTime()
+          comparison = tsA - tsB
+        }
         break
         
       case 'project':
         const projectA = (a.project || 'default').toLowerCase()
         const projectB = (b.project || 'default').toLowerCase()
         comparison = projectA.localeCompare(projectB)
+        // If same project, secondary sort by timestamp
+        if (comparison === 0) {
+          const tsA = new Date(a.timestamp || '1970-01-01').getTime()
+          const tsB = new Date(b.timestamp || '1970-01-01').getTime()
+          comparison = tsA - tsB
+        }
         break
         
       case 'category':
         const categoryA = (a.category || 'personal').toLowerCase()
         const categoryB = (b.category || 'personal').toLowerCase()
         comparison = categoryA.localeCompare(categoryB)
+        // If same category, secondary sort by timestamp
+        if (comparison === 0) {
+          const tsA = new Date(a.timestamp || '1970-01-01').getTime()
+          const tsB = new Date(b.timestamp || '1970-01-01').getTime()
+          comparison = tsA - tsB
+        }
         break
         
       default:

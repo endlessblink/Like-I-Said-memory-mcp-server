@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Memory } from "@/types"
 import { Plus, Folder, FolderOpen, Settings, X } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface ProjectTabsProps {
   memories: Memory[]
@@ -208,14 +209,21 @@ export function ProjectTabs({
               </p>
             </div>
             {currentProject !== "default" && currentProject !== "all" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteProject(currentProject)}
-                className="text-red-400 hover:text-red-300"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteProject(currentProject)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete project</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>

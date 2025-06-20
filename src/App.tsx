@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import Editor from '@monaco-editor/react'
 import { ModernGraph } from '@/components/ModernGraph'
 import { ModernGraphTest } from '@/components/ModernGraphTest'
@@ -889,7 +890,8 @@ Respond with JSON format:
 
   // === RENDER ===
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
       {/* Navigation */}
       <nav className="glass-effect border-b border-gray-700/50 shadow-xl sticky top-0 z-50">
         <div className="space-container">
@@ -1331,14 +1333,21 @@ Respond with JSON format:
                         <span className="text-blue-300 font-medium">
                           {selectedMemories.size} memory{selectedMemories.size !== 1 ? 'ies' : ''} selected
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedMemories(new Set())}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          Clear Selection
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedMemories(new Set())}
+                              className="text-gray-400 hover:text-white"
+                            >
+                              Clear Selection
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Deselect all memories</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-3">
@@ -1486,7 +1495,7 @@ Respond with JSON format:
                           const summary = generateSummary(memory.content, memory)
                           
                           return (
-                            <TableRow key={`table-${memory.id}`} className="border-gray-700 hover:bg-gray-750">
+                            <TableRow key={`table-${memory.id}-${memory.timestamp}`} className="border-gray-700 hover:bg-gray-750">
                               <TableCell className="text-white font-medium max-w-48">
                                 <div className="truncate">{title}</div>
                               </TableCell>
@@ -1499,7 +1508,7 @@ Respond with JSON format:
                                     const colors = getTagColor(tag)
                                     return (
                                       <Badge
-                                        key={`${memory.id}-tag-${tag}-${i}`}
+                                        key={`${memory.id}-${memory.timestamp}-tag-${tag}-${i}`}
                                         className="text-xs"
                                         style={{
                                           backgroundColor: colors.bg,
@@ -1833,6 +1842,7 @@ Respond with JSON format:
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

@@ -1,6 +1,7 @@
 # Environment and secrets
 .env
 .env.local
+.env.*
 .env.*.local
 
 # Logs
@@ -22,6 +23,12 @@ __tests__/
 *.test.js
 *.spec.js
 test-npx/
+
+# Personal development files
+SESSION-SUMMARY-*.md
+GITHUB-AUTONOMOUS-*.md
+*.backup
+.claude/
 
 # Documentation (users will see README on npm)
 documentation/

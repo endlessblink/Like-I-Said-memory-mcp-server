@@ -79,12 +79,8 @@
     "like-i-said-memory-v2": {
       "command": "node",
       "args": [
-        "D:/APPSNospaces/Like-I-said-mcp-server-v2/server-markdown.js"
-      ],
-      "cwd": "D:/APPSNospaces/Like-I-said-mcp-server-v2",
-      "env": {
-        "NODE_PATH": "C:/Program Files/nodejs"
-      }
+        "./server-markdown.js"
+      ]
     },
     "claude-task-master": {
       "command": "npx",

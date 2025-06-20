@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AdvancedFilters, MemoryCategory, ContentType } from "@/types"
 import { Search, Filter, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AdvancedSearchProps {
   query: string
@@ -139,50 +140,85 @@ export function AdvancedSearch({
           {filters.tags?.map((tag) => (
             <Badge key={tag} variant="secondary" className="flex items-center gap-1">
               #{tag}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => handleRemoveTag(tag)}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <X 
+                    className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                    onClick={() => handleRemoveTag(tag)}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove tag</p>
+                </TooltipContent>
+              </Tooltip>
             </Badge>
           ))}
           
           {filters.project && (
             <Badge variant="outline" className="flex items-center gap-1">
               Project: {filters.project}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => onFiltersChange({ ...filters, project: undefined })}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <X 
+                    className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                    onClick={() => onFiltersChange({ ...filters, project: undefined })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove project filter</p>
+                </TooltipContent>
+              </Tooltip>
             </Badge>
           )}
           
           {filters.category && (
             <Badge variant="outline" className="flex items-center gap-1">
               Category: {filters.category}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => onFiltersChange({ ...filters, category: undefined })}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <X 
+                    className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                    onClick={() => onFiltersChange({ ...filters, category: undefined })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove category filter</p>
+                </TooltipContent>
+              </Tooltip>
             </Badge>
           )}
           
           {filters.contentType && (
             <Badge variant="outline" className="flex items-center gap-1">
               Type: {filters.contentType}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => onFiltersChange({ ...filters, contentType: undefined })}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <X 
+                    className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                    onClick={() => onFiltersChange({ ...filters, contentType: undefined })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove content type filter</p>
+                </TooltipContent>
+              </Tooltip>
             </Badge>
           )}
           
           {filters.dateRange && (
             <Badge variant="outline" className="flex items-center gap-1">
               Date Range
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                onClick={() => onFiltersChange({ ...filters, dateRange: undefined })}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <X 
+                    className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                    onClick={() => onFiltersChange({ ...filters, dateRange: undefined })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove date range filter</p>
+                </TooltipContent>
+              </Tooltip>
             </Badge>
           )}
         </div>

@@ -56,7 +56,10 @@
       "Bash(fi)",
       "Bash(git pull:*)",
       "Bash(git reset:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git checkout:*)",
+      "mcp__claude-task-master__add_task",
+      "mcp__playwright-mcp__browser_install"
     ],
     "deny": []
   },

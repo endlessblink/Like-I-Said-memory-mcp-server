@@ -1,5 +1,8 @@
 # Claude Code Configuration
 
+#Critical
+1. When asked to use pupeteer or playwright, always use the mcp tools for this and don't install anything else. 
+
 ## Quality Assurance Directive
 Before marking any task as complete, you MUST:
 1. **Test the functionality** - run builds, start servers, test APIs
