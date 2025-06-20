@@ -63,7 +63,8 @@
       "Bash(sudo apt-get:*)",
       "Bash(claude mcp:*)",
       "mcp__playwright-mcp__browser_close",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(timeout 30s npm publish --access public)"
     ],
     "deny": []
   },
