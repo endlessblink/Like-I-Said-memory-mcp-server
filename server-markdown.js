@@ -2,12 +2,16 @@
 
 import fs from 'fs';
 import path from 'path';
+import { Worker } from 'worker_threads';
+import { fileURLToPath } from 'url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load .env file if it exists
 const envPath = path.join(process.cwd(), '.env');
@@ -25,7 +29,46 @@ if (fs.existsSync(envPath)) {
   console.error('.env file loaded successfully');
 }
 
-// Backup system will be started after server connection
+// Initialize backup worker
+let backupWorker;
+if (process.env.NO_BACKUP !== 'true') {
+  try {
+    backupWorker = new Worker(path.join(__dirname, 'backup-worker.js'), {
+      env: {
+        ...process.env,
+        MEMORIES_DIR: path.resolve('./memories')
+      }
+    });
+    
+    backupWorker.on('message', (message) => {
+      if (message.type === 'ready') {
+        console.error('🔄 Backup system initialized successfully');
+        console.error(`📁 Watching: ${message.data.memoriesDir}`);
+        console.error(`💾 Backups: ${message.data.backupDir}`);
+      } else if (message.type === 'backup-created') {
+        console.error(`✅ Backup created: ${path.basename(message.data.file)} (${message.data.changes.length} changes)`);
+      } else if (message.type === 'backup-error') {
+        console.error(`⚠️  Backup error: ${message.data.error}`);
+      } else if (message.type === 'watcher-error') {
+        console.error(`⚠️  File watcher error: ${message.data.error}`);
+      }
+    });
+    
+    backupWorker.on('error', (err) => {
+      console.error('⚠️  Backup worker error:', err.message);
+    });
+    
+    backupWorker.on('exit', (code) => {
+      if (code !== 0) {
+        console.error(`⚠️  Backup worker stopped with exit code: ${code}`);
+      }
+    });
+    
+  } catch (error) {
+    console.error('⚠️  Failed to start backup system:', error.message);
+    console.error('💡 Memories will still work, but without automatic backups');
+  }
+}
 
 // AI Enhancement for automatic title and summary generation
 class AIEnhancer {
@@ -1134,16 +1177,29 @@ async function main() {
   await server.connect(transport);
   console.error('Like I Said Memory MCP Server v2 started successfully');
   
-  // Auto-start backup system after server is connected
-  if (process.env.NO_BACKUP !== 'true') {
-    setTimeout(() => {
-      console.error('🔄 Starting backup system...');
-      import('./backup-system.js').catch(error => {
-        console.error('⚠️  Backup system failed to start:', error.message);
-        console.error('💡 Memories will still work, but without automatic backups');
-      });
-    }, 1000); // Start backup system after 1 second delay
-  }
+  // Cleanup on exit
+  process.on('exit', () => {
+    if (backupWorker) {
+      backupWorker.postMessage('shutdown');
+      backupWorker.terminate();
+    }
+  });
+
+  process.on('SIGTERM', () => {
+    if (backupWorker) {
+      backupWorker.postMessage('shutdown');
+      backupWorker.terminate();
+    }
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    if (backupWorker) {
+      backupWorker.postMessage('shutdown');
+      backupWorker.terminate();
+    }
+    process.exit(0);
+  });
 }
 
 main().catch(console.error);
