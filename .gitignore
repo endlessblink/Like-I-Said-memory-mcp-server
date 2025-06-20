@@ -58,3 +58,9 @@ backups/*.tar.gz
 backups/*.tar.gz.sha256
 backups/*.tar.gz.meta.json
 backup/*.tar.gz
+
+# All backup files containing user data
+backups/
+backup/
+*.tar.gz
+*.backup
