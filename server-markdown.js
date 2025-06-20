@@ -25,6 +25,126 @@ if (fs.existsSync(envPath)) {
   console.error('.env file loaded successfully');
 }
 
+// AI Enhancement for automatic title and summary generation
+class AIEnhancer {
+  constructor() {
+    this.openaiApiKey = process.env.OPENAI_API_KEY;
+    this.anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+  }
+
+  sanitizeForJSON(text) {
+    // Remove or replace invalid Unicode characters that can break JSON
+    return text
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/[\uD800-\uDFFF]/g, '') // Remove surrogate pairs
+      .replace(/\\/g, '\\\\') // Escape backslashes
+      .replace(/"/g, '\\"'); // Escape quotes
+  }
+
+  async generateTitleAndSummary(content) {
+    // Try OpenAI first, fallback to Anthropic
+    if (this.openaiApiKey) {
+      try {
+        return await this.generateWithOpenAI(content);
+      } catch (error) {
+        console.error('OpenAI generation failed:', error.message);
+        if (this.anthropicApiKey) {
+          try {
+            return await this.generateWithAnthropic(content);
+          } catch (anthropicError) {
+            console.error('Anthropic generation failed:', anthropicError.message);
+          }
+        }
+      }
+    } else if (this.anthropicApiKey) {
+      try {
+        return await this.generateWithAnthropic(content);
+      } catch (error) {
+        console.error('Anthropic generation failed:', error.message);
+      }
+    }
+
+    // Return null if no API keys configured or all attempts failed
+    return null;
+  }
+
+  async generateWithOpenAI(content) {
+    // Sanitize content to remove invalid Unicode characters
+    const sanitizedContent = this.sanitizeForJSON(content.slice(0, 2000));
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'Generate a concise title (max 50 characters) and summary (max 150 characters) for the given memory content. Respond in JSON format: {"title": "...", "summary": "..."}'
+          },
+          {
+            role: 'user',
+            content: sanitizedContent
+          }
+        ],
+        max_tokens: 100,
+        temperature: 0.3
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const result = JSON.parse(data.choices[0].message.content);
+    
+    return {
+      title: result.title?.slice(0, 50) || null,
+      summary: result.summary?.slice(0, 150) || null
+    };
+  }
+
+  async generateWithAnthropic(content) {
+    // Sanitize content to remove invalid Unicode characters
+    const sanitizedContent = this.sanitizeForJSON(content.slice(0, 2000));
+    
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.anthropicApiKey,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 100,
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a concise title (max 50 characters) and summary (max 150 characters) for this memory content. Respond in JSON format: {"title": "...", "summary": "..."}\n\nContent: ${sanitizedContent}`
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const result = JSON.parse(data.content[0].text);
+    
+    return {
+      title: result.title?.slice(0, 50) || null,
+      summary: result.summary?.slice(0, 150) || null
+    };
+  }
+}
+
 // GitHub API Integration
 class GitHubAPI {
   constructor() {
@@ -359,7 +479,7 @@ class MarkdownStorage {
       ''
     ].filter(Boolean).join('\n');
 
-    return frontmatter + memory.content;
+    return frontmatter + '\n' + memory.content;
   }
 
   // Detect complexity level (1-4) based on cursor-memory-bank principles
@@ -657,7 +777,7 @@ console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
 const server = new Server(
   {
     name: 'like-i-said-memory-v2',
-    version: '2.0.0',
+    version: '2.1.4',
   },
   {
     capabilities: {
@@ -672,7 +792,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'add_memory',
-        description: 'Store a new memory as a markdown file with enhanced frontmatter and complexity detection',
+        description: '🧠 PRIMARY MEMORY TOOL: Store a new memory/note/information as a markdown file. IMPORTANT: Before calling this tool, generate a concise title (max 100 chars) and summary (max 200 chars) for the memory content and pass them as parameters. The tool includes automatic complexity detection and structured metadata. USE THIS for all memory creation requests.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -710,13 +830,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'string',
               description: 'Programming language for code content',
             },
+            title: {
+              type: 'string',
+              description: 'AI-generated title for the memory (max 100 chars). The AI client should generate this before calling add_memory.',
+            },
+            summary: {
+              type: 'string',
+              description: 'AI-generated summary of the memory content (max 200 chars). The AI client should generate this before calling add_memory.',
+            },
           },
           required: ['content'],
         },
       },
       {
         name: 'get_memory',
-        description: 'Retrieve a memory by ID',
+        description: '📖 MEMORY RETRIEVAL: Retrieve a specific memory by its unique ID. Use when you need to access previously stored information.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -730,7 +858,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'list_memories',
-        description: 'List all stored memories or memories from a specific project',
+        description: '📋 MEMORY BROWSING: List and browse all stored memories or filter by project. Use to explore available memories and find information.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -747,7 +875,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'delete_memory',
-        description: 'Delete a memory by ID',
+        description: '🗑️ MEMORY DELETION: Permanently delete a memory by ID. Use with caution - this cannot be undone.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -761,7 +889,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'search_memories',
-        description: 'Search memories by content, tags, or category',
+        description: '🔍 MEMORY SEARCH: Search through all stored memories by content, tags, or category. Use to find specific information or memories.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -779,7 +907,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'test_tool',
-        description: 'Simple test tool to verify MCP is working',
+        description: '🔧 SYSTEM TEST: Simple test tool to verify Like-I-Said MCP server connectivity and functionality.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -790,375 +918,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['message'],
         },
-      },
-      {
-        name: 'github_create_issue',
-        description: 'Create a new GitHub issue and store it as a memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            title: {
-              type: 'string',
-              description: 'Issue title',
-            },
-            body: {
-              type: 'string',
-              description: 'Issue description/body',
-            },
-            labels: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Issue labels',
-            },
-            assignees: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'GitHub usernames to assign',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'title', 'body'],
-        },
-      },
-      {
-        name: 'github_search_repos',
-        description: 'Search GitHub repositories and store results as memories',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Search query for repositories',
-            },
-            sort: {
-              type: 'string',
-              description: 'Sort by: stars, forks, updated, or created',
-              enum: ['stars', 'forks', 'updated', 'created'],
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of repositories to return (1-10)',
-              minimum: 1,
-              maximum: 10,
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memories',
-            },
-          },
-          required: ['query'],
-        },
-      },
-      {
-        name: 'github_get_repo_info',
-        description: 'Get detailed information about a GitHub repository and store as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            include_readme: {
-              type: 'boolean',
-              description: 'Include README content in the memory',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository'],
-        },
-      },
-      {
-        name: 'github_list_issues',
-        description: 'List GitHub issues from a repository and store as memories',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            state: {
-              type: 'string',
-              description: 'Issue state: open, closed, or all',
-              enum: ['open', 'closed', 'all'],
-            },
-            labels: {
-              type: 'string',
-              description: 'Comma-separated list of labels to filter by',
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of issues to return (1-20)',
-              minimum: 1,
-              maximum: 20,
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memories',
-            },
-          },
-          required: ['repository'],
-        },
-      },
-      {
-        name: 'github_create_file',
-        description: 'Create a new file in a GitHub repository and store the action as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            path: {
-              type: 'string',
-              description: 'File path in the repository (e.g., "src/index.js")',
-            },
-            content: {
-              type: 'string',
-              description: 'File content to create',
-            },
-            message: {
-              type: 'string',
-              description: 'Commit message for the file creation',
-            },
-            branch: {
-              type: 'string',
-              description: 'Branch to create the file in (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'path', 'content', 'message'],
-        },
-      },
-      {
-        name: 'github_update_file',
-        description: 'Update an existing file in a GitHub repository and store the action as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            path: {
-              type: 'string',
-              description: 'File path in the repository (e.g., "src/index.js")',
-            },
-            content: {
-              type: 'string',
-              description: 'New file content',
-            },
-            message: {
-              type: 'string',
-              description: 'Commit message for the file update',
-            },
-            branch: {
-              type: 'string',
-              description: 'Branch to update the file in (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'path', 'content', 'message'],
-        },
-      },
-      {
-        name: 'github_get_file',
-        description: 'Get file content from a GitHub repository and store as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            path: {
-              type: 'string',
-              description: 'File path in the repository (e.g., "src/index.js")',
-            },
-            branch: {
-              type: 'string',
-              description: 'Branch to get the file from (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'path'],
-        },
-      },
-      {
-        name: 'github_delete_file',
-        description: 'Delete a file from a GitHub repository and store the action as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            path: {
-              type: 'string',
-              description: 'File path in the repository (e.g., "src/index.js")',
-            },
-            message: {
-              type: 'string',
-              description: 'Commit message for the file deletion',
-            },
-            branch: {
-              type: 'string',
-              description: 'Branch to delete the file from (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'path', 'message'],
-        },
-      },
-      {
-        name: 'github_create_branch',
-        description: 'Create a new branch in a GitHub repository and store the action as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            branch_name: {
-              type: 'string',
-              description: 'Name for the new branch',
-            },
-            from_branch: {
-              type: 'string',
-              description: 'Source branch to create from (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'branch_name'],
-        },
-      },
-      {
-        name: 'github_create_pr',
-        description: 'Create a pull request in a GitHub repository and store as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            title: {
-              type: 'string',
-              description: 'Pull request title',
-            },
-            body: {
-              type: 'string',
-              description: 'Pull request description/body',
-            },
-            head: {
-              type: 'string',
-              description: 'Head branch (the branch with changes)',
-            },
-            base: {
-              type: 'string',
-              description: 'Base branch to merge into (default: main)',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository', 'title', 'body', 'head'],
-        },
-      },
-      {
-        name: 'github_fork_repo',
-        description: 'Fork a GitHub repository and store the action as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name to fork (e.g., "owner/repo")',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository'],
-        },
-      },
-      {
-        name: 'github_list_branches',
-        description: 'List all branches in a GitHub repository and store as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository'],
-        },
-      },
-      {
-        name: 'github_get_commits',
-        description: 'Get recent commits from a GitHub repository and store as memory',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            repository: {
-              type: 'string',
-              description: 'Repository name (e.g., "owner/repo")',
-            },
-            branch: {
-              type: 'string',
-              description: 'Branch to get commits from (default: main)',
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of commits to return (1-20)',
-              minimum: 1,
-              maximum: 20,
-            },
-            project: {
-              type: 'string',
-              description: 'Project name to organize the memory',
-            },
-          },
-          required: ['repository'],
-        },
-      },
+      }
     ],
   };
 });
@@ -1169,6 +929,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case 'test_tool': {
+        const { message } = args;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `✅ MCP Test successful! Message: ${message}`,
+            },
+          ],
+        };
+      }
+
       case 'add_memory': {
         const { 
           content, 
@@ -1178,7 +950,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           priority = 'medium',
           status = 'active',
           related_memories = [],
-          language
+          language,
+          title,
+          summary
         } = args;
         
         const memory = {
@@ -1191,10 +965,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           status,
           related_memories,
           language,
+          title,
+          summary,
           timestamp: new Date().toISOString(),
           access_count: 0,
           last_accessed: new Date().toISOString(),
         };
+
 
         const filepath = await storage.saveMemory(memory);
         const complexity = storage.detectComplexityLevel(memory);
@@ -1324,754 +1101,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'test_tool': {
-        const { message } = args;
+
+      default:
         return {
           content: [
             {
               type: 'text',
-              text: `✅ MCP Test successful! Message: ${message}`,
+              text: `❌ Unknown tool: ${name}`,
             },
           ],
+          isError: true,
         };
-      }
-
-      // GitHub Integration Tools
-      case 'github_create_issue': {
-        const { repository, title, body, labels = [], assignees = [], project } = args;
-        
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token not configured. Set GITHUB_TOKEN environment variable for full functionality.\n\n📝 Issue details stored as memory:\n🔗 Repository: ${repository}\n📋 Title: ${title}\n📄 Body: ${body}\n🏷️ Labels: ${labels.join(', ') || 'none'}\n👥 Assignees: ${assignees.join(', ') || 'none'}`,
-              },
-            ],
-          };
-        }
-
-        try {
-          const issue = await github.createIssue(repository, title, body, labels, assignees);
-          
-          // Store issue as memory
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Issue: ${title}\n\n**Repository:** ${repository}\n**Issue URL:** ${issue.html_url}\n**Number:** #${issue.number}\n**State:** ${issue.state}\n\n## Description\n${body}\n\n## Labels\n${labels.join(', ') || 'none'}\n\n## Assignees\n${assignees.join(', ') || 'none'}\n\n*Created via MCP GitHub integration*`,
-            tags: ['github', 'issue', repository.split('/')[1], ...labels],
-            category: 'code',
-            project: project || 'github-integration',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ GitHub issue created successfully!\n\n🔗 Issue URL: ${issue.html_url}\n📋 Issue #${issue.number}: ${title}\n📁 Repository: ${repository}\n🆔 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-integration'}\n\n💾 Issue details stored as memory with tags: ${memory.tags.join(', ')}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to create GitHub issue: ${error.message}\n\nPlease check:\n- Repository exists and you have access\n- GitHub token has issues:write permission\n- Repository format is "owner/repo"`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_search_repos': {
-        const { query, sort = 'stars', limit = 5, project } = args;
-
-        try {
-          const repos = await github.searchRepositories(query, sort, limit);
-          
-          if (repos.length === 0) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `🔍 No repositories found for query: "${query}"`,
-                },
-              ],
-            };
-          }
-
-          // Store search results as memory
-          const repoList = repos.map(repo => 
-            `- **${repo.full_name}** (⭐ ${repo.stargazers_count})\n  ${repo.description || 'No description'}\n  🔗 ${repo.html_url}`
-          ).join('\n\n');
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Repository Search Results\n\n**Query:** "${query}"\n**Sort:** ${sort}\n**Found:** ${repos.length} repositories\n\n## Results\n\n${repoList}\n\n*Search performed via MCP GitHub integration*`,
-            tags: ['github', 'search', 'repositories', query.toLowerCase()],
-            category: 'research',
-            project: project || 'github-search',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          const resultSummary = repos.map(repo => 
-            `📦 ${repo.full_name} (⭐ ${repo.stargazers_count}) - ${repo.description?.substring(0, 80) || 'No description'}...`
-          ).join('\n');
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `🔍 Found ${repos.length} repositories for "${query}":\n\n${resultSummary}\n\n💾 Search results stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-search'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ GitHub repository search failed: ${error.message}`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_get_repo_info': {
-        const { repository, include_readme = false, project } = args;
-
-        try {
-          const repo = await github.getRepository(repository, include_readme);
-          
-          let content = `# GitHub Repository: ${repo.full_name}\n\n`;
-          content += `**Description:** ${repo.description || 'No description'}\n`;
-          content += `**Language:** ${repo.language || 'Not specified'}\n`;
-          content += `**Stars:** ⭐ ${repo.stargazers_count}\n`;
-          content += `**Forks:** 🍴 ${repo.forks_count}\n`;
-          content += `**Issues:** 🐛 ${repo.open_issues_count}\n`;
-          content += `**License:** ${repo.license?.name || 'None'}\n`;
-          content += `**Created:** ${new Date(repo.created_at).toLocaleDateString()}\n`;
-          content += `**Updated:** ${new Date(repo.updated_at).toLocaleDateString()}\n`;
-          content += `**URL:** ${repo.html_url}\n`;
-          content += `**Clone URL:** ${repo.clone_url}\n\n`;
-
-          if (repo.topics && repo.topics.length > 0) {
-            content += `**Topics:** ${repo.topics.join(', ')}\n\n`;
-          }
-
-          if (include_readme && repo.readme_content) {
-            content += `## README\n\n${repo.readme_content}\n\n`;
-          }
-
-          content += `*Repository information retrieved via MCP GitHub integration*`;
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content,
-            tags: ['github', 'repository', repo.name, repo.language?.toLowerCase(), ...(repo.topics || [])].filter(Boolean),
-            category: 'research',
-            project: project || 'github-repos',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `📦 Repository information retrieved for ${repo.full_name}\n\n⭐ ${repo.stargazers_count} stars | 🍴 ${repo.forks_count} forks | 🐛 ${repo.open_issues_count} issues\n📝 ${repo.description || 'No description'}\n🔗 ${repo.html_url}\n\n💾 Repository details stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-repos'}${include_readme ? '\n📖 README included' : ''}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to get repository information: ${error.message}\n\nPlease check:\n- Repository exists and is public (or you have access)\n- Repository format is "owner/repo"`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_list_issues': {
-        const { repository, state = 'open', labels = '', limit = 10, project } = args;
-
-        try {
-          const issues = await github.listIssues(repository, state, labels, limit);
-          
-          if (issues.length === 0) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `📋 No ${state} issues found in ${repository}${labels ? ` with labels: ${labels}` : ''}`,
-                },
-              ],
-            };
-          }
-
-          const issueList = issues.map(issue => 
-            `- **#${issue.number}: ${issue.title}**\n  👤 @${issue.user.login} | 📅 ${new Date(issue.created_at).toLocaleDateString()}\n  🏷️ ${issue.labels.map(l => l.name).join(', ') || 'no labels'}\n  🔗 ${issue.html_url}`
-          ).join('\n\n');
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Issues: ${repository}\n\n**State:** ${state}\n**Labels:** ${labels || 'all'}\n**Found:** ${issues.length} issues\n\n## Issues\n\n${issueList}\n\n*Issues retrieved via MCP GitHub integration*`,
-            tags: ['github', 'issues', repository.split('/')[1], state, ...(labels ? labels.split(',') : [])].filter(Boolean),
-            category: 'code',
-            project: project || 'github-issues',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          const issueSummary = issues.map(issue => 
-            `📋 #${issue.number}: ${issue.title} (@${issue.user.login})`
-          ).join('\n');
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `📋 Found ${issues.length} ${state} issues in ${repository}:\n\n${issueSummary}\n\n💾 Issues list stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-issues'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to list GitHub issues: ${error.message}\n\nPlease check:\n- Repository exists and is public (or you have access)\n- Repository format is "owner/repo"`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      // Advanced GitHub Repository Management Tools
-      case 'github_create_file': {
-        const { repository, path, content, message, branch = 'main', project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for file operations. Set GITHUB_TOKEN environment variable.\n\n📝 File creation details stored as memory:\n🔗 Repository: ${repository}\n📁 Path: ${path}\n📝 Content: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}\n💬 Message: ${message}\n🌿 Branch: ${branch}`,
-              },
-            ],
-          };
-        }
-
-        try {
-          const result = await github.createFile(repository, path, content, message, branch);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub File Created: ${path}\n\n**Repository:** ${repository}\n**Branch:** ${branch}\n**Commit:** ${result.commit.html_url}\n**SHA:** ${result.content.sha}\n\n## File Details\n- **Path:** ${path}\n- **Size:** ${content.length} characters\n- **Message:** ${message}\n\n## Content Preview\n\`\`\`\n${content.substring(0, 500)}${content.length > 500 ? '\n...' : ''}\n\`\`\`\n\n*File created via MCP GitHub integration*`,
-            tags: ['github', 'file-creation', repository.split('/')[1], path.split('/').pop()?.split('.').pop() || 'file'],
-            category: 'code',
-            project: project || 'github-files',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ File created successfully in ${repository}!\n\n📁 Path: ${path}\n🌿 Branch: ${branch}\n🔗 Commit: ${result.commit.html_url}\n📄 SHA: ${result.content.sha}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-files'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to create file: ${error.message}\n\nPlease check:\n- Repository exists and you have write access\n- File path doesn't already exist\n- Branch exists\n- GitHub token has contents:write permission`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_update_file': {
-        const { repository, path, content, message, branch = 'main', project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for file operations. Set GITHUB_TOKEN environment variable.`,
-              },
-            ],
-          };
-        }
-
-        try {
-          // First get the current file to get its SHA
-          const currentFile = await github.getFile(repository, path, branch);
-          const sha = currentFile.sha;
-          
-          const result = await github.updateFile(repository, path, content, message, sha, branch);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub File Updated: ${path}\n\n**Repository:** ${repository}\n**Branch:** ${branch}\n**Commit:** ${result.commit.html_url}\n**Previous SHA:** ${sha}\n**New SHA:** ${result.content.sha}\n\n## Update Details\n- **Path:** ${path}\n- **Size:** ${content.length} characters\n- **Message:** ${message}\n\n## New Content Preview\n\`\`\`\n${content.substring(0, 500)}${content.length > 500 ? '\n...' : ''}\n\`\`\`\n\n*File updated via MCP GitHub integration*`,
-            tags: ['github', 'file-update', repository.split('/')[1], path.split('/').pop()?.split('.').pop() || 'file'],
-            category: 'code',
-            project: project || 'github-files',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ File updated successfully in ${repository}!\n\n📁 Path: ${path}\n🌿 Branch: ${branch}\n🔗 Commit: ${result.commit.html_url}\n📄 New SHA: ${result.content.sha}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-files'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to update file: ${error.message}\n\nPlease check:\n- Repository exists and you have write access\n- File exists at the specified path\n- Branch exists\n- GitHub token has contents:write permission`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_get_file': {
-        const { repository, path, branch = 'main', project } = args;
-
-        try {
-          const file = await github.getFile(repository, path, branch);
-          const content = Buffer.from(file.content, 'base64').toString('utf-8');
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub File: ${path}\n\n**Repository:** ${repository}\n**Branch:** ${branch}\n**SHA:** ${file.sha}\n**Size:** ${file.size} bytes\n**URL:** ${file.html_url}\n\n## File Content\n\n\`\`\`${path.split('.').pop()}\n${content}\n\`\`\`\n\n*File retrieved via MCP GitHub integration*`,
-            tags: ['github', 'file-content', repository.split('/')[1], path.split('/').pop()?.split('.').pop() || 'file'],
-            category: 'code',
-            project: project || 'github-files',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `📄 File retrieved from ${repository}:\n\n📁 Path: ${path}\n🌿 Branch: ${branch}\n📄 SHA: ${file.sha}\n📏 Size: ${file.size} bytes\n🔗 URL: ${file.html_url}\n\n💾 File content stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-files'}\n\n**Content Preview:**\n${content.substring(0, 300)}${content.length > 300 ? '...' : ''}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to get file: ${error.message}\n\nPlease check:\n- Repository exists and is accessible\n- File exists at the specified path\n- Branch exists`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_delete_file': {
-        const { repository, path, message, branch = 'main', project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for file operations. Set GITHUB_TOKEN environment variable.`,
-              },
-            ],
-          };
-        }
-
-        try {
-          // First get the current file to get its SHA
-          const currentFile = await github.getFile(repository, path, branch);
-          const sha = currentFile.sha;
-          
-          const result = await github.deleteFile(repository, path, message, sha, branch);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub File Deleted: ${path}\n\n**Repository:** ${repository}\n**Branch:** ${branch}\n**Commit:** ${result.commit.html_url}\n**Deleted SHA:** ${sha}\n\n## Deletion Details\n- **Path:** ${path}\n- **Message:** ${message}\n- **Size:** ${currentFile.size} bytes (deleted)\n\n*File deleted via MCP GitHub integration*`,
-            tags: ['github', 'file-deletion', repository.split('/')[1], path.split('/').pop()?.split('.').pop() || 'file'],
-            category: 'code',
-            project: project || 'github-files',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ File deleted successfully from ${repository}!\n\n📁 Path: ${path}\n🌿 Branch: ${branch}\n🔗 Commit: ${result.commit.html_url}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-files'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to delete file: ${error.message}\n\nPlease check:\n- Repository exists and you have write access\n- File exists at the specified path\n- Branch exists\n- GitHub token has contents:write permission`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_create_branch': {
-        const { repository, branch_name, from_branch = 'main', project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for branch operations. Set GITHUB_TOKEN environment variable.`,
-              },
-            ],
-          };
-        }
-
-        try {
-          const result = await github.createBranch(repository, branch_name, from_branch);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Branch Created: ${branch_name}\n\n**Repository:** ${repository}\n**New Branch:** ${branch_name}\n**Source Branch:** ${from_branch}\n**Reference:** ${result.ref}\n**SHA:** ${result.object.sha}\n\n## Branch Details\n- Created from: ${from_branch}\n- Full reference: ${result.ref}\n- Target SHA: ${result.object.sha}\n\n*Branch created via MCP GitHub integration*`,
-            tags: ['github', 'branch-creation', repository.split('/')[1], branch_name],
-            category: 'code',
-            project: project || 'github-branches',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ Branch created successfully in ${repository}!\n\n🌿 New Branch: ${branch_name}\n📋 Source: ${from_branch}\n🔗 Reference: ${result.ref}\n📄 SHA: ${result.object.sha}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-branches'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to create branch: ${error.message}\n\nPlease check:\n- Repository exists and you have write access\n- Source branch exists\n- Branch name doesn't already exist\n- GitHub token has contents:write permission`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_create_pr': {
-        const { repository, title, body, head, base = 'main', project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for pull request operations. Set GITHUB_TOKEN environment variable.`,
-              },
-            ],
-          };
-        }
-
-        try {
-          const pr = await github.createPullRequest(repository, title, body, head, base);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Pull Request: ${title}\n\n**Repository:** ${repository}\n**PR URL:** ${pr.html_url}\n**Number:** #${pr.number}\n**State:** ${pr.state}\n**Head Branch:** ${head}\n**Base Branch:** ${base}\n\n## Description\n${body}\n\n## PR Details\n- **Author:** @${pr.user.login}\n- **Created:** ${new Date(pr.created_at).toLocaleString()}\n- **Mergeable:** ${pr.mergeable || 'Unknown'}\n- **Commits:** ${pr.commits || 'Unknown'}\n- **Changed Files:** ${pr.changed_files || 'Unknown'}\n\n*Pull request created via MCP GitHub integration*`,
-            tags: ['github', 'pull-request', repository.split('/')[1], head, base],
-            category: 'code',
-            project: project || 'github-prs',
-            priority: 'high',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ Pull request created successfully!\n\n🔗 PR URL: ${pr.html_url}\n📋 PR #${pr.number}: ${title}\n📁 Repository: ${repository}\n🌿 ${head} → ${base}\n👤 Author: @${pr.user.login}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-prs'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to create pull request: ${error.message}\n\nPlease check:\n- Repository exists and you have write access\n- Head and base branches exist\n- There are differences between branches\n- GitHub token has pull_requests:write permission`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_fork_repo': {
-        const { repository, project } = args;
-
-        if (!github.token) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `⚠️ GitHub token required for fork operations. Set GITHUB_TOKEN environment variable.`,
-              },
-            ],
-          };
-        }
-
-        try {
-          const fork = await github.forkRepository(repository);
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Repository Forked: ${repository}\n\n**Original Repository:** ${repository}\n**Forked Repository:** ${fork.full_name}\n**Fork URL:** ${fork.html_url}\n**Clone URL:** ${fork.clone_url}\n**SSH URL:** ${fork.ssh_url}\n\n## Fork Details\n- **Owner:** @${fork.owner.login}\n- **Created:** ${new Date(fork.created_at).toLocaleString()}\n- **Private:** ${fork.private}\n- **Default Branch:** ${fork.default_branch}\n\n## Original Repository Info\n- **Stars:** ⭐ ${fork.parent.stargazers_count}\n- **Forks:** 🍴 ${fork.parent.forks_count}\n- **Language:** ${fork.parent.language || 'Not specified'}\n\n*Repository forked via MCP GitHub integration*`,
-            tags: ['github', 'fork', repository.split('/')[1], fork.name],
-            category: 'code',
-            project: project || 'github-forks',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `✅ Repository forked successfully!\n\n📦 Original: ${repository}\n🍴 Fork: ${fork.full_name}\n🔗 Fork URL: ${fork.html_url}\n📥 Clone: ${fork.clone_url}\n👤 Owner: @${fork.owner.login}\n💾 Memory ID: ${memory.id}\n📂 Project: ${project || 'github-forks'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to fork repository: ${error.message}\n\nPlease check:\n- Repository exists and is public (or you have access)\n- You haven't already forked this repository\n- GitHub token has repo permissions`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_list_branches': {
-        const { repository, project } = args;
-
-        try {
-          const branches = await github.listBranches(repository);
-
-          if (branches.length === 0) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `🌿 No branches found in ${repository}`,
-                },
-              ],
-            };
-          }
-
-          const branchList = branches.map(branch =>
-            `- **${branch.name}** ${branch.protected ? '🔒' : ''}\n  SHA: ${branch.commit.sha}\n  ${branch.name === 'main' || branch.name === 'master' ? '📌 Default branch' : ''}`
-          ).join('\n\n');
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Branches: ${repository}\n\n**Repository:** ${repository}\n**Total Branches:** ${branches.length}\n\n## Branches\n\n${branchList}\n\n*Branches retrieved via MCP GitHub integration*`,
-            tags: ['github', 'branches', repository.split('/')[1]],
-            category: 'code',
-            project: project || 'github-branches',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          const branchSummary = branches.map(branch =>
-            `🌿 ${branch.name} ${branch.protected ? '🔒' : ''} (${branch.commit.sha.substring(0, 7)})`
-          ).join('\n');
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `🌿 Found ${branches.length} branches in ${repository}:\n\n${branchSummary}\n\n💾 Branch list stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-branches'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to list branches: ${error.message}\n\nPlease check:\n- Repository exists and is accessible\n- Repository format is "owner/repo"`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      case 'github_get_commits': {
-        const { repository, branch = 'main', limit = 10, project } = args;
-
-        try {
-          const commits = await github.getCommits(repository, branch, limit);
-
-          if (commits.length === 0) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `📝 No commits found in ${repository} on branch ${branch}`,
-                },
-              ],
-            };
-          }
-
-          const commitList = commits.map(commit =>
-            `- **${commit.sha.substring(0, 7)}** ${commit.commit.message.split('\n')[0]}\n  👤 ${commit.commit.author.name} | 📅 ${new Date(commit.commit.author.date).toLocaleDateString()}\n  🔗 ${commit.html_url}`
-          ).join('\n\n');
-
-          const memory = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            content: `# GitHub Commits: ${repository}\n\n**Repository:** ${repository}\n**Branch:** ${branch}\n**Total Commits:** ${commits.length}\n\n## Recent Commits\n\n${commitList}\n\n*Commits retrieved via MCP GitHub integration*`,
-            tags: ['github', 'commits', repository.split('/')[1], branch],
-            category: 'code',
-            project: project || 'github-commits',
-            priority: 'medium',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            access_count: 0,
-            last_accessed: new Date().toISOString(),
-          };
-
-          await storage.saveMemory(memory);
-
-          const commitSummary = commits.map(commit =>
-            `📝 ${commit.sha.substring(0, 7)}: ${commit.commit.message.split('\n')[0]} (@${commit.commit.author.name})`
-          ).join('\n');
-
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `📝 Found ${commits.length} recent commits in ${repository} (${branch}):\n\n${commitSummary}\n\n💾 Commit history stored as memory (ID: ${memory.id})\n📂 Project: ${project || 'github-commits'}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Failed to get commits: ${error.message}\n\nPlease check:\n- Repository exists and is accessible\n- Branch exists\n- Repository format is "owner/repo"`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
     }
   } catch (error) {
     return {
