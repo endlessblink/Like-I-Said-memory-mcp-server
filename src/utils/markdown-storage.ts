@@ -291,29 +291,5 @@ export class MarkdownStorage {
     return true
   }
 
-  // Migration utility from JSON to markdown
-  async migrateFromJSON(jsonFilePath: string): Promise<number> {
-    if (!fs.existsSync(jsonFilePath)) {
-      return 0
-    }
-
-    const jsonContent = fs.readFileSync(jsonFilePath, 'utf8')
-    const memories: Memory[] = JSON.parse(jsonContent)
-
-    let migrated = 0
-    for (const memory of memories) {
-      try {
-        await this.saveMemory(memory)
-        migrated++
-      } catch (error) {
-        console.error(`Failed to migrate memory ${memory.id}:`, error)
-      }
-    }
-
-    // Backup original JSON file
-    const backupPath = jsonFilePath + '.backup'
-    fs.copyFileSync(jsonFilePath, backupPath)
-
-    return migrated
-  }
+  // JSON migration removed - migration complete
 }

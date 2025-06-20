@@ -59,7 +59,11 @@
       "Bash(gh auth:*)",
       "Bash(git checkout:*)",
       "mcp__claude-task-master__add_task",
-      "mcp__playwright-mcp__browser_install"
+      "mcp__playwright-mcp__browser_install",
+      "Bash(sudo apt-get:*)",
+      "Bash(claude mcp:*)",
+      "mcp__playwright-mcp__browser_close",
+      "Bash(python3:*)"
     ],
     "deny": []
   },

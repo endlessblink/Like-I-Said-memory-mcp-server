@@ -1,7 +1,29 @@
 # Claude Code Configuration
 
 #Critical
-1. When asked to use pupeteer or playwright, always use the mcp tools for this and don't install anything else. 
+1. When asked to use pupeteer or playwright, always use the mcp tools for this and don't install anything else.
+
+## 🚨 CRITICAL MEMORY PROTECTION DIRECTIVES 🚨
+**NEVER DELETE OR CLEAN UP MEMORY FILES UNDER ANY CIRCUMSTANCES**
+
+1. **NEVER remove, delete, or clean up files in the `memories/` directory**
+2. **NEVER suggest file cleanup operations on the project**
+3. **NEVER remove markdown files (.md) from memories/ subdirectories**
+4. **ALWAYS backup before any migration or data operation**
+5. **ALWAYS verify memory count before and after any operation**
+6. **NEVER assume files are "redundant" or "cleanup-able" - all memories are user data**
+
+**MEMORY PROTECTION PROTOCOL:**
+- Before ANY operation involving files: `find memories/ -name "*.md" | wc -l`
+- After ANY operation involving files: Verify count is same or higher
+- If memory count decreases: STOP IMMEDIATELY and investigate
+- User data loss is UNACCEPTABLE and project is NOT ready for publishing if memories are lost
+
+**MIGRATION SAFETY:**
+- Always create timestamped backups before migrations
+- Verify source and target memory counts match
+- Test that all memories are accessible via API after migration
+- Never delete source files until target is verified working 
 
 ## Quality Assurance Directive
 Before marking any task as complete, you MUST:
