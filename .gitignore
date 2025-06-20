@@ -64,3 +64,4 @@ backups/
 backup/
 *.tar.gz
 *.backup
+archive/
