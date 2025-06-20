@@ -25,6 +25,15 @@ if (fs.existsSync(envPath)) {
   console.error('.env file loaded successfully');
 }
 
+// Auto-start backup system unless explicitly disabled
+if (process.env.NO_BACKUP !== 'true') {
+  console.error('🔄 Starting backup system...');
+  import('./backup-system.js').catch(error => {
+    console.error('⚠️  Backup system failed to start:', error.message);
+    console.error('💡 Memories will still work, but without automatic backups');
+  });
+}
+
 // AI Enhancement for automatic title and summary generation
 class AIEnhancer {
   constructor() {

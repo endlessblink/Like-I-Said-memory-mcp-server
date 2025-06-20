@@ -720,6 +720,36 @@ async function handleCommand() {
       case 'debug:cursor':
         await import('./debug-cursor.js');
         break;
+      case 'backup':
+        const subCommand = process.argv[3];
+        const { spawn } = await import('child_process');
+        
+        if (subCommand === 'status') {
+          const child = spawn('node', ['backup-runner.js', 'status'], {
+            stdio: 'inherit',
+            cwd: __dirname
+          });
+          child.on('exit', process.exit);
+        } else if (subCommand === 'verify') {
+          const backupFile = process.argv[4];
+          if (!backupFile) {
+            log('Usage: like-i-said-v2 backup verify <backup-file>', 'red');
+            process.exit(1);
+          }
+          const child = spawn('node', ['backup-runner.js', 'verify', backupFile], {
+            stdio: 'inherit',
+            cwd: __dirname
+          });
+          child.on('exit', process.exit);
+        } else {
+          // Default to single backup
+          const child = spawn('node', ['backup-runner.js', '--single-backup'], {
+            stdio: 'inherit',
+            cwd: __dirname
+          });
+          child.on('exit', process.exit);
+        }
+        break;
     default:
       log('Like-I-Said Memory MCP Server v2.0', 'blue');
       log('\n🎯 Supported Clients:', 'green');
@@ -732,6 +762,8 @@ async function handleCommand() {
       log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 setup   - Alternative setup command', 'yellow');
       log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
       log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start   - Start the MCP server manually', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 backup  - Create immediate backup', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 backup status - Check backup status', 'yellow');
       
       log('\n🚀 Quick Start:', 'green');
       log('  1. npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');

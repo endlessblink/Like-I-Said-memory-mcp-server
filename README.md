@@ -20,6 +20,7 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 - 🔍 **Advanced Search** - Full-text search with filters and tags
 - 📈 **Analytics** - Memory usage statistics and insights
 - 🎨 **Modern UI** - Card-based layout with dark theme
+- 🛡️ **Auto-Backup** - Real-time backup system with data protection
 
 ## 🚀 Quick Install
 
@@ -131,6 +132,42 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 
 3. **Start using memory:**
    > "Remember that I'm working on a Next.js project called MyApp"
+
+## 🛡️ Automatic Backup System
+
+Like-I-Said v2 includes an **enterprise-grade backup system** that automatically protects your memories:
+
+### Features:
+- ✅ **Real-time protection** - Backs up changes as they happen
+- ✅ **Integrity verification** - Checksums ensure data validity
+- ✅ **Multi-location storage** - Local + external backup locations
+- ✅ **Automatic compression** - Efficient storage with .tar.gz format
+- ✅ **Zero configuration** - Starts automatically with MCP server
+
+### How it works:
+1. **Automatic startup** - Backup system starts when MCP server starts
+2. **File watching** - Monitors memory changes in real-time
+3. **Smart scheduling** - Debounces changes to avoid excessive backups
+4. **Verification** - Each backup is tested for integrity
+5. **Retention** - Keeps 30 days of backups automatically
+
+### Disable backups (not recommended):
+```bash
+# Set environment variable to disable
+export NO_BACKUP=true
+```
+
+### Manual backup commands:
+```bash
+# Create immediate backup
+npx -p @endlessblink/like-i-said-v2 backup
+
+# Check backup status  
+npx -p @endlessblink/like-i-said-v2 backup status
+
+# Verify backup integrity
+npx -p @endlessblink/like-i-said-v2 backup verify <backup-file>
+```
 
 ## 🆘 Troubleshooting
 
