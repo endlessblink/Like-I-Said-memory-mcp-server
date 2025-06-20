@@ -69,7 +69,14 @@
       "Bash(# Start server in background and test file change detection\nnode server-markdown.js 2>&1 &\nSERVER_PID=$!\n\n# Wait for startup\nsleep 8\n\n# Create a test memory file to trigger backup\necho \"---\ntitle: Test Memory Auto Backup\nsummary: Testing automatic backup system\ncategory: test\ntags: [backup-test]\npriority: medium\n---\n\n# Test Memory\n\nThis is a test memory to verify automatic backup detection.\" > memories/default/test-backup-detection.md\n\n# Wait for backup to trigger\nsleep 8\n\n# Kill server\nkill $SERVER_PID 2>/dev/null || true\nwait $SERVER_PID 2>/dev/null || true)",
       "Bash(# Test that backup system auto-starts with NPM version\ntimeout 10s node server-markdown.js 2>&1 | head -15)",
       "Bash(# Simulate existing project\necho '{\n  \"name\": \"my-awesome-app\",\n  \"version\": \"1.0.0\",\n  \"description\": \"My existing project\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"start\": \"node index.js\",\n    \"test\": \"jest\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}' > package.json\n\necho \"console.log('My existing app');\" > index.js\necho \"# My Awesome App\" > README.md\nmkdir src tests\necho \"This is my existing project\" > src/app.js)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(tar:*)",
+      "Bash(for file in backup-worker.js backup-system.js backup-runner.js)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(echo)",
+      "Bash(done)"
     ],
     "deny": []
   },
