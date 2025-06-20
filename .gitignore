@@ -53,3 +53,7 @@ test-npx/
 # Documentation (local only)
 Docs/
 docs/ 
+# Ignore backup files (but keep backup system)
+backups/*.tar.gz
+backups/*.tar.gz.sha256
+backups/*.tar.gz.meta.json
