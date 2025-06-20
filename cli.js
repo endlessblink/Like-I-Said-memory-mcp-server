@@ -518,6 +518,8 @@ async function quickInstall() {
       // Essential files to copy
       const filesToCopy = [
         'server-markdown.js',
+        'backup-system.js',
+        'backup-runner.js',
         'package.json',
         'README.md'
       ];
@@ -547,6 +549,21 @@ async function quickInstall() {
       
       if (copied > 0) {
         log(`📋 Copied ${copied} files to current directory`, 'green');
+        
+        // Fix package.json to include "type": "module" for ES modules
+        const packageJsonPath = path.join(projectPath, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+          try {
+            const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+            if (!pkg.type) {
+              pkg.type = 'module';
+              fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
+              log('✓ Added ES module type to package.json', 'green');
+            }
+          } catch (error) {
+            log('⚠️  Could not update package.json type field', 'yellow');
+          }
+        }
       }
     } else {
       log('✓ Project files found', 'green');
