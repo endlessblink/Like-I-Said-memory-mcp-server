@@ -1,0 +1,35 @@
+# Use Node.js LTS
+FROM node:20-alpine
+
+# Install git and other dependencies
+RUN apk add --no-cache git bash
+
+# Create app directory
+WORKDIR /app
+
+# Test as a new user would
+RUN npm install -g @endlessblink/like-i-said-v2@latest
+
+# Create a test script
+RUN echo '#!/bin/bash\n\
+echo "=== Testing Like-I-Said MCP v2 Installation ==="\n\
+echo "Current directory: $(pwd)"\n\
+echo "Node version: $(node --version)"\n\
+echo "NPM version: $(npm --version)"\n\
+echo ""\n\
+echo "Testing global installation..."\n\
+like-i-said-v2 --version || echo "Version command not implemented"\n\
+echo ""\n\
+echo "Creating test project..."\n\
+mkdir -p /test-project\n\
+cd /test-project\n\
+echo ""\n\
+echo "Running installation..."\n\
+like-i-said-v2 install\n\
+echo ""\n\
+echo "Listing installed files..."\n\
+ls -la\n\
+' > /test-install.sh && chmod +x /test-install.sh
+
+# Default command
+CMD ["/test-install.sh"]

@@ -1,0 +1,15 @@
+# Use Node.js LTS  
+FROM node:20
+
+# Install additional tools for testing
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a clean workspace
+WORKDIR /workspace
+
+# Start with bash
+CMD ["/bin/bash"]
