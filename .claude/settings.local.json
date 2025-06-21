@@ -59,7 +59,11 @@
       "Bash(gh auth:*)",
       "Bash(git checkout:*)",
       "mcp__playwright-mcp__browser_close",
-      "mcp__playwright-mcp__browser_take_screenshot"
+      "mcp__playwright-mcp__browser_take_screenshot",
+      "WebFetch(domain:github.com)",
+      "mcp__like-i-said-v2__github_create_issue",
+      "Bash(git tag:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   },
