@@ -41,4 +41,18 @@ ecosystem.config.json
 
 # Documentation (local only)
 Docs/
-docs/ 
+docs/
+
+# Backup files
+backup/
+backups/
+*.tar.gz
+*.backup
+
+# Project analysis files
+PROJECT-INTEGRITY-REPORT.md
+verify-project-integrity.js
+
+# Config files with personal data
+mcp-config.json
+claude_desktop_config.json 

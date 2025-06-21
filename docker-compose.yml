@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  like-i-said-v2:
+    build: .
+    image: like-i-said-v2:latest
+    container_name: like-i-said-v2
+    ports:
+      - "3001:3001"  # Dashboard API
+      - "5173:5173"  # Dashboard UI
+    environment:
+      - NODE_ENV=production
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    volumes:
+      - ./memories:/app/memories
+      - ./backups:/app/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
