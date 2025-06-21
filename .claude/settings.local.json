@@ -56,7 +56,10 @@
       "Bash(fi)",
       "Bash(git pull:*)",
       "Bash(git reset:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git checkout:*)",
+      "mcp__playwright-mcp__browser_close",
+      "mcp__playwright-mcp__browser_take_screenshot"
     ],
     "deny": []
   },
