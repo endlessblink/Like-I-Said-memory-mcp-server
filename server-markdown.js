@@ -405,8 +405,14 @@ class MarkdownStorage {
 
 }
 
-// Initialize storage
-const storage = new MarkdownStorage();
+// Initialize storage with path relative to server installation
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const memoriesPath = path.join(__dirname, 'memories');
+console.error(`🔧 Debug: Server at: ${__dirname}`);
+console.error(`🔧 Debug: Memories path: ${memoriesPath}`);
+const storage = new MarkdownStorage(memoriesPath);
 
 console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
 

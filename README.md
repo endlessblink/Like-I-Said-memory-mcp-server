@@ -161,6 +161,39 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
+## 🔄 Updating Like-I-Said
+
+### For npm users:
+```bash
+# Check current version
+npm list -g @endlessblink/like-i-said-v2
+
+# Update to latest version
+npm update -g @endlessblink/like-i-said-v2
+
+# Or force reinstall
+npm install -g @endlessblink/like-i-said-v2@latest
+```
+
+### For local development:
+```bash
+# Pull latest changes
+git pull origin main
+
+# Reinstall dependencies if needed
+npm install
+```
+
+### After updating:
+1. **Restart your MCP client** (Claude Desktop, Cursor, Windsurf)
+2. **No configuration changes needed** - The server uses relative paths automatically
+3. **Your memories are preserved** - They remain in your memories folder
+
+### Version Check:
+You can verify you have the latest version by checking:
+- npm package version: `npm list -g @endlessblink/like-i-said-v2`
+- Memory path fix: Look for `fileURLToPath` in your `server-markdown.js`
+
 ## 🔨 Development Setup
 
 If you want to run from source:
@@ -189,6 +222,16 @@ npm run build
 - **Structure**: 145+ memories with complexity levels, categories, and relationships
 - **Features**: Real-time file watching, automatic indexing
 - **API**: RESTful API on port 3001 for dashboard integration
+
+## 📚 Documentation
+
+For comprehensive documentation, visit the [`documentation/`](./documentation/) folder:
+
+- **[Setup Instructions](./documentation/SETUP-INSTRUCTIONS.md)** - Detailed installation guide
+- **[Docker Guide](./documentation/DOCKER.md)** - Docker deployment and enterprise setup
+- **[Development Guide](./documentation/DEVELOPMENT.md)** - Development setup and guidelines
+- **[Hebrew Documentation](./documentation/rtl/)** - Complete RTL documentation in Hebrew
+- **[Full Documentation Index](./documentation/INDEX.md)** - Complete documentation overview
 
 ## 🤝 Contributing
 
