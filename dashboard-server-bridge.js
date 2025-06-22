@@ -16,7 +16,7 @@ class DashboardBridge {
     this.server = http.createServer(this.app);
     this.wss = new WebSocketServer({ server: this.server });
     this.clients = new Set();
-    this.memoriesDir = 'memories';
+    this.memoriesDir = process.env.MEMORIES_DIR || 'memories';
     this.setupExpress();
     this.setupWebSocket();
     this.setupFileWatcher();

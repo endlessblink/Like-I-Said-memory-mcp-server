@@ -56,7 +56,16 @@
       "Bash(fi)",
       "Bash(git pull:*)",
       "Bash(git reset:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git tag:*)",
+      "Bash(gh workflow view:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose up:*)",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_click",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose:*)"
     ],
     "deny": []
   },

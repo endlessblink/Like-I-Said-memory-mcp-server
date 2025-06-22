@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Test the NPM production version
+  like-i-said-test:
+    build: .
+    container_name: like-i-said-v2-test
+    volumes:
+      - ./test-memories:/app/memories
+    environment:
+      - NODE_ENV=production
+    command: /app/test.sh
+
+  # Run the MCP server
+  like-i-said-mcp:
+    image: node:20-alpine
+    container_name: like-i-said-v2-mcp
+    working_dir: /app
+    volumes:
+      - ./test-memories:/app/memories
+    environment:
+      - NODE_ENV=production
+    command: >
+      sh -c "npm install -g @endlessblink/like-i-said-v2@2.3.2 && 
+             npx @endlessblink/like-i-said-v2 start"
+    stdin_open: true
+    tty: true
+
+  # Run the dashboard
+  like-i-said-dashboard:
+    build: .
+    container_name: like-i-said-v2-dashboard
+    working_dir: /app
+    ports:
+      - "3002:3001"  # Map to different port to avoid conflict
+      - "5174:5173"
+    environment:
+      - NODE_ENV=production
+      - MEMORIES_DIR=/app/memories
+    volumes:
+      - ./dist:/app/dist:ro  # Use local build with graph fix
+    command: >
+      sh -c "cp /usr/local/lib/node_modules/@endlessblink/like-i-said-v2/dashboard-server-bridge.js /app/ && 
+             cp /usr/local/lib/node_modules/@endlessblink/like-i-said-v2/package.json /app/ && 
+             cp -r /usr/local/lib/node_modules/@endlessblink/like-i-said-v2/node_modules /app/ &&
+             cd /app && 
+             MEMORIES_DIR=/app/memories node dashboard-server-bridge.js"
+
+  # Interactive test environment
+  like-i-said-interactive:
+    image: node:20-alpine
+    container_name: like-i-said-v2-interactive
+    working_dir: /app
+    volumes:
+      - ./test-memories:/app/memories
+    environment:
+      - NODE_ENV=production
+    command: >
+      sh -c "apk add --no-cache jq && 
+             npm install -g @endlessblink/like-i-said-v2@2.3.2 && 
+             echo 'Like-I-Said v2.3.1 installed. Run tests with:' && 
+             echo 'echo \"{\\\"jsonrpc\\\": \\\"2.0\\\", \\\"id\\\": 1, \\\"method\\\": \\\"tools/list\\\"}\" | npx @endlessblink/like-i-said-v2 start | jq' &&
+             /bin/sh"
+    stdin_open: true
+    tty: true

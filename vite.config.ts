@@ -9,6 +9,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
+  build: {
+    target: 'esnext',
+    sourcemap: true,
+    commonjsOptions: {
+      include: [/react-force-graph/, /d3/, /node_modules/]
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          reactForceGraph: ['react-force-graph-2d', 'd3', 'd3-force'],
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['react-force-graph-2d', 'd3', 'd3-force', 'd3-selection', 'd3-zoom']
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

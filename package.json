@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "description": "Pure MCP memory server with markdown storage and modern React dashboard - remember conversations across sessions",
   "main": "server-markdown.js",
   "type": "module",
@@ -16,7 +16,11 @@
     "github",
     "dashboard",
     "react",
-    "integration"
+    "integration",
+    "docker",
+    "containerization",
+    "alpine",
+    "production"
   ],
   "author": "endlessblink",
   "license": "MIT",
@@ -39,7 +43,10 @@
     "src",
     "public",
     "package.json",
-    "README.md"
+    "README.md",
+    "Dockerfile",
+    "docker-compose.yml",
+    "vite.config.ts"
   ],
   "scripts": {
     "start": "node server-markdown.js",
