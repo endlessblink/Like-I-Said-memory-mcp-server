@@ -2,7 +2,7 @@
   "mcpServers": {
     "like-i-said-memory": {
       "command": "node",
-      "args": ["/mnt/d/APPSNospaces/Like-I-said-mcp-server-v2/server.js"]
+      "args": ["/mnt/d/APPSNospaces/Like-I-said-mcp-server-v2/server-markdown.js"]
     }
   }
 }

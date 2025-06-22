@@ -39,6 +39,14 @@ ecosystem.config.json
 .env
 .env.local
 
-# Documentation (local only)
+# Temporary documentation and session notes
 Docs/
-docs/ 
+docs/
+DOCKER-TESTING-MEMORY.md
+DROPOFF-COMMANDS.md
+DROPOFF-PROMPT-NEW-CONVERSATION.md
+
+# Development session notes (if recreated)
+*-session-*.md
+*-memory-*.md
+*-testing-*.md 
