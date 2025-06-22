@@ -707,7 +707,9 @@ async function handleCommand() {
         await main();
         break;
       case 'start':
-        await import('./server-markdown.js');
+        // Use absolute path to ensure it works in NPM global context
+        const serverPath = path.join(__dirname, 'server-markdown.js');
+        await import(serverPath);
         break;
       case 'migrate':
         const { migrateFromJson } = await import('./migrate.js');
