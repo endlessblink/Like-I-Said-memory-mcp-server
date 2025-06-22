@@ -1,7 +1,7 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.1.1",
-  "description": "Enhanced MCP memory server with GitHub integration and modern React dashboard - remember conversations across sessions",
+  "version": "2.3.1",
+  "description": "Pure MCP memory server with markdown storage and modern React dashboard - remember conversations across sessions",
   "main": "server-markdown.js",
   "type": "module",
   "keywords": [
@@ -45,7 +45,7 @@
     "start": "node server-markdown.js",
     "start:mcp": "node server-markdown.js",
     "start:legacy": "node server.js",
-    "start:dashboard": "node dashboard-server.js",
+    "start:dashboard": "node dashboard-server-bridge.js",
     "dev": "vite --host 0.0.0.0",
     "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"green,magenta\"",
     "build": "vite build",
