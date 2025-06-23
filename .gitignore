@@ -62,4 +62,9 @@ memory_backups/
 memory-backups/
 D:/
 D:\*
-dashboard.log 
+dashboard.log
+
+# Local config
+.claude/settings.local.json
+*.md
+*-before-*.js
