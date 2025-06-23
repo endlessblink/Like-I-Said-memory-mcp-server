@@ -9,7 +9,6 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { Transform, Readable } from 'stream';
-import JSONStream from 'JSONStream';
 import { initSanitizationWatcher, sanitizeUnicode } from './memory-sanitizer.js';
 
 /**
@@ -64,9 +63,13 @@ process.on('uncaughtException', (err) => {
     console.error('🚨 UNICODE ERROR: Memory file contains invalid characters');
     console.error('File likely needs sanitization. Error details:', err.message);
     console.error('Stack trace:', err.stack);
+    // Exit gracefully to prevent zombie process
+    process.exit(1);
   } else {
-    // Re-throw other exceptions
-    throw err;
+    console.error('💥 UNCAUGHT EXCEPTION:', err.message);
+    console.error('Stack trace:', err.stack);
+    // Exit gracefully for all uncaught exceptions
+    process.exit(1);
   }
 });
 
@@ -934,7 +937,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
-  // Custom Transform stream for sanitizing memory content
+  // Use existing sanitization logic from memory-sanitizer.js
   class UnicodeSanitizer extends Transform {
     constructor() {
       super({ objectMode: true });
@@ -943,7 +946,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (memory.content) {
         memory.content = sanitizeUnicode(memory.content);
       }
-      this.push(memory);
+      // Apply deep sanitization to the whole memory object
+      const sanitizedMemory = sanitizeResponse(memory);
+      this.push(sanitizedMemory);
       callback();
     }
   }
@@ -1110,7 +1115,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
 
         if (safeResults.length === 0) {
-          return {
+          const noResultsResponse = {
             content: [
               {
                 type: 'text',
@@ -1118,21 +1123,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               },
             ],
           };
+          return safeJSONResponse(noResultsResponse, 'search_memories_empty');
         }
 
         const resultList = safeResults.map(memory => {
-          const preview = memory.content.length > 80 ? memory.content.substring(0, 80) + '...' : memory.content;
-          return `🆔 ${memory.id} | 📝 ${preview} | 🏷️ ${memory.tags?.join(', ') || 'no tags'} | 📁 ${memory.project || 'default'}`;
+          const preview = memory.content.length > 50 ? memory.content.substring(0, 50) + '...' : memory.content;
+          const complexityIcon = ['🟢', '🟡', '🟠', '🔴'][Math.min((memory.complexity || 1) - 1, 3)];
+          const priorityIcon = memory.priority === 'high' ? '🔥' : memory.priority === 'low' ? '❄️' : '📝';
+          const line = `🆔 ${memory.id} | ${complexityIcon} L${memory.complexity || 1} | ${priorityIcon} ${sanitizeUnicode(preview)} | ⏰ ${new Date(memory.timestamp).toLocaleDateString()} | 📁 ${memory.project || 'default'}`;
+          return sanitizeUnicode(line);
         }).join('\n');
 
-        return {
+        const responseText = `🔍 Found ${safeResults.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n${resultList}`;
+        
+        const sanitizedResponse = {
           content: [
             {
               type: 'text',
-              text: `🔍 Found ${safeResults.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n\n${resultList}`,
+              text: sanitizeUnicode(responseText),
             },
           ],
         };
+        
+        return safeJSONResponse(sanitizedResponse, 'search_memories');
       }
 
       case 'test_tool': {
@@ -1178,7 +1191,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // A function to validate all memory files on startup
 async function validateAllMemories() {
   console.log('Running startup validation of all memory files...');
-  const storage = new MarkdownStorage();
   const projects = (await fs.promises.readdir(storage.baseDir, { withFileTypes: true }))
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name);
@@ -1217,7 +1229,6 @@ async function main() {
   });
 
   if (process.env.ENABLE_AUTO_SANITIZE === 'true') {
-    const storage = new MarkdownStorage();
     initSanitizationWatcher(storage.baseDir);
   }
 
