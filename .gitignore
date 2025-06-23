@@ -70,4 +70,4 @@ dashboard.log
 *-before-*.js
 
 # Backups
-/backups/
+/development-backups/

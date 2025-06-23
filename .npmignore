@@ -188,7 +188,7 @@ assets/
 documentation/
 
 # Ignore backups, tests, and logs
-/backups/
+/development-backups/
 /test-memories/
 /memory_backups/
 *.log
