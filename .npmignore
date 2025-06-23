@@ -195,6 +195,7 @@ documentation/
 *.tsbuildinfo
 
 # Ignore misc files
+/scripts/
 CRITICAL_ISSUES_FOUND.md
 *.sh
 *.bat
