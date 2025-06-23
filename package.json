@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "Pure MCP memory server with markdown storage and modern React dashboard - remember conversations across sessions",
   "main": "server-markdown.js",
   "type": "module",
