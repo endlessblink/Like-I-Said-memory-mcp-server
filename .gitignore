@@ -49,4 +49,17 @@ DROPOFF-PROMPT-NEW-CONVERSATION.md
 # Development session notes (if recreated)
 *-session-*.md
 *-memory-*.md
-*-testing-*.md 
+*-testing-*.md
+
+# Backup files and temporary directories
+*-backup-*.js
+server-markdown-backup-*.js
+server-markdown-original.js
+server-markdown-with-github.js.backup
+server-markdown.js.backup
+*.backup
+memory_backups/
+memory-backups/
+D:/
+D:\*
+dashboard.log 

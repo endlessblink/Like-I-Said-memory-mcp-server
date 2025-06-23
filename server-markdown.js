@@ -8,11 +8,15 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { Transform, Readable } from 'stream';
+import JSONStream from 'JSONStream';
+import { initSanitizationWatcher, sanitizeUnicode } from './memory-sanitizer.js';
+
 
 // Load .env file if it exists
 const envPath = path.join(process.cwd(), '.env');
 if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
+  const envContent = fs.readFileSync(envPath, { encoding: 'utf-8', ignoreBOM: true });
   envContent.split('\n').forEach(line => {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith('#')) {
@@ -183,12 +187,14 @@ class MarkdownStorage {
   }
 
   parseMarkdownContent(content) {
-    const frontmatterRegex = /^---\n([\s\S]*?)\n---([\s\S]*)$/;
+    // More flexible frontmatter regex that handles various formats
+    const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/;
     const match = content.match(frontmatterRegex);
     
     if (!match) {
+      console.error(`[DEBUG] No frontmatter found, treating as plain content`);
       return {
-        id: Date.now().toString(),
+        id: `generated-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: content.trim(),
         timestamp: new Date().toISOString(),
         tags: [],
@@ -293,15 +299,29 @@ class MarkdownStorage {
       }
     });
 
+    // Ensure required fields are present
+    if (!memory.id) {
+      memory.id = `auto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      console.error(`[DEBUG] Generated ID for memory without ID: ${memory.id}`);
+    }
+    
+    if (!memory.timestamp) {
+      memory.timestamp = new Date().toISOString();
+    }
+
     return memory;
   }
 
   parseMarkdownFile(filepath) {
     try {
-      const content = fs.readFileSync(filepath, 'utf8');
+      // Enforce UTF-8 and ignore BOM
+      const content = fs.readFileSync(filepath, { encoding: 'utf-8', ignoreBOM: true });
       const parsed = this.parseMarkdownContent(content);
       
-      if (!parsed) return null;
+      if (!parsed) {
+        console.error(`[DEBUG] parseMarkdownContent returned null for ${filepath}`);
+        return null;
+      }
 
       const filename = path.basename(filepath);
       const projectName = path.basename(path.dirname(filepath));
@@ -310,7 +330,7 @@ class MarkdownStorage {
         ...parsed,
         filename,
         filepath,
-        project: projectName === this.defaultProject ? undefined : projectName
+        project: projectName
       };
     } catch (error) {
       console.error(`Error reading markdown file ${filepath}:`, error);
@@ -323,10 +343,13 @@ class MarkdownStorage {
     const filename = this.generateFilename(memory);
     const filepath = path.join(projectDir, filename);
     
-    const markdownContent = this.generateMarkdownContent(memory);
-    fs.writeFileSync(filepath, markdownContent, 'utf8');
-    
-    return filepath;
+    let markdownContent = this.generateMarkdownContent(memory);
+    // Pre-sanitize content before writing to disk
+    markdownContent = sanitizeUnicode(markdownContent);
+    await fs.promises.writeFile(filepath, markdownContent, 'utf8');
+
+    memory.filename = path.basename(filepath);
+    return memory;
   }
 
   async getMemory(id) {
@@ -336,52 +359,126 @@ class MarkdownStorage {
 
   async listMemories(project) {
     const memories = [];
+    let parseFailures = 0;
+    let totalFiles = 0;
+    
+    console.error(`[DEBUG] === LISTMEMORIES START ===`);
+    console.error(`[DEBUG] Requested project: ${project}`);
+    console.error(`[DEBUG] Memory root (baseDir): ${this.baseDir}`);
+    console.error(`[DEBUG] Current working directory: ${process.cwd()}`);
+    console.error(`[DEBUG] Server file location: ${__dirname}`);
+    
+    // File system audit
+    try {
+      const defaultDir = path.join(this.baseDir, 'default');
+      console.error(`[DEBUG] Testing default directory: ${defaultDir}`);
+      if (fs.existsSync(defaultDir)) {
+        const allFiles = fs.readdirSync(defaultDir);
+        console.error(`[DEBUG] 'default' directory contains ${allFiles.length} total files`);
+        const mdFiles = allFiles.filter(f => f.endsWith('.md'));
+        console.error(`[DEBUG] 'default' directory contains ${mdFiles.length} .md files`);
+        console.error(`[DEBUG] First 5 .md files:`, mdFiles.slice(0, 5));
+      } else {
+        console.error(`[DEBUG] 'default' directory does not exist!`);
+      }
+    } catch (auditError) {
+      console.error(`[ERROR] File system audit failed:`, auditError.message);
+    }
     
     if (project) {
       const projectDir = this.getProjectDir(project);
       const files = fs.readdirSync(projectDir).filter(f => f.endsWith('.md'));
+      totalFiles = files.length;
       
       for (const file of files) {
         const filepath = path.join(projectDir, file);
-        const memory = this.parseMarkdownFile(filepath);
-        if (memory) memories.push(memory);
+        try {
+          const memory = this.parseMarkdownFile(filepath);
+          if (memory) {
+            memories.push(memory);
+          } else {
+            parseFailures++;
+          }
+        } catch (error) {
+          console.error(`[ERROR] Exception parsing ${filepath}:`, error.message);
+          parseFailures++;
+        }
       }
     } else {
-      const projectDirs = fs.readdirSync(this.baseDir).filter(dir => {
-        const dirPath = path.join(this.baseDir, dir);
-        return fs.statSync(dirPath).isDirectory();
-      });
-
+      console.error(`[DEBUG] Scanning ALL subdirectories dynamically in: ${this.baseDir}`);
+      
+      // Dynamic scan: Get ALL subdirectories automatically
+      let projectDirs;
+      try {
+        projectDirs = fs.readdirSync(this.baseDir).filter(dir => {
+          const dirPath = path.join(this.baseDir, dir);
+          try {
+            return fs.statSync(dirPath).isDirectory();
+          } catch (e) {
+            console.error(`[ERROR] Cannot stat ${dirPath}:`, e.message);
+            return false;
+          }
+        });
+      } catch (error) {
+        console.error(`[ERROR] Cannot read baseDir ${this.baseDir}:`, error.message);
+        return memories;
+      }
+      
+      console.error(`[DEBUG] Found ${projectDirs.length} project directories: ${projectDirs.join(', ')}`);
+      
+      // Scan ALL directories found
       for (const projectDir of projectDirs) {
         const projectPath = path.join(this.baseDir, projectDir);
-        const files = fs.readdirSync(projectPath).filter(f => f.endsWith('.md'));
+        console.error(`[DEBUG] Scanning directory: ${projectPath}`);
+        
+        let files;
+        try {
+          files = fs.readdirSync(projectPath).filter(f => f.endsWith('.md'));
+          totalFiles += files.length;
+          console.error(`[DEBUG] Project '${projectDir}': scanning ${files.length} .md files`);
+        } catch (error) {
+          console.error(`[ERROR] Cannot read project dir ${projectPath}:`, error.message);
+          continue;
+        }
         
         for (const file of files) {
           const filepath = path.join(projectPath, file);
-          const memory = this.parseMarkdownFile(filepath);
-          if (memory) memories.push(memory);
+          try {
+            const memory = this.parseMarkdownFile(filepath);
+            if (memory) {
+              memories.push(memory);
+            } else {
+              parseFailures++;
+              console.error(`[DEBUG] parseMarkdownFile returned null for: ${file}`);
+            }
+          } catch (error) {
+            console.error(`[ERROR] Exception parsing ${filepath}:`, error.message);
+            parseFailures++;
+          }
         }
       }
+      
+      console.error(`[SUMMARY] Total files: ${totalFiles}, Parsed: ${memories.length}, Failed: ${parseFailures}`);
     }
 
     return memories.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
   async updateMemory(id, updates) {
-    const existingMemory = await this.getMemory(id);
-    if (!existingMemory) return false;
+    const memory = await this.getMemory(id);
+    if (!memory) {
+      return null;
+    }
 
-    fs.unlinkSync(existingMemory.filepath);
+    const updatedMemory = { ...memory, ...updates, timestamp: new Date().toISOString() };
+    delete updatedMemory.filepath; // remove property before re-generating content
 
-    const updatedMemory = {
-      ...existingMemory,
-      ...updates,
-      id: existingMemory.id,
-      timestamp: existingMemory.timestamp
-    };
+    let updatedContent = this.generateMarkdownContent(updatedMemory);
+    // Pre-sanitize before writing update
+    updatedContent = sanitizeUnicode(updatedContent);
+    await fs.promises.writeFile(memory.filepath, updatedContent, 'utf8');
 
-    await this.saveMemory(updatedMemory);
-    return true;
+    return this.parseMarkdownFile(memory.filepath);
   }
 
   async deleteMemory(id) {
@@ -392,26 +489,244 @@ class MarkdownStorage {
     return true;
   }
 
-  async searchMemories(query, project) {
-    const memories = await this.listMemories(project);
-    const lowerQuery = query.toLowerCase();
+  async findProjectDir(projectName) {
+    if (!projectName) {
+        return null;
+    }
+    const allProjects = (await fs.promises.readdir(this.baseDir, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+    
+    const foundDirName = allProjects.find(p => p.toLowerCase() === projectName.toLowerCase());
+    return foundDirName ? path.join(this.baseDir, foundDirName) : null;
+  }
 
-    return memories.filter(memory => 
-      memory.content.toLowerCase().includes(lowerQuery) ||
-      memory.tags?.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-      memory.category?.toLowerCase().includes(lowerQuery)
+  async streamMemories(project) {
+    const readable = new Readable({
+      objectMode: true,
+      read() {}
+    });
+
+    const processFiles = async (projectDir) => {
+        try {
+            const files = await fs.promises.readdir(projectDir);
+            for (const file of files) {
+                if (path.extname(file) === '.md') {
+                    const filepath = path.join(projectDir, file);
+                    try {
+                        const memory = this.parseMarkdownFile(filepath);
+                        if (memory) {
+                            readable.push(memory);
+                        }
+                    } catch (error) {
+                        readable.push({ error: `Failed to parse ${file}`, details: error.message });
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore errors for directories that can't be read, etc.
+        }
+    };
+    
+    (async () => {
+        if (project) {
+            const projectDir = await this.findProjectDir(project);
+            if (projectDir) {
+                await processFiles(projectDir);
+            }
+        } else {
+            // No project specified, stream from all projects
+            const allProjects = (await fs.promises.readdir(this.baseDir, { withFileTypes: true }))
+                .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.'));
+            
+            for (const projectDirEnt of allProjects) {
+                 const projectDir = path.join(this.baseDir, projectDirEnt.name);
+                 await processFiles(projectDir);
+            }
+        }
+        readable.push(null); // End of stream
+    })();
+
+    return readable;
+  }
+
+  async searchMemories(query, project) {
+    const allMemories = await this.listMemories(project); // Now uses the robust streamMemories
+    if (!query) {
+      return allMemories;
+    }
+    return this.enhancedSearch(allMemories, query);
+  }
+
+  enhancedSearch(memories, query) {
+    const lowerCaseQuery = query.toLowerCase();
+    const queryTerms = lowerCaseQuery.split(/\s+/).filter(term => term.length > 2);
+    
+    // Technical synonym mapping for MCP/memory queries
+    const synonyms = {
+      'mcp': ['model context protocol', 'memory', 'server', 'connection'],
+      'cursor': ['client', 'ide', 'integration'],
+      'windsurf': ['client', 'ide', 'integration'],
+      'memory': ['storage', 'data', 'recall', 'save'],
+      'fix': ['solution', 'repair', 'resolve', 'solve'],
+      'connection': ['integration', 'setup', 'config', 'link'],
+      'bina-bekitzur': ['project', 'implementation', 'system']
+    };
+    
+    // Expand query terms with synonyms
+    const expandedTerms = new Set(queryTerms);
+    queryTerms.forEach(term => {
+      if (synonyms[term]) {
+        synonyms[term].forEach(synonym => expandedTerms.add(synonym));
+      }
+    });
+    
+    const results = [];
+    
+    memories.forEach(memory => {
+      let score = 0;
+      const searchableText = this.getSearchableText(memory).toLowerCase();
+      
+      // Multi-field scoring with different weights
+      expandedTerms.forEach(term => {
+        // Content match (weight: 1.0)
+        if (memory.content.toLowerCase().includes(term)) {
+          score += 1.0;
+        }
+        
+        // Title/filename match (weight: 2.0)
+        if (memory.filename?.toLowerCase().includes(term)) {
+          score += 2.0;
+        }
+        
+        // Tags match (weight: 1.5)
+        if (memory.tags?.some(tag => tag.toLowerCase().includes(term))) {
+          score += 1.5;
+        }
+        
+        // Category match (weight: 1.2)
+        if (memory.category?.toLowerCase().includes(term)) {
+          score += 1.2;
+        }
+        
+        // Project match (weight: 1.8)
+        if (memory.project?.toLowerCase().includes(term)) {
+          score += 1.8;
+        }
+        
+        // Exact phrase bonus in content (weight: 3.0)
+        if (memory.content.toLowerCase().includes(lowerCaseQuery)) {
+          score += 3.0;
+        }
+      });
+      
+      // Fuzzy matching for compound terms
+      if (this.fuzzyMatch(searchableText, lowerCaseQuery)) {
+        score += 0.5;
+      }
+      
+      if (score > 0) {
+        results.push({ memory, score });
+      }
+    });
+    
+    return results;
+  }
+
+  getSearchableText(memory) {
+    return [
+      memory.content || '',
+      memory.filename || '',
+      memory.category || '',
+      memory.project || '',
+      ...(memory.tags || [])
+    ].join(' ');
+  }
+
+  fuzzyMatch(text, query) {
+    // Simple fuzzy matching for compound technical terms
+    const words = query.split(/\s+/);
+    return words.every(word => 
+      text.includes(word) || 
+      text.includes(word.slice(0, -1)) || // Handle plurals
+      this.levenshteinDistance(word, this.findClosestWord(text, word)) <= 2
     );
+  }
+
+  findClosestWord(text, target) {
+    const words = text.split(/\s+/);
+    let closest = '';
+    let minDistance = Infinity;
+    
+    words.forEach(word => {
+      const distance = this.levenshteinDistance(target, word);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = word;
+      }
+    });
+    
+    return closest;
+  }
+
+  levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
   }
 
 }
 
-// Initialize storage with path relative to server installation
+// Smart path detection: relative for new installs, absolute after first use
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const memoriesPath = path.join(__dirname, 'memories');
+
+function getMemoriesPath() {
+  // Priority 1: Environment variable override (for flexibility)
+  if (process.env.MCP_MEMORY_PATH) {
+    console.error(`🔧 Using environment variable path: ${process.env.MCP_MEMORY_PATH}`);
+    return process.env.MCP_MEMORY_PATH;
+  }
+  
+  // Priority 2: Use __dirname for reliable path resolution
+  const memoriesPath = path.join(__dirname, 'memories');
+  console.error(`🔧 Using __dirname-based path: ${memoriesPath}`);
+  
+  // Ensure memories directory exists
+  if (!fs.existsSync(memoriesPath)) {
+    console.error(`🔧 Creating memories directory: ${memoriesPath}`);
+    fs.mkdirSync(memoriesPath, { recursive: true });
+  }
+  
+  return memoriesPath;
+}
+
+const memoriesPath = getMemoriesPath();
 console.error(`🔧 Debug: Server at: ${__dirname}`);
-console.error(`🔧 Debug: Memories path: ${memoriesPath}`);
+console.error(`🔧 Debug: Final memories path: ${memoriesPath}`);
 const storage = new MarkdownStorage(memoriesPath);
 
 console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
@@ -562,6 +877,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  // Custom Transform stream for sanitizing memory content
+  class UnicodeSanitizer extends Transform {
+    constructor() {
+      super({ objectMode: true });
+    }
+    _transform(memory, encoding, callback) {
+      if (memory.content) {
+        memory.content = sanitizeUnicode(memory.content);
+      }
+      this.push(memory);
+      callback();
+    }
+  }
+
   try {
     switch (name) {
       case 'add_memory': {
@@ -632,7 +961,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'list_memories': {
         const { limit = 10, project } = args;
-        const memories = await storage.listMemories(project);
+        console.error(`[MCP DEBUG] list_memories called with limit=${limit}, project=${project || 'none'}`);
+        
+        const memoryStream = await storage.streamMemories(project);
+        const sanitizer = new UnicodeSanitizer();
+        
+        const memories = [];
+        await new Promise((resolve, reject) => {
+            memoryStream
+                .pipe(sanitizer)
+                .on('data', (mem) => memories.push(mem))
+                .on('end', resolve)
+                .on('error', reject);
+        });
+
+        console.error(`[MCP DEBUG] listMemories returned ${memories.length} memories`);
         const limitedMemories = memories.slice(0, limit);
 
         if (limitedMemories.length === 0) {
@@ -651,14 +994,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const preview = memory.content.length > 50 ? memory.content.substring(0, 50) + '...' : memory.content;
           const complexityIcon = ['🟢', '🟡', '🟠', '🔴'][Math.min((memory.complexity || 1) - 1, 3)];
           const priorityIcon = memory.priority === 'high' ? '🔥' : memory.priority === 'low' ? '❄️' : '📝';
-          return `🆔 ${memory.id} | ${complexityIcon} L${memory.complexity || 1} | ${priorityIcon} ${preview} | ⏰ ${new Date(memory.timestamp).toLocaleDateString()} | 📁 ${memory.project || 'default'}`;
+          const line = `🆔 ${memory.id} | ${complexityIcon} L${memory.complexity || 1} | ${priorityIcon} ${sanitizeUnicode(preview)} | ⏰ ${new Date(memory.timestamp).toLocaleDateString()} | 📁 ${memory.project || 'default'}`;
+          return sanitizeUnicode(line);
         }).join('\n');
 
+        const responseText = `📚 Total memories: ${total}${project ? ` in project: ${project}` : ''}\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n📋 ${limitedMemories.length > 0 ? `Showing ${limitedMemories.length}:` : 'Recent memories:'}\n${memoryList}`;
+        
         return {
           content: [
             {
               type: 'text',
-              text: `📚 Total memories: ${total}${project ? ` in project: ${project}` : ''}\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n📋 ${limitedMemories.length > 0 ? `Showing ${limitedMemories.length}:` : 'Recent memories:'}\n${memoryList}`,
+              text: sanitizeUnicode(responseText),
             },
           ],
         };
@@ -693,7 +1039,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { query, project } = args;
         const results = await storage.searchMemories(query, project);
 
-        if (results.length === 0) {
+        // Sanitize content before sending
+        const safeResults = results.map(mem => {
+          if (mem.error) return mem; // Pass through error objects
+          return {
+            ...mem,
+            content: sanitizeUnicode(mem.content || ''),
+          };
+        });
+
+        if (safeResults.length === 0) {
           return {
             content: [
               {
@@ -704,7 +1059,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
 
-        const resultList = results.map(memory => {
+        const resultList = safeResults.map(memory => {
           const preview = memory.content.length > 80 ? memory.content.substring(0, 80) + '...' : memory.content;
           return `🆔 ${memory.id} | 📝 ${preview} | 🏷️ ${memory.tags?.join(', ') || 'no tags'} | 📁 ${memory.project || 'default'}`;
         }).join('\n');
@@ -713,7 +1068,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: `🔍 Found ${results.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n\n${resultList}`,
+              text: `🔍 Found ${safeResults.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n\n${resultList}`,
             },
           ],
         };
@@ -747,8 +1102,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
+// A function to validate all memory files on startup
+async function validateAllMemories() {
+  console.log('Running startup validation of all memory files...');
+  const storage = new MarkdownStorage();
+  const projects = (await fs.promises.readdir(storage.baseDir, { withFileTypes: true }))
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+
+  let corruptedCount = 0;
+  for (const project of projects) {
+    const projectDir = storage.getProjectDir(project);
+    const files = await fs.promises.readdir(projectDir);
+    for (const file of files) {
+      if (path.extname(file) === '.md') {
+        const filepath = path.join(projectDir, file);
+        try {
+          const buffer = await fs.promises.readFile(filepath);
+          new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+        } catch (error) {
+          if (error instanceof TypeError) {
+            console.error(`[Startup Check] Corrupted file found: ${filepath}`);
+            corruptedCount++;
+          }
+        }
+      }
+    }
+  }
+
+  if (corruptedCount > 0) {
+    console.error(`[Startup Check] Validation complete. Found ${corruptedCount} corrupted files. The server will still start, but these files may cause issues.`);
+  } else {
+    console.log('[Startup Check] Validation complete. All memory files appear to be valid.');
+  }
+}
+
 // Start the server
 async function main() {
+  await validateAllMemories().catch(err => {
+    console.error('Error during startup validation:', err);
+  });
+
+  if (process.env.ENABLE_AUTO_SANITIZE === 'true') {
+    const storage = new MarkdownStorage();
+    initSanitizationWatcher(storage.baseDir);
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Like I Said Memory MCP Server v2 started successfully');

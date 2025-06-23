@@ -95,6 +95,19 @@ tmp/
 temp/
 temp-*
 
+# Backup files and testing directories  
+*-backup-*.js
+server-markdown-backup-*.js
+server-markdown-original.js
+server-markdown-with-github.js.backup
+server-markdown.js.backup
+memory_backups/
+memory-backups/
+test-memories/
+D:/
+D:\*
+dashboard.log
+
 # Source control
 .svn/
 .hg/
