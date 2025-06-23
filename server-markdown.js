@@ -8,7 +8,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { Transform, Readable } from 'stream';
+import { Readable } from 'stream';
 import { initSanitizationWatcher, sanitizeUnicode } from './memory-sanitizer.js';
 
 /**
@@ -610,6 +610,68 @@ class MarkdownStorage {
     return readable;
   }
 
+  // New method for efficient limited streaming
+  async streamMemoriesLimited(project, limit = 10) {
+    const memories = [];
+    let count = 0;
+    
+    const processFiles = async (projectDir) => {
+      if (count >= limit) return;
+      
+      try {
+        const files = await fs.promises.readdir(projectDir);
+        
+        // Sort files by modification time (newest first)
+        const fileStats = await Promise.all(
+          files
+            .filter(file => path.extname(file) === '.md')
+            .map(async (file) => {
+              const filepath = path.join(projectDir, file);
+              const stats = await fs.promises.stat(filepath);
+              return { file, filepath, mtime: stats.mtime };
+            })
+        );
+        
+        fileStats.sort((a, b) => b.mtime - a.mtime);
+        
+        for (const { filepath } of fileStats) {
+          if (count >= limit) break;
+          
+          try {
+            const memory = this.parseMarkdownFile(filepath);
+            if (memory) {
+              memories.push(memory);
+              count++;
+            }
+          } catch (error) {
+            console.error(`Failed to parse ${filepath}:`, error.message);
+          }
+        }
+      } catch (e) {
+        console.error(`Failed to read directory ${projectDir}:`, e.message);
+      }
+    };
+
+    if (project) {
+      const projectDir = await this.findProjectDir(project);
+      if (projectDir) {
+        await processFiles(projectDir);
+      }
+    } else {
+      // Process all projects until limit is reached
+      const allProjects = (await fs.promises.readdir(this.baseDir, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.'));
+      
+      for (const projectDirEnt of allProjects) {
+        if (count >= limit) break;
+        const projectDir = path.join(this.baseDir, projectDirEnt.name);
+        await processFiles(projectDir);
+      }
+    }
+    
+    return memories;
+  }
+
   async searchMemories(query, project) {
     const allMemories = await this.listMemories(project); // Now uses the robust streamMemories
     if (!query) {
@@ -690,7 +752,13 @@ class MarkdownStorage {
       }
     });
     
-    return results;
+    // Sort by score descending and return memory objects with scores
+    return results
+      .sort((a, b) => b.score - a.score)
+      .map(result => ({
+        ...result.memory,
+        score: result.score
+      }));
   }
 
   getSearchableText(memory) {
@@ -937,21 +1005,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
-  // Use existing sanitization logic from memory-sanitizer.js
-  class UnicodeSanitizer extends Transform {
-    constructor() {
-      super({ objectMode: true });
-    }
-    _transform(memory, encoding, callback) {
-      if (memory.content) {
-        memory.content = sanitizeUnicode(memory.content);
-      }
-      // Apply deep sanitization to the whole memory object
-      const sanitizedMemory = sanitizeResponse(memory);
-      this.push(sanitizedMemory);
-      callback();
-    }
-  }
+  // Removed unused UnicodeSanitizer class - sanitization is now handled directly in the methods
 
   // Helper function to handle tool execution with automatic sanitization
   async function handleToolOriginal(name, args) {
@@ -1026,22 +1080,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { limit = 10, project } = args;
         console.error(`[MCP DEBUG] list_memories called with limit=${limit}, project=${project || 'none'}`);
         
-        const memoryStream = await storage.streamMemories(project);
-        const sanitizer = new UnicodeSanitizer();
-        
-        const memories = [];
-        await new Promise((resolve, reject) => {
-            memoryStream
-                .pipe(sanitizer)
-                .on('data', (mem) => memories.push(mem))
-                .on('end', resolve)
-                .on('error', reject);
-        });
+        try {
+          // Fix: Use efficient limited streaming instead of loading all memories
+          const limitedMemories = await storage.streamMemoriesLimited(project, limit);
+          
+          // Apply sanitization to the limited results
+          const sanitizedMemories = limitedMemories.map(memory => ({
+            ...memory,
+            content: sanitizeUnicode(memory.content || ''),
+          }));
 
-        console.error(`[MCP DEBUG] listMemories returned ${memories.length} memories`);
-        const limitedMemories = memories.slice(0, limit);
+          console.error(`[MCP DEBUG] listMemories returned ${sanitizedMemories.length} memories`);
 
-        if (limitedMemories.length === 0) {
+        if (sanitizedMemories.length === 0) {
           const noMemoriesResponse = {
             content: [
               {
@@ -1053,8 +1104,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return safeJSONResponse(noMemoriesResponse, 'list_memories_empty');
         }
 
-        const total = memories.length;
-        const memoryList = limitedMemories.map(memory => {
+        const total = sanitizedMemories.length; // Note: This is now the limited count, not total count
+        const memoryList = sanitizedMemories.map(memory => {
           const preview = memory.content.length > 50 ? memory.content.substring(0, 50) + '...' : memory.content;
           const complexityIcon = ['🟢', '🟡', '🟠', '🔴'][Math.min((memory.complexity || 1) - 1, 3)];
           const priorityIcon = memory.priority === 'high' ? '🔥' : memory.priority === 'low' ? '❄️' : '📝';
@@ -1062,7 +1113,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return sanitizeUnicode(line);
         }).join('\n');
 
-        const responseText = `📚 Total memories: ${total}${project ? ` in project: ${project}` : ''}\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n📋 ${limitedMemories.length > 0 ? `Showing ${limitedMemories.length}:` : 'Recent memories:'}\n${memoryList}`;
+        const responseText = `📚 Showing ${total} recent memories${project ? ` in project: ${project}` : ''}\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n📋 ${sanitizedMemories.length > 0 ? `Memories (${sanitizedMemories.length}):` : 'Recent memories:'}\n${memoryList}`;
         
         const sanitizedResponse = {
           content: [
@@ -1074,6 +1125,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
         
         return safeJSONResponse(sanitizedResponse, 'list_memories');
+        
+        } catch (error) {
+          console.error(`[MCP ERROR] Failed to list memories:`, error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Failed to list memories: ${error.message}`,
+              },
+            ],
+          };
+        }
       }
 
       case 'delete_memory': {
@@ -1103,16 +1166,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'search_memories': {
         const { query, project } = args;
-        const results = await storage.searchMemories(query, project);
+        
+        try {
+          const results = await storage.searchMemories(query, project);
 
-        // Sanitize content before sending
-        const safeResults = results.map(mem => {
-          if (mem.error) return mem; // Pass through error objects
-          return {
-            ...mem,
-            content: sanitizeUnicode(mem.content || ''),
-          };
-        });
+          // Fix: Handle {memory, score} objects correctly
+          const safeResults = results.map(result => {
+            if (result.error) return result; // Pass through error objects
+            
+            // Check if this is a {memory, score} object from enhancedSearch
+            const mem = result.memory || result;
+            
+            return {
+              ...mem,
+              content: sanitizeUnicode(mem.content || ''),
+              score: result.score || 0, // Include score if available
+            };
+          });
 
         if (safeResults.length === 0) {
           const noResultsResponse = {
@@ -1146,6 +1216,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
         
         return safeJSONResponse(sanitizedResponse, 'search_memories');
+        
+        } catch (error) {
+          console.error(`[MCP ERROR] Failed to search memories:`, error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Failed to search memories: ${error.message}`,
+              },
+            ],
+          };
+        }
       }
 
       case 'test_tool': {
