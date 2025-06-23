@@ -68,3 +68,6 @@ dashboard.log
 .claude/settings.local.json
 *.md
 *-before-*.js
+
+# Backups
+/backups/

@@ -165,3 +165,38 @@ dist/
 bower_components/
 .claude/
 .like-i-said/
+
+# Ignore project and development files
+.DS_Store
+.github/
+.vscode/
+.claude/
+src/
+public/
+
+# Ignore configuration files
+vite.config.ts
+postcss.config.js
+tailwind.config.js
+eslint.config.js
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+
+# Ignore assets and documentation
+assets/
+documentation/
+
+# Ignore backups, tests, and logs
+/backups/
+/test-memories/
+/memory_backups/
+*.log
+*.tsbuildinfo
+
+# Ignore misc files
+CRITICAL_ISSUES_FOUND.md
+*.sh
+*.bat
+docker-compose.yml
+Dockerfile
