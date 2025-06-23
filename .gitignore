@@ -60,6 +60,9 @@ server-markdown.js.backup
 *.backup
 memory_backups/
 memory-backups/
+development-backups/
+backup/backup/
+# Keep the main backup directory but ignore nested backup folder
 D:/
 D:\*
 dashboard.log
@@ -70,8 +73,11 @@ dashboard.log
 *-before-*.js
 
 # Backups
-/development-backups/
+/backups/
+backup/*.zip
+backup/*.tar.gz
 
-# Ignore erroneous path-based folders
-[A-Z]*/
-[A-Z]*/
+# Testing (keep our test infrastructure, ignore generated files)
+coverage/
+.nyc_output/
+test-memories/

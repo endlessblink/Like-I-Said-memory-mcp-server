@@ -10,6 +10,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { Readable } from 'stream';
 import { initSanitizationWatcher, sanitizeUnicode } from './memory-sanitizer.js';
+import MemoryBackupScheduler from './backup-scheduler.js';
 
 /**
  * Deep sanitization function for complex objects and responses
@@ -86,7 +87,8 @@ if (fs.existsSync(envPath)) {
       }
     }
   });
-  console.error('.env file loaded successfully');
+  // Suppress startup logs to prevent JSON parse errors
+  // console.error('.env file loaded successfully');
 }
 
 
@@ -835,17 +837,20 @@ const __dirname = path.dirname(__filename);
 function getMemoriesPath() {
   // Priority 1: Environment variable override (for flexibility)
   if (process.env.MCP_MEMORY_PATH) {
-    console.error(`🔧 Using environment variable path: ${process.env.MCP_MEMORY_PATH}`);
+    // Suppress debug logs to prevent JSON parse errors
+    // console.error(`🔧 Using environment variable path: ${process.env.MCP_MEMORY_PATH}`);
     return process.env.MCP_MEMORY_PATH;
   }
   
   // Priority 2: Use __dirname for reliable path resolution
   const memoriesPath = path.join(__dirname, 'memories');
-  console.error(`🔧 Using __dirname-based path: ${memoriesPath}`);
+  // Suppress debug logs to prevent JSON parse errors
+  // console.error(`🔧 Using __dirname-based path: ${memoriesPath}`);
   
   // Ensure memories directory exists
   if (!fs.existsSync(memoriesPath)) {
-    console.error(`🔧 Creating memories directory: ${memoriesPath}`);
+    // Suppress debug logs to prevent JSON parse errors
+    // console.error(`🔧 Creating memories directory: ${memoriesPath}`);
     fs.mkdirSync(memoriesPath, { recursive: true });
   }
   
@@ -853,11 +858,13 @@ function getMemoriesPath() {
 }
 
 const memoriesPath = getMemoriesPath();
-console.error(`🔧 Debug: Server at: ${__dirname}`);
-console.error(`🔧 Debug: Final memories path: ${memoriesPath}`);
+// Suppress debug logs to prevent JSON parse errors
+// console.error(`🔧 Debug: Server at: ${__dirname}`);
+// console.error(`🔧 Debug: Final memories path: ${memoriesPath}`);
 const storage = new MarkdownStorage(memoriesPath);
 
-console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
+// Suppress startup message to prevent JSON parse errors
+// console.error('Like-I-Said Memory Server v2 - Markdown File Mode');
 
 // Create MCP server
 const server = new Server(
@@ -1272,7 +1279,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // A function to validate all memory files on startup
 async function validateAllMemories() {
-  console.log('Running startup validation of all memory files...');
+  // Suppress startup logs to prevent JSON parse errors in Claude/Windsurf
+  // console.log('Running startup validation of all memory files...');
   const projects = (await fs.promises.readdir(storage.baseDir, { withFileTypes: true }))
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name);
@@ -1289,7 +1297,8 @@ async function validateAllMemories() {
           new TextDecoder('utf-8', { fatal: true }).decode(buffer);
         } catch (error) {
           if (error instanceof TypeError) {
-            console.error(`[Startup Check] Corrupted file found: ${filepath}`);
+            // Log to debug file instead of stderr
+            // console.error(`[Startup Check] Corrupted file found: ${filepath}`);
             corruptedCount++;
           }
         }
@@ -1297,26 +1306,40 @@ async function validateAllMemories() {
     }
   }
 
-  if (corruptedCount > 0) {
-    console.error(`[Startup Check] Validation complete. Found ${corruptedCount} corrupted files. The server will still start, but these files may cause issues.`);
-  } else {
-    console.log('[Startup Check] Validation complete. All memory files appear to be valid.');
-  }
+  // Don't output validation results to avoid interfering with JSON-RPC
+  // if (corruptedCount > 0) {
+  //   console.error(`[Startup Check] Validation complete. Found ${corruptedCount} corrupted files. The server will still start, but these files may cause issues.`);
+  // } else {
+  //   console.log('[Startup Check] Validation complete. All memory files appear to be valid.');
+  // }
 }
 
 // Start the server
 async function main() {
   await validateAllMemories().catch(err => {
-    console.error('Error during startup validation:', err);
+    // Suppress error logs during startup
+    // console.error('Error during startup validation:', err);
   });
 
   if (process.env.ENABLE_AUTO_SANITIZE === 'true') {
     initSanitizationWatcher(storage.baseDir);
   }
 
+  // Start automatic backup system
+  if (process.env.DISABLE_AUTO_BACKUP !== 'true') {
+    try {
+      const backupSystem = new MemoryBackupScheduler({ silent: true });
+      backupSystem.start();
+    } catch (error) {
+      // Silently handle backup system errors to not interfere with MCP startup
+      // console.error('Backup system startup failed:', error);
+    }
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Like I Said Memory MCP Server v2 started successfully');
+  // Suppress success message to prevent JSON parse errors
+  // console.error('Like I Said Memory MCP Server v2 started successfully');
 }
 
 main().catch(console.error);

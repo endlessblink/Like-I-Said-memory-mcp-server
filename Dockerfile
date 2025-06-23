@@ -29,7 +29,7 @@ ENV npm_config_python=/usr/bin/python3
 WORKDIR /app
 
 # Install the production version from NPM
-RUN npm install -g @endlessblink/like-i-said-v2@2.3.2
+RUN npm install -g @endlessblink/like-i-said-v2@2.3.5
 
 # Rebuild native modules for Alpine compatibility
 RUN npm rebuild --update-binary

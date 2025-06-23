@@ -21,7 +21,7 @@ services:
     environment:
       - NODE_ENV=production
     command: >
-      sh -c "npm install -g @endlessblink/like-i-said-v2@2.3.2 && 
+      sh -c "npm install -g @endlessblink/like-i-said-v2@2.3.5 && 
              npx @endlessblink/like-i-said-v2 start"
     stdin_open: true
     tty: true
@@ -57,7 +57,7 @@ services:
       - NODE_ENV=production
     command: >
       sh -c "apk add --no-cache jq && 
-             npm install -g @endlessblink/like-i-said-v2@2.3.2 && 
+             npm install -g @endlessblink/like-i-said-v2@2.3.5 && 
              echo 'Like-I-Said v2.3.1 installed. Run tests with:' && 
              echo 'echo \"{\\\"jsonrpc\\\": \\\"2.0\\\", \\\"id\\\": 1, \\\"method\\\": \\\"tools/list\\\"}\" | npx @endlessblink/like-i-said-v2 start | jq' &&
              /bin/sh"

@@ -12,11 +12,12 @@ const sanitizationMetrics = {
 };
 
 // Log metrics periodically to the console
-setInterval(() => {
-  if (sanitizationMetrics.filesProcessed > 0) {
-    console.log(`[Sanitization Stats] Files processed: ${sanitizationMetrics.filesProcessed} | Corruptions fixed: ${sanitizationMetrics.corruptionsFixed} | Backups: ${sanitizationMetrics.backupsCreated}`);
-  }
-}, 60000);
+// Disabled to prevent JSON parse errors in MCP clients
+// setInterval(() => {
+//   if (sanitizationMetrics.filesProcessed > 0) {
+//     console.log(`[Sanitization Stats] Files processed: ${sanitizationMetrics.filesProcessed} | Corruptions fixed: ${sanitizationMetrics.corruptionsFixed} | Backups: ${sanitizationMetrics.backupsCreated}`);
+//   }
+// }, 60000);
 
 /**
  * Sanitizes a string by re-encoding it as UTF-8 and decoding it,
@@ -48,7 +49,8 @@ async function createBackup(filePath, originalContent) {
     await fs.promises.writeFile(backupPath, originalContent, 'utf8');
     sanitizationMetrics.backupsCreated++;
   } catch (error) {
-    console.error(`[Backup Error] Failed to create backup for ${filePath}:`, error);
+    // Suppress error logs to prevent JSON parse errors in MCP clients
+    // console.error(`[Backup Error] Failed to create backup for ${filePath}:`, error);
   }
 }
 
@@ -71,11 +73,13 @@ async function handleFileChange(filePath) {
       
       await createBackup(filePath, originalContent);
       await fs.promises.writeFile(filePath, sanitizedContent, 'utf8');
-      console.log(`[Auto-Sanitized] Fixed and backed up: ${path.basename(filePath)}`);
+      // Suppress logs to prevent JSON parse errors in MCP clients
+      // console.log(`[Auto-Sanitized] Fixed and backed up: ${path.basename(filePath)}`);
     }
   } catch (error) {
     if (error.code !== 'ENOENT') { // Ignore errors for files that were deleted quickly
-        console.error(`[Sanitization Error] Failed to process ${filePath}:`, error);
+        // Suppress error logs to prevent JSON parse errors in MCP clients
+        // console.error(`[Sanitization Error] Failed to process ${filePath}:`, error);
     }
   }
 }
@@ -85,7 +89,8 @@ async function handleFileChange(filePath) {
  * @param {string} memoriesPath The path to the main memories directory.
  */
 export function initSanitizationWatcher(memoriesPath) {
-  console.log(`[Auto-Sanitize] Initializing watcher for path: ${memoriesPath}`);
+  // Suppress startup logs to prevent JSON parse errors in MCP clients
+  // console.log(`[Auto-Sanitize] Initializing watcher for path: ${memoriesPath}`);
   const watcher = chokidar.watch(memoriesPath, {
     ignored: /(^|[\/\\])\..*|.*\.backups.*/, // Ignore dotfiles and backup directories
     persistent: true,
@@ -100,7 +105,11 @@ export function initSanitizationWatcher(memoriesPath) {
   watcher
     .on('add', (path) => handleFileChange(path))
     .on('change', (path) => handleFileChange(path))
-    .on('error', (error) => console.error(`[Watcher Error] ${error}`));
+    .on('error', (error) => {
+      // Log errors silently to avoid interfering with JSON-RPC
+      // console.error(`[Watcher Error] ${error}`)
+    });
   
-  console.log('[Auto-Sanitize] File watcher is now running.');
+  // Suppress startup logs to prevent JSON parse errors in MCP clients
+  // console.log('[Auto-Sanitize] File watcher is now running.');
 } 

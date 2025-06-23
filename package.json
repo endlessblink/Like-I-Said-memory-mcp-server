@@ -60,11 +60,17 @@
     "install-mcp": "node cli.js install",
     "configure": "node cli.js init",
     "test:mcp": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}' | node server-markdown.js",
-    "test:api": "curl -s http://localhost:3001/api/status"
+    "test:api": "curl -s http://localhost:3001/api/status",
+    "backup": "node backup-scheduler.js backup",
+    "backup:start": "node backup-scheduler.js start",
+    "backup:status": "node backup-scheduler.js status",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@endlessblink/like-i-said-v2": "^2.0.25",
-    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@modelcontextprotocol/sdk": "^1.13.1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
@@ -77,6 +83,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@types/cytoscape": "^3.21.9",
+    "archiver": "^7.0.1",
     "chokidar": "^4.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -98,13 +105,17 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.13",
     "concurrently": "^8.2.2",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.21",
     "puppeteer": "^24.10.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.0.4",
-    "vite": "^4.4.9"
+    "vite": "^4.4.9",
+    "vitest": "^3.2.4"
   }
 }

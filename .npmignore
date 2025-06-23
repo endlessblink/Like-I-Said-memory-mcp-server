@@ -188,14 +188,22 @@ assets/
 documentation/
 
 # Ignore backups, tests, and logs
-/development-backups/
+/backups/
+backup/
 /test-memories/
 /memory_backups/
 *.log
 *.tsbuildinfo
 
+# Testing files (not needed in NPM package)
+tests/
+vitest.config.ts
+coverage/
+.nyc_output/
+*.test.js
+*.spec.js
+
 # Ignore misc files
-/scripts/
 CRITICAL_ISSUES_FOUND.md
 *.sh
 *.bat
