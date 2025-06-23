@@ -12,6 +12,63 @@ import { Transform, Readable } from 'stream';
 import JSONStream from 'JSONStream';
 import { initSanitizationWatcher, sanitizeUnicode } from './memory-sanitizer.js';
 
+/**
+ * Deep sanitization function for complex objects and responses
+ * Recursively processes all string values to ensure valid UTF-8 encoding
+ * @param {any} obj - The object to sanitize (strings, arrays, objects)
+ * @returns {any} - Sanitized object with valid UTF-8 strings
+ */
+function sanitizeResponse(obj) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  
+  function processValue(value) {
+    if (typeof value === 'string') {
+      return decoder.decode(encoder.encode(value));
+    }
+    if (Array.isArray(value)) {
+      return value.map(processValue);
+    }
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [k, processValue(v)])
+      );
+    }
+    return value;
+  }
+  
+  return processValue(obj);
+}
+
+/**
+ * Safe JSON response wrapper with automatic error recovery
+ * @param {any} data - Data to serialize as JSON
+ * @param {string} context - Context description for debugging
+ * @returns {any} - Sanitized data safe for JSON serialization
+ */
+function safeJSONResponse(data, context = 'unknown') {
+  try {
+    JSON.stringify(data);
+    return data;
+  } catch (err) {
+    console.error(`❌ JSON Error in ${context}:`, err.message);
+    const sanitized = sanitizeResponse(data);
+    console.error(`✅ Applied sanitization to ${context}`);
+    return sanitized;
+  }
+}
+
+// Enhanced error logging for Unicode issues
+process.on('uncaughtException', (err) => {
+  if (err.message.includes('surrogate') || err.message.includes('JSON') || err.message.includes('invalid string')) {
+    console.error('🚨 UNICODE ERROR: Memory file contains invalid characters');
+    console.error('File likely needs sanitization. Error details:', err.message);
+    console.error('Stack trace:', err.stack);
+  } else {
+    // Re-throw other exceptions
+    throw err;
+  }
+});
 
 // Load .env file if it exists
 const envPath = path.join(process.cwd(), '.env');
@@ -891,7 +948,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   }
 
-  try {
+  // Helper function to handle tool execution with automatic sanitization
+  async function handleToolOriginal(name, args) {
     switch (name) {
       case 'add_memory': {
         const { 
@@ -920,7 +978,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           last_accessed: new Date().toISOString(),
         };
 
-        const filepath = await storage.saveMemory(memory);
+        const savedMemory = await storage.saveMemory(memory);
         const complexity = storage.detectComplexityLevel(memory);
         const contentType = storage.detectContentType(content);
         
@@ -928,7 +986,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: `✅ Memory stored as markdown file: ${path.basename(filepath)}\n🆔 ID: ${memory.id}\n📁 Project: ${project || 'default'}\n🎯 Complexity Level: ${complexity}\n📝 Content Type: ${contentType}\n🏷️ Priority: ${priority}\n📊 Status: ${status}\n\nContent Preview:\n${content.substring(0, 150)}${content.length > 150 ? '...' : ''}`,
+              text: `✅ Memory stored as markdown file: ${savedMemory.filename}\n🆔 ID: ${memory.id}\n📁 Project: ${project || 'default'}\n🎯 Complexity Level: ${complexity}\n📝 Content Type: ${contentType}\n🏷️ Priority: ${priority}\n📊 Status: ${status}\n\nContent Preview:\n${content.substring(0, 150)}${content.length > 150 ? '...' : ''}`,
             },
           ],
         };
@@ -979,7 +1037,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const limitedMemories = memories.slice(0, limit);
 
         if (limitedMemories.length === 0) {
-          return {
+          const noMemoriesResponse = {
             content: [
               {
                 type: 'text',
@@ -987,6 +1045,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               },
             ],
           };
+          return safeJSONResponse(noMemoriesResponse, 'list_memories_empty');
         }
 
         const total = memories.length;
@@ -1000,7 +1059,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const responseText = `📚 Total memories: ${total}${project ? ` in project: ${project}` : ''}\n🎯 Complexity Legend: 🟢 L1 (Simple) | 🟡 L2 (Enhanced) | 🟠 L3 (Project) | 🔴 L4 (Advanced)\n🏷️ Priority: 🔥 High | 📝 Medium | ❄️ Low\n\n📋 ${limitedMemories.length > 0 ? `Showing ${limitedMemories.length}:` : 'Recent memories:'}\n${memoryList}`;
         
-        return {
+        const sanitizedResponse = {
           content: [
             {
               type: 'text',
@@ -1008,6 +1067,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+        
+        return safeJSONResponse(sanitizedResponse, 'list_memories');
       }
 
       case 'delete_memory': {
@@ -1089,8 +1150,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
+  }
+
+  // Main tool handler with enhanced error handling and sanitization
+  try {
+    const result = await handleToolOriginal(name, args);
+    
+    // Apply deep sanitization to all responses
+    const sanitizedResult = sanitizeResponse(result);
+    return safeJSONResponse(sanitizedResult, `tool_${name}`);
+    
   } catch (error) {
-    return {
+    console.error(`[ERROR] Tool ${name} failed:`, error.message);
+    const errorResponse = {
       content: [
         {
           type: 'text',
@@ -1099,6 +1171,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ],
       isError: true,
     };
+    return safeJSONResponse(errorResponse, `tool_${name}_error`);
   }
 });
 
