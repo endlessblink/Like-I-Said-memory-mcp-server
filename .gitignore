@@ -71,3 +71,7 @@ dashboard.log
 
 # Backups
 /development-backups/
+
+# Ignore erroneous path-based folders
+[A-Z]*/
+[A-Z]*/
