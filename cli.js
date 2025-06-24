@@ -691,14 +691,62 @@ async function setupAndInstall() {
   await quickInstall();
 }
 
+// Docker configuration helper
+async function setupDockerConfig() {
+  log('\n🐳 Setting up Docker configuration...', 'blue');
+  
+  const dockerFiles = [
+    'docker-configs/Dockerfile.production',
+    'docker-configs/Dockerfile.minimal'
+  ];
+  
+  for (const dockerFile of dockerFiles) {
+    if (fs.existsSync(dockerFile)) {
+      const targetName = dockerFile.includes('production') ? 'Dockerfile' : 'Dockerfile.minimal';
+      fs.copyFileSync(dockerFile, targetName);
+      log(`✓ Copied ${dockerFile} to ${targetName}`, 'green');
+    }
+  }
+  
+  // Create docker-compose.yml if it doesn't exist
+  if (!fs.existsSync('docker-compose.yml')) {
+    const dockerCompose = `version: '3.8'
+services:
+  like-i-said-mcp:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./memories:/app/memories
+    environment:
+      - NODE_ENV=production
+      - MCP_MEMORY_PATH=/app/memories
+    restart: unless-stopped
+`;
+    fs.writeFileSync('docker-compose.yml', dockerCompose);
+    log('✓ Created docker-compose.yml', 'green');
+  }
+  
+  log('\n🐳 Docker setup complete!', 'green');
+  log('To use Docker:', 'blue');
+  log('  docker build -t like-i-said-mcp .', 'yellow');
+  log('  docker run -p 3001:3001 like-i-said-mcp', 'yellow');
+  log('Or with docker-compose:', 'blue');
+  log('  docker-compose up -d', 'yellow');
+}
+
 // Handle commands
 async function handleCommand() {
   const command = process.argv[2];
+  const hasDockerFlag = process.argv.includes('--docker');
 
   try {
     switch (command) {
       case 'install':
         await quickInstall();
+        if (hasDockerFlag) {
+          await setupDockerConfig();
+        }
         break;
       case 'setup':
         await setupAndInstall();
@@ -728,10 +776,11 @@ async function handleCommand() {
       log('  • Zed Editor, Codeium, Docker', 'yellow');
       
       log('\n📋 Commands:', 'blue');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install - Auto-setup and configure all clients (recommended)', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 setup   - Alternative setup command', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init    - Advanced setup and configuration', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start   - Start the MCP server manually', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install        - Auto-setup and configure all clients (recommended)', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --docker - Install with Docker configuration', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 setup          - Alternative setup command', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init           - Advanced setup and configuration', 'yellow');
+      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start          - Start the MCP server manually', 'yellow');
       
       log('\n🚀 Quick Start:', 'green');
       log('  1. npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');

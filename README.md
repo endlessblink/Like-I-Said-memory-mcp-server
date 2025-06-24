@@ -23,41 +23,81 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 ## 🚀 Easy Installation (No Technical Skills Required!)
 
-### Prerequisites: Install Node.js (First Time Only)
+### Step 1: Install Node.js (First Time Only)
 
-**If you don't have Node.js installed**, follow these simple steps:
+**For complete beginners - Node.js is like installing a program that helps run JavaScript apps on your computer.**
 
-1. **Visit**: [nodejs.org](https://nodejs.org)
-2. **Download**: The "LTS" version (recommended for most users)
-3. **Install**: Run the downloaded installer with default settings
-4. **Verify**: Open terminal/command prompt and type `node --version`
+#### Windows Users:
+1. **Visit**: [nodejs.org](https://nodejs.org) or [nodejs.org/releases](https://nodejs.org/releases) for older versions
+2. **Download**: Click the green "LTS" button (Long Term Support - most stable)
+3. **Install**: 
+   - Run the downloaded `.msi` file
+   - Click "Next" through all the steps (defaults are fine)
+   - ✅ Check "Automatically install the necessary tools" if asked
+4. **Verify**: 
+   - Press `Windows + R`, type `cmd`, press Enter
+   - Type: `node --version` and press Enter
+   - You should see something like `v20.x.x`
 
-*Node.js is required to run the MCP server. It's like installing a program that helps your AI remember things.*
+#### Mac Users:
+1. **Visit**: [nodejs.org](https://nodejs.org) or [nodejs.org/releases](https://nodejs.org/releases) for specific versions
+2. **Download**: Click the green "LTS" button 
+3. **Install**: 
+   - Run the downloaded `.pkg` file
+   - Follow the installer (defaults are fine)
+4. **Verify**:
+   - Press `Cmd + Space`, type `terminal`, press Enter
+   - Type: `node --version` and press Enter
+   - You should see something like `v20.x.x`
 
-### Step 1: One-Command Installation
+#### Linux Users:
+```bash
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify
+node --version
+```
+
+### Step 2: One-Command MCP Installation
 ```bash
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
-**What this does automatically:**
-- ✅ Downloads and sets up the memory server
-- ✅ Finds your AI apps (Claude Desktop, Cursor, Windsurf) 
-- ✅ Configures everything to work together
-- ✅ Tests that everything is working
-- ✅ Keeps your existing settings safe
+**What this magical command does:**
+- 🔍 **Finds your AI apps** automatically (Claude Desktop, Cursor, Windsurf, VS Code)
+- ⚙️ **Configures everything** so your AI can remember things
+- 🧪 **Tests everything works** before finishing
+- 🛡️ **Keeps your existing settings** completely safe
+- 📦 **Works on all platforms** (Windows, Mac, Linux)
 
-**No coding knowledge required! The installer does everything for you.**
+**No coding knowledge required! Just copy, paste, and press Enter.**
 
-### Step 2: Start the Web Dashboard (Optional)
+### Step 3: Start the Web Dashboard (Optional)
 ```bash
-# Global installation (recommended)
+# Option A: Install globally (recommended for regular use)
 npm install -g @endlessblink/like-i-said-v2
 like-i-said-v2 start
 
-# Or run directly from npx
+# Option B: Run directly without installing
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 ```
-Visit `http://localhost:3001` for visual memory management with AI insights, statistics, and relationship mapping.
+
+**Visual Interface**: Visit `http://localhost:3001` in your browser for:
+- 📊 **Memory Dashboard** - See all your AI's memories in a modern interface
+- 🔍 **Advanced Search** - Find memories by content, tags, or projects  
+- 📈 **Analytics** - Usage statistics and memory insights
+- 🎨 **Memory Cards** - Beautiful card-based layout with categories
+
+### For Advanced Users: Docker Support
+```bash
+# Install with Docker configuration
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --docker
+
+# Or copy Docker files for custom deployment
+cp docker-configs/Dockerfile.production ./Dockerfile
+```
 
 ## 📸 Dashboard Screenshots
 
