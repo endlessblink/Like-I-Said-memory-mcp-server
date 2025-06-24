@@ -74,7 +74,16 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 
 **No coding knowledge required! Just copy, paste, and press Enter.**
 
-### Step 3: Start the Web Dashboard (Optional)
+### Step 3: Update to Latest Version (When Needed)
+```bash
+# Update to the latest version
+npm update -g @endlessblink/like-i-said-v2
+
+# Or reinstall to get latest version
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+```
+
+### Step 4: Start the Web Dashboard (Optional)
 ```bash
 # Option A: Install globally (recommended for regular use)
 npm install -g @endlessblink/like-i-said-v2
