@@ -1,10 +1,11 @@
 # Smithery deployment configuration for Like-I-Said MCP v2
-# Simple Node.js deployment without Docker
+# Native HTTP transport - no STDIO wrapper
 version: 1
 
-# Direct Node.js execution
+# Native HTTP MCP server
 start:
-  command: ["node", "server-http-fixed.js"]
+  type: http-stream
+  command: ["node", "server-http-native.js"]
   port: 3001
 
 # MCP server configuration schema
@@ -13,8 +14,8 @@ configSchema:
   properties:
     storagePath:
       type: string
-      default: "./memories"
-      description: "Path for markdown memory storage"
+      default: "./memories.json"
+      description: "Path for JSON memory storage"
     projectName:
       type: string
       default: "default"
@@ -23,4 +24,4 @@ configSchema:
 # Environment variables
 env:
   NODE_ENV: production
-  MCP_MEMORY_PATH: "./memories"
+  MCP_MEMORY_PATH: "./memories.json"
