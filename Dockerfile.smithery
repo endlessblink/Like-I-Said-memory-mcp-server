@@ -1,0 +1,36 @@
+# Smithery-optimized Dockerfile for Like-I-Said MCP v2
+FROM node:20-alpine
+
+# Install system dependencies for native modules
+RUN apk add --no-cache \
+    build-base \
+    python3 \
+    py3-pip
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install production dependencies only
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy essential server files (no React build needed)
+COPY server-markdown.js ./
+COPY server-http-fixed.js ./
+COPY memory-sanitizer.js ./
+COPY backup-scheduler.js ./
+COPY smithery.yaml ./
+
+# Create memories directory and declare as volume for persistence
+RUN mkdir -p /app/memories
+VOLUME ["/app/memories"]
+
+# Expose port for HTTP wrapper
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Default command - use fixed HTTP server for Smithery deployment
+CMD ["node", "server-http-fixed.js"]
