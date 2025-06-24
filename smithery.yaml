@@ -4,7 +4,7 @@ version: 1
 # HTTP transport required for Smithery cloud deployment
 start:
   type: http-stream
-  command: ["node", "server-http-fixed.js"]
+  command: ["node", "/app/server-http-fixed.js"]
   port: 3001
   cors: true
 
@@ -26,7 +26,7 @@ configSchema:
 
 # Docker build configuration
 build:
-  dockerfile: Dockerfile.smithery
+  dockerfile: Dockerfile.smithery-simple
   dockerBuildPath: .
 
 # Environment variables
