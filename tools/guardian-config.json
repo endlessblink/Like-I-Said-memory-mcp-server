@@ -1,0 +1,53 @@
+{
+  "settings": {
+    "maxFailures": 3,
+    "failureWindow": 300000,
+    "retryDelay": 60000,
+    "maxRetries": 3,
+    "healthCheckInterval": 30000,
+    "enabled": true
+  },
+  "serverStatus": [
+    [
+      "github",
+      {
+        "failures": [],
+        "disabled": false,
+        "lastCheck": 1750744120544,
+        "retryCount": 0,
+        "lastRetry": null
+      }
+    ],
+    [
+      "playwright",
+      {
+        "failures": [],
+        "disabled": false,
+        "lastCheck": 1750744122985,
+        "retryCount": 0,
+        "lastRetry": null
+      }
+    ],
+    [
+      "puppeteer",
+      {
+        "failures": [],
+        "disabled": false,
+        "lastCheck": 1750744122981,
+        "retryCount": 0,
+        "lastRetry": null
+      }
+    ],
+    [
+      "like-i-said-memory",
+      {
+        "failures": [],
+        "disabled": false,
+        "lastCheck": 1750744123440,
+        "retryCount": 0,
+        "lastRetry": null
+      }
+    ]
+  ],
+  "lastUpdated": "2025-06-24T05:48:43.440Z"
+}

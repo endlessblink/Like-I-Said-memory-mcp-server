@@ -33,7 +33,7 @@
     "url": "https://github.com/endlessblink/Like-I-Said-Memory-V2/issues"
   },
   "bin": {
-    "like-i-said-v2": "./cli.js"
+    "like-i-said-v2": "cli.js"
   },
   "files": [
     "cli.js",
@@ -117,5 +117,8 @@
     "typescript": "^5.0.4",
     "vite": "^4.4.9",
     "vitest": "^3.2.4"
+  },
+  "directories": {
+    "test": "tests"
   }
 }

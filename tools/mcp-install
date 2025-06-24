@@ -1,0 +1,285 @@
+#!/bin/bash
+
+# MCP Server Auto-Installer for WSL
+# Usage: mcp-install <server-name> [scope] [project-path]
+# Scope: global (default) or project
+# Project-path: required if scope is project
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+CLAUDE_CONFIG="$HOME/.claude.json"
+MCP_DIR="$HOME/.claude/mcp-servers"
+GITHUB_PAT_PLACEHOLDER="YOUR_GITHUB_TOKEN_HERE"
+
+# Ensure MCP directory exists
+mkdir -p "$MCP_DIR"
+
+# Helper functions
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Function to backup Claude config
+backup_config() {
+    cp "$CLAUDE_CONFIG" "$CLAUDE_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
+    log_info "Config backed up"
+}
+
+# Function to add MCP server to config
+add_to_config() {
+    local server_name="$1"
+    local scope="$2"
+    local project_path="$3"
+    local config="$4"
+    
+    python3 << EOF
+import json
+import sys
+
+try:
+    with open('$CLAUDE_CONFIG', 'r') as f:
+        config = json.load(f)
+    
+    server_config = $config
+    
+    if '$scope' == 'global':
+        if 'mcpServers' not in config:
+            config['mcpServers'] = {}
+        config['mcpServers']['$server_name'] = server_config
+        print(f"Added {server_config['command']} to global MCP servers")
+    else:
+        # Project scope
+        if 'projects' not in config:
+            config['projects'] = {}
+        if '$project_path' not in config['projects']:
+            config['projects']['$project_path'] = {'allowedTools': [], 'ignorePatterns': [], 'mcpServers': {}}
+        if 'mcpServers' not in config['projects']['$project_path']:
+            config['projects']['$project_path']['mcpServers'] = {}
+        
+        config['projects']['$project_path']['mcpServers']['$server_name'] = server_config
+        print(f"Added {server_config['command']} to project MCP servers for $project_path")
+    
+    with open('$CLAUDE_CONFIG', 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    sys.exit(0)
+except Exception as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+EOF
+}
+
+# Function to prompt for GitHub token
+prompt_github_token() {
+    echo -e "${YELLOW}GitHub MCP Server requires a Personal Access Token.${NC}"
+    echo "Create one at: https://github.com/settings/tokens/new"
+    echo -n "Enter your GitHub PAT (or press Enter to use placeholder): "
+    read -s github_token
+    echo
+    echo "${github_token:-$GITHUB_PAT_PLACEHOLDER}"
+}
+
+# MCP Server definitions
+install_github() {
+    local scope="$1"
+    local project_path="$2"
+    
+    log_info "Installing GitHub MCP Server..."
+    
+    # Download binary if not exists
+    if [[ ! -f "$MCP_DIR/github-mcp-server" ]]; then
+        log_info "Downloading GitHub MCP Server binary..."
+        curl -L "https://github.com/github/github-mcp-server/releases/download/v0.5.0/github-mcp-server_Linux_x86_64.tar.gz" -o "$MCP_DIR/github-mcp.tar.gz"
+        tar -xzf "$MCP_DIR/github-mcp.tar.gz" -C "$MCP_DIR"
+        chmod +x "$MCP_DIR/github-mcp-server"
+        rm "$MCP_DIR/github-mcp.tar.gz"
+    fi
+    
+    local github_token=$(prompt_github_token)
+    
+    local config="{
+        \"command\": \"$MCP_DIR/github-mcp-server\",
+        \"args\": [\"stdio\"],
+        \"env\": {
+            \"GITHUB_PERSONAL_ACCESS_TOKEN\": \"$github_token\"
+        }
+    }"
+    
+    add_to_config "github" "$scope" "$project_path" "$config"
+    log_success "GitHub MCP Server installed"
+}
+
+install_puppeteer() {
+    local scope="$1"
+    local project_path="$2"
+    
+    log_info "Installing Puppeteer MCP Server..."
+    
+    local config="{
+        \"command\": \"npx\",
+        \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]
+    }"
+    
+    add_to_config "puppeteer" "$scope" "$project_path" "$config"
+    log_success "Puppeteer MCP Server installed"
+}
+
+install_playwright() {
+    local scope="$1"
+    local project_path="$2"
+    
+    log_info "Installing Playwright MCP Server..."
+    
+    local config="{
+        \"command\": \"npx\",
+        \"args\": [\"-y\", \"@executeautomation/mcp-playwright\"]
+    }"
+    
+    add_to_config "playwright" "$scope" "$project_path" "$config"
+    log_success "Playwright MCP Server installed"
+}
+
+install_sqlite() {
+    local scope="$1"
+    local project_path="$2"
+    
+    log_info "Installing SQLite MCP Server..."
+    
+    local config="{
+        \"command\": \"npx\",
+        \"args\": [\"-y\", \"@modelcontextprotocol/server-sqlite\"]
+    }"
+    
+    add_to_config "sqlite" "$scope" "$project_path" "$config"
+    log_success "SQLite MCP Server installed"
+}
+
+install_filesystem() {
+    local scope="$1"
+    local project_path="$2"
+    
+    log_info "Installing Filesystem MCP Server..."
+    
+    local config="{
+        \"command\": \"npx\",
+        \"args\": [\"-y\", \"@modelcontextprotocol/server-filesystem\"]
+    }"
+    
+    add_to_config "filesystem" "$scope" "$project_path" "$config"
+    log_success "Filesystem MCP Server installed"
+}
+
+install_memory() {
+    local scope="$1"
+    local project_path="$2"
+    
+    if [[ "$scope" == "project" && -f "$project_path/server-markdown.js" ]]; then
+        log_info "Installing Like-I-Said Memory MCP Server (local)..."
+        
+        local config="{
+            \"command\": \"node\",
+            \"args\": [\"$project_path/server-markdown.js\"]
+        }"
+        
+        add_to_config "like-i-said-memory" "$scope" "$project_path" "$config"
+        log_success "Like-I-Said Memory MCP Server installed"
+    else
+        log_error "Memory server requires project scope and server-markdown.js in project directory"
+        exit 1
+    fi
+}
+
+# Function to list available servers
+list_servers() {
+    echo -e "${BLUE}Available MCP Servers:${NC}"
+    echo "  github      - GitHub API integration"
+    echo "  puppeteer   - Browser automation with Puppeteer"
+    echo "  playwright  - Browser automation with Playwright"
+    echo "  sqlite      - SQLite database operations"
+    echo "  filesystem  - File system operations"
+    echo "  memory      - Like-I-Said memory server (project only)"
+    echo ""
+    echo -e "${BLUE}Usage:${NC}"
+    echo "  mcp-install <server-name> [global|project] [project-path]"
+    echo "  mcp-install list"
+    echo ""
+    echo -e "${BLUE}Examples:${NC}"
+    echo "  mcp-install github global"
+    echo "  mcp-install puppeteer project /path/to/project"
+    echo "  mcp-install memory project /path/to/like-i-said-project"
+}
+
+# Main function
+main() {
+    local server_name="$1"
+    local scope="${2:-global}"
+    local project_path="$3"
+    
+    # Check if Claude config exists
+    if [[ ! -f "$CLAUDE_CONFIG" ]]; then
+        log_error "Claude config not found at $CLAUDE_CONFIG"
+        exit 1
+    fi
+    
+    # Handle list command
+    if [[ "$server_name" == "list" ]]; then
+        list_servers
+        exit 0
+    fi
+    
+    # Validate arguments
+    if [[ -z "$server_name" ]]; then
+        log_error "Server name is required"
+        list_servers
+        exit 1
+    fi
+    
+    if [[ "$scope" == "project" && -z "$project_path" ]]; then
+        log_error "Project path is required when scope is 'project'"
+        exit 1
+    fi
+    
+    # Backup config
+    backup_config
+    
+    # Install the requested server
+    case "$server_name" in
+        "github")
+            install_github "$scope" "$project_path"
+            ;;
+        "puppeteer")
+            install_puppeteer "$scope" "$project_path"
+            ;;
+        "playwright")
+            install_playwright "$scope" "$project_path"
+            ;;
+        "sqlite")
+            install_sqlite "$scope" "$project_path"
+            ;;
+        "filesystem")
+            install_filesystem "$scope" "$project_path"
+            ;;
+        "memory")
+            install_memory "$scope" "$project_path"
+            ;;
+        *)
+            log_error "Unknown server: $server_name"
+            list_servers
+            exit 1
+            ;;
+    esac
+    
+    log_success "Installation complete! Restart Claude Code to use the new MCP server."
+}
+
+# Run main function with all arguments
+main "$@"
