@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # MCP Server Auto-Installer for WSL
-# Usage: mcp-install <server-name> [scope] [project-path]
+# Usage: 
+#   mcp-install <server-name> [scope] [project-path]     # Pre-configured servers
+#   mcp-install npm <package-name> [scope] [project-path] # Any NPM package
+#   mcp-install auto <github-url> [scope] [project-path] # Auto-detect from GitHub
+#   mcp-install remote <name> <url> [scope] [project-path] # Remote HTTP/SSE server
 # Scope: global (default) or project
 # Project-path: required if scope is project
 
@@ -55,7 +59,8 @@ try:
         if 'mcpServers' not in config:
             config['mcpServers'] = {}
         config['mcpServers']['$server_name'] = server_config
-        print(f"Added {server_config['command']} to global MCP servers")
+        server_type = server_config.get('command', server_config.get('transport', {}).get('type', 'unknown'))
+        print(f"Added {server_type} to global MCP servers")
     else:
         # Project scope
         if 'projects' not in config:
@@ -66,7 +71,8 @@ try:
             config['projects']['$project_path']['mcpServers'] = {}
         
         config['projects']['$project_path']['mcpServers']['$server_name'] = server_config
-        print(f"Added {server_config['command']} to project MCP servers for $project_path")
+        server_type = server_config.get('command', server_config.get('transport', {}).get('type', 'unknown'))
+        print(f"Added {server_type} to project MCP servers for $project_path")
     
     with open('$CLAUDE_CONFIG', 'w') as f:
         json.dump(config, f, indent=2)
@@ -141,7 +147,7 @@ install_playwright() {
     
     local config="{
         \"command\": \"npx\",
-        \"args\": [\"-y\", \"@executeautomation/mcp-playwright\"]
+        \"args\": [\"-y\", \"@executeautomation/playwright-mcp-server\"]
     }"
     
     add_to_config "playwright" "$scope" "$project_path" "$config"
@@ -198,9 +204,225 @@ install_memory() {
     fi
 }
 
+# NPM package installation
+install_npm() {
+    local package_name="$1"
+    local scope="$2"
+    local project_path="$3"
+    
+    log_info "Installing NPM MCP Server: $package_name..."
+    
+    # Validate package name
+    if [[ -z "$package_name" ]]; then
+        log_error "Package name is required for NPM installation"
+        exit 1
+    fi
+    
+    # Check if package exists on NPM
+    log_info "Verifying package exists on NPM..."
+    if ! npm view "$package_name" > /dev/null 2>&1; then
+        log_error "Package '$package_name' not found on NPM"
+        log_info "Please check the package name and try again"
+        exit 1
+    fi
+    
+    # Generate server name from package name (remove @ and / characters)
+    local server_name=$(echo "$package_name" | sed 's/@//g' | sed 's/\//-/g')
+    
+    log_info "Server name will be: $server_name"
+    
+    local config="{
+        \"command\": \"npx\",
+        \"args\": [\"-y\", \"$package_name\"]
+    }"
+    
+    add_to_config "$server_name" "$scope" "$project_path" "$config"
+    log_success "NPM MCP Server '$package_name' installed as '$server_name'"
+    log_info "Package info: $(npm view "$package_name" description 2>/dev/null || echo 'No description available')"
+}
+
+# Remote MCP server installation (HTTP/SSE)
+install_remote() {
+    local server_name="$1"
+    local server_url="$2"
+    local scope="$3"
+    local project_path="$4"
+    
+    log_info "Installing Remote MCP Server: $server_name at $server_url..."
+    
+    # Validate inputs
+    if [[ -z "$server_name" || -z "$server_url" ]]; then
+        log_error "Server name and URL are required for remote installation"
+        exit 1
+    fi
+    
+    # Determine transport type based on URL
+    local transport_type="sse"
+    if [[ "$server_url" == *"/websocket"* || "$server_url" == "ws://"* || "$server_url" == "wss://"* ]]; then
+        transport_type="websocket"
+    fi
+    
+    log_info "Using transport type: $transport_type"
+    
+    local config="{
+        \"transport\": {
+            \"type\": \"$transport_type\",
+            \"url\": \"$server_url\"
+        }
+    }"
+    
+    add_to_config "$server_name" "$scope" "$project_path" "$config"
+    log_success "Remote MCP Server '$server_name' installed"
+    log_info "Transport: $transport_type at $server_url"
+}
+
+# Auto-detect MCP installation from GitHub repository
+install_auto() {
+    local github_url="$1"
+    local scope="$2"
+    local project_path="$3"
+    
+    log_info "Auto-detecting MCP installation method for: $github_url"
+    
+    # Validate GitHub URL
+    if [[ ! "$github_url" =~ ^https://github\.com/[^/]+/[^/]+/?$ ]]; then
+        log_error "Invalid GitHub URL format. Expected: https://github.com/owner/repo"
+        exit 1
+    fi
+    
+    # Extract owner and repo from URL
+    local repo_info=$(echo "$github_url" | sed -E 's|https://github\.com/([^/]+)/([^/]+)/?|\1/\2|')
+    local owner=$(echo "$repo_info" | cut -d'/' -f1)
+    local repo=$(echo "$repo_info" | cut -d'/' -f2)
+    
+    log_info "Analyzing repository: $owner/$repo"
+    
+    # Check for package.json (NPM package)
+    if curl -s "https://api.github.com/repos/$owner/$repo/contents/package.json" | grep -q '"name"'; then
+        log_info "Found package.json - checking if published to NPM..."
+        
+        # Get package name from package.json
+        local package_name=$(curl -s "https://api.github.com/repos/$owner/$repo/contents/package.json" | \
+                            python3 -c "import sys, json, base64; data=json.load(sys.stdin); print(json.loads(base64.b64decode(data['content']).decode())['name'])" 2>/dev/null)
+        
+        if [[ -n "$package_name" ]] && npm view "$package_name" > /dev/null 2>&1; then
+            log_success "Found published NPM package: $package_name"
+            install_npm "$package_name" "$scope" "$project_path"
+            return
+        else
+            log_warning "Package not published to NPM, attempting Git installation..."
+            install_git "$github_url" "$scope" "$project_path"
+            return
+        fi
+    fi
+    
+    # Check for common remote server indicators
+    if curl -s "https://api.github.com/repos/$owner/$repo/contents/README.md" | grep -qi "remote\|http\|sse\|websocket"; then
+        log_warning "Repository may contain a remote MCP server"
+        log_info "Please use: mcp-install remote <name> <url> for remote servers"
+        log_info "Check the repository README for the correct endpoint URL"
+        exit 1
+    fi
+    
+    # Fallback to Git installation
+    log_info "Attempting Git clone and build installation..."
+    install_git "$github_url" "$scope" "$project_path"
+}
+
+# Git repository installation (clone and build)
+install_git() {
+    local github_url="$1"
+    local scope="$2"
+    local project_path="$3"
+    
+    log_info "Installing MCP Server from Git repository: $github_url"
+    
+    # Extract repo name for directory
+    local repo_name=$(basename "$github_url" .git)
+    local clone_dir="$MCP_DIR/git/$repo_name"
+    
+    # Create git directory
+    mkdir -p "$MCP_DIR/git"
+    
+    # Clone repository
+    log_info "Cloning repository..."
+    if [[ -d "$clone_dir" ]]; then
+        log_warning "Directory exists, updating..."
+        cd "$clone_dir" && git pull
+    else
+        git clone "$github_url" "$clone_dir"
+    fi
+    
+    cd "$clone_dir"
+    
+    # Detect build system and install
+    if [[ -f "package.json" ]]; then
+        log_info "Detected Node.js project, running npm install..."
+        npm install
+        
+        # Check for build script
+        if npm run-script | grep -q "build"; then
+            log_info "Running build script..."
+            npm run build
+        fi
+        
+        # Determine entry point
+        local entry_point="$clone_dir/server.js"
+        if [[ -f "$clone_dir/index.js" ]]; then
+            entry_point="$clone_dir/index.js"
+        elif grep -q '"main"' package.json; then
+            local main_file=$(grep '"main"' package.json | sed -E 's/.*"main":\s*"([^"]+)".*/\1/')
+            entry_point="$clone_dir/$main_file"
+        fi
+        
+        local config="{
+            \"command\": \"node\",
+            \"args\": [\"$entry_point\"]
+        }"
+        
+    elif [[ -f "requirements.txt" || -f "setup.py" ]]; then
+        log_info "Detected Python project..."
+        
+        # Create virtual environment
+        python3 -m venv "$clone_dir/venv"
+        source "$clone_dir/venv/bin/activate"
+        
+        # Install dependencies
+        if [[ -f "requirements.txt" ]]; then
+            pip install -r requirements.txt
+        elif [[ -f "setup.py" ]]; then
+            pip install -e .
+        fi
+        
+        # Find main Python file
+        local python_main="$clone_dir/server.py"
+        if [[ -f "$clone_dir/main.py" ]]; then
+            python_main="$clone_dir/main.py"
+        elif [[ -f "$clone_dir/__main__.py" ]]; then
+            python_main="$clone_dir/__main__.py"
+        fi
+        
+        local config="{
+            \"command\": \"$clone_dir/venv/bin/python\",
+            \"args\": [\"$python_main\"]
+        }"
+        
+    else
+        log_error "Unsupported project type. Only Node.js and Python are currently supported."
+        exit 1
+    fi
+    
+    # Generate server name from repo name
+    local server_name=$(echo "$repo_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+    
+    add_to_config "$server_name" "$scope" "$project_path" "$config"
+    log_success "Git MCP Server '$repo_name' installed as '$server_name'"
+    log_info "Source: $clone_dir"
+}
+
 # Function to list available servers
 list_servers() {
-    echo -e "${BLUE}Available MCP Servers:${NC}"
+    echo -e "${BLUE}Available Pre-configured MCP Servers:${NC}"
     echo "  github      - GitHub API integration"
     echo "  puppeteer   - Browser automation with Puppeteer"
     echo "  playwright  - Browser automation with Playwright"
@@ -208,21 +430,43 @@ list_servers() {
     echo "  filesystem  - File system operations"
     echo "  memory      - Like-I-Said memory server (project only)"
     echo ""
+    echo -e "${BLUE}Universal Installation Support:${NC}"
+    echo "  npm <package>   - Install any NPM MCP package"
+    echo "  auto <github>   - Auto-detect installation method from GitHub"
+    echo "  remote <name> <url> - Install remote HTTP/SSE MCP server"
+    echo ""
     echo -e "${BLUE}Usage:${NC}"
     echo "  mcp-install <server-name> [global|project] [project-path]"
+    echo "  mcp-install npm <package-name> [global|project] [project-path]"
+    echo "  mcp-install auto <github-url> [global|project] [project-path]"
+    echo "  mcp-install remote <name> <url> [global|project] [project-path]"
     echo "  mcp-install list"
     echo ""
-    echo -e "${BLUE}Examples:${NC}"
+    echo -e "${BLUE}Pre-configured Examples:${NC}"
     echo "  mcp-install github global"
     echo "  mcp-install puppeteer project /path/to/project"
     echo "  mcp-install memory project /path/to/like-i-said-project"
+    echo ""
+    echo -e "${BLUE}NPM Examples:${NC}"
+    echo "  mcp-install npm @brightdata/mcp global"
+    echo "  mcp-install npm @example/custom-mcp global"
+    echo "  mcp-install npm some-mcp-server project"
+    echo ""
+    echo -e "${BLUE}Auto-detection Examples:${NC}"
+    echo "  mcp-install auto https://github.com/brightdata/brightdata-mcp global"
+    echo "  mcp-install auto https://github.com/user/custom-mcp project"
+    echo ""
+    echo -e "${BLUE}Remote Server Examples:${NC}"
+    echo "  mcp-install remote my-api https://api.example.com/mcp/sse global"
+    echo "  mcp-install remote websocket-server wss://api.example.com/ws project"
 }
 
 # Main function
 main() {
     local server_name="$1"
-    local scope="${2:-global}"
-    local project_path="$3"
+    local package_or_scope="$2"
+    local scope_or_path="$3"
+    local project_path="$4"
     
     # Check if Claude config exists
     if [[ ! -f "$CLAUDE_CONFIG" ]]; then
@@ -243,7 +487,87 @@ main() {
         exit 1
     fi
     
-    if [[ "$scope" == "project" && -z "$project_path" ]]; then
+    # Handle NPM installation
+    if [[ "$server_name" == "npm" ]]; then
+        local npm_package="$package_or_scope"
+        local npm_scope="${scope_or_path:-global}"
+        local npm_project_path="$project_path"
+        
+        if [[ -z "$npm_package" ]]; then
+            log_error "NPM package name is required"
+            log_info "Usage: mcp-install npm <package-name> [global|project] [project-path]"
+            exit 1
+        fi
+        
+        if [[ "$npm_scope" == "project" && -z "$npm_project_path" ]]; then
+            log_error "Project path is required when scope is 'project'"
+            exit 1
+        fi
+        
+        # Backup config
+        backup_config
+        
+        install_npm "$npm_package" "$npm_scope" "$npm_project_path"
+        log_success "Installation complete! Restart Claude Code to use the new MCP server."
+        exit 0
+    fi
+    
+    # Handle auto-detection installation
+    if [[ "$server_name" == "auto" ]]; then
+        local github_url="$package_or_scope"
+        local auto_scope="${scope_or_path:-global}"
+        local auto_project_path="$project_path"
+        
+        if [[ -z "$github_url" ]]; then
+            log_error "GitHub URL is required for auto-detection"
+            log_info "Usage: mcp-install auto <github-url> [global|project] [project-path]"
+            exit 1
+        fi
+        
+        if [[ "$auto_scope" == "project" && -z "$auto_project_path" ]]; then
+            log_error "Project path is required when scope is 'project'"
+            exit 1
+        fi
+        
+        # Backup config
+        backup_config
+        
+        install_auto "$github_url" "$auto_scope" "$auto_project_path"
+        log_success "Installation complete! Restart Claude Code to use the new MCP server."
+        exit 0
+    fi
+    
+    # Handle remote server installation
+    if [[ "$server_name" == "remote" ]]; then
+        local remote_name="$package_or_scope"
+        local remote_url="$scope_or_path"
+        local remote_scope="${project_path:-global}"
+        local remote_project_path="$5"
+        
+        if [[ -z "$remote_name" || -z "$remote_url" ]]; then
+            log_error "Server name and URL are required for remote installation"
+            log_info "Usage: mcp-install remote <name> <url> [global|project] [project-path]"
+            exit 1
+        fi
+        
+        if [[ "$remote_scope" == "project" && -z "$remote_project_path" ]]; then
+            log_error "Project path is required when scope is 'project'"
+            exit 1
+        fi
+        
+        # Backup config
+        backup_config
+        
+        install_remote "$remote_name" "$remote_url" "$remote_scope" "$remote_project_path"
+        log_success "Installation complete! Restart Claude Code to use the new MCP server."
+        exit 0
+    fi
+    
+    # Handle pre-configured servers (original logic)
+    local scope="${package_or_scope:-global}"
+    local original_project_path="$scope_or_path"
+    
+    if [[ "$scope" == "project" && -z "$original_project_path" ]]; then
         log_error "Project path is required when scope is 'project'"
         exit 1
     fi
@@ -254,22 +578,22 @@ main() {
     # Install the requested server
     case "$server_name" in
         "github")
-            install_github "$scope" "$project_path"
+            install_github "$scope" "$original_project_path"
             ;;
         "puppeteer")
-            install_puppeteer "$scope" "$project_path"
+            install_puppeteer "$scope" "$original_project_path"
             ;;
         "playwright")
-            install_playwright "$scope" "$project_path"
+            install_playwright "$scope" "$original_project_path"
             ;;
         "sqlite")
-            install_sqlite "$scope" "$project_path"
+            install_sqlite "$scope" "$original_project_path"
             ;;
         "filesystem")
-            install_filesystem "$scope" "$project_path"
+            install_filesystem "$scope" "$original_project_path"
             ;;
         "memory")
-            install_memory "$scope" "$project_path"
+            install_memory "$scope" "$original_project_path"
             ;;
         *)
             log_error "Unknown server: $server_name"

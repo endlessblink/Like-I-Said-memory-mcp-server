@@ -23,6 +23,17 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 ## 🚀 Quick Install
 
+### Prerequisites: Install Node.js (First Time Only)
+
+If you don't have Node.js installed, download and install it first:
+
+1. **Visit**: [nodejs.org](https://nodejs.org)
+2. **Download**: The "LTS" version (recommended for most users)
+3. **Install**: Run the downloaded installer with default settings
+4. **Verify**: Open terminal/command prompt and type `node --version`
+
+> **What is Node.js?** A JavaScript runtime that allows this memory server to run on your computer. It's free, safe, and used by millions of developers worldwide.
+
 ### Step 1: Install MCP Server
 ```bash
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
@@ -138,6 +149,11 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 - Ensure you fully restarted your AI client
 - Wait 2-3 minutes for detection (Claude Desktop may take up to 5 minutes)
 - Check client-specific logs
+
+### Don't have Node.js installed?
+- **Install Node.js first**: Download from [nodejs.org](https://nodejs.org) (choose LTS version)
+- **Then run the command above**
+- **Need help?** See our [Node.js Installation Guide](#prerequisites-install-nodejs-first-time-only)
 
 ### Windows-specific notes:
 - ⚠️ **Always use the full npx command format**: `npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install`

@@ -28,14 +28,19 @@ ENV npm_config_python=/usr/bin/python3
 # Set working directory
 WORKDIR /app
 
-# Install the production version from NPM
-RUN npm install -g @endlessblink/like-i-said-v2@2.3.5
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci --production
+
+# Copy application code including HTTP wrapper
+COPY . .
 
 # Rebuild native modules for Alpine compatibility
 RUN npm rebuild --update-binary
 
-# Create memories directory
+# Create memories directory and declare as volume for persistence
 RUN mkdir -p /app/memories
+VOLUME ["/app/memories"]
 
 # Copy memories from build context (will be copied during build)
 COPY memories/ /app/memories/
@@ -57,5 +62,8 @@ RUN echo '#!/bin/sh' > /app/test.sh && \
     echo 'echo "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}" | npx @endlessblink/like-i-said-v2 start | jq -r ".result.tools[].name" | grep -i github || echo "✅ No GitHub tools found (as expected)"' >> /app/test.sh && \
     chmod +x /app/test.sh
 
-# Default command runs the test
-CMD ["/app/test.sh"]
+# Default command - use fixed HTTP server for Smithery deployment
+CMD ["node", "server-http-fixed.js"]
+
+# Alternative: run tests
+# CMD ["/app/test.sh"]
