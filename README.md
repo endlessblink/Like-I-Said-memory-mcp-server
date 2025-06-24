@@ -194,6 +194,51 @@ You can verify you have the latest version by checking:
 - npm package version: `npm list -g @endlessblink/like-i-said-v2`
 - Memory path fix: Look for `fileURLToPath` in your `server-markdown.js`
 
+## 🛡️ Safe Update Guide: MCP Memory & Dashboard
+
+To update the Like-I-Said-Memory MCP and dashboard **without breaking anything**, follow these best practices:
+
+1. **Backup Your Memories**
+   - Before any update, back up your `memories/` directory and any custom configuration files.
+   - Use the built-in backup tool or manually copy the `memories/` folder to a safe location.
+
+2. **Update the MCP Server & Dashboard**
+   - For npm users:
+     ```bash
+     npm update -g @endlessblink/like-i-said-v2
+     # or
+     npm install -g @endlessblink/like-i-said-v2@latest
+     ```
+   - For source users:
+     ```bash
+     git pull origin main  # or your active branch
+     npm install
+     ```
+
+3. **Restart All Clients**
+   - Fully close and restart Claude Desktop, Cursor, Windsurf, or any other connected AI client.
+   - For VS Code/Cursor: Use `Ctrl+Shift+P` → "Reload Window".
+
+4. **Verify Memory Path**
+   - Ensure your `memories/` directory is still present and accessible.
+   - Check that your configuration files (see above) still point to the correct memory path.
+
+5. **Test the Dashboard**
+   - Open the dashboard at `http://localhost:3001` and verify your memories and projects are visible.
+   - Use the search and analytics features to confirm data integrity.
+
+6. **Restore from Backup if Needed**
+   - If anything is missing or broken, restore your `memories/` directory from your backup.
+   - Restart the server and clients again.
+
+7. **Never Delete or Overwrite the `memories/` Folder**
+   - Updates should never remove or overwrite your `memories/` directory. If prompted, always choose to preserve existing data.
+
+8. **Check for Breaking Changes**
+   - Review the release notes (GitHub/NPM) for any breaking changes or migration steps.
+
+**Following these steps ensures your memories and dashboard remain safe and fully functional during updates.**
+
 ## 🔨 Development Setup
 
 If you want to run from source:
