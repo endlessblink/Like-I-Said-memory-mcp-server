@@ -55,4 +55,8 @@ verify-project-integrity.js
 
 # Config files with personal data
 mcp-config.json
-claude_desktop_config.json 
+claude_desktop_config.json
+
+# Docker files (exist locally but ignored for Smithery compatibility)
+Dockerfile*
+docker-compose* 
