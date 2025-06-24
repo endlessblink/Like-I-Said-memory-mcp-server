@@ -1,0 +1,25 @@
+# Minimal Dockerfile for Smithery - No React build
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy only essential files first
+COPY package*.json ./
+
+# Install production dependencies only - no build step
+RUN npm ci --omit=dev
+
+# Copy only the server files needed
+COPY server-markdown.js ./
+COPY server-http-fixed.js ./
+COPY memory-sanitizer.js ./
+COPY backup-scheduler.js ./
+
+# Create memories directory
+RUN mkdir -p /app/memories
+
+# Expose port
+EXPOSE 3001
+
+# Simple command
+CMD ["node", "server-http-fixed.js"]

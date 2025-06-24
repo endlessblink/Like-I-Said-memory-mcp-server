@@ -26,7 +26,7 @@ configSchema:
 
 # Docker build configuration
 build:
-  dockerfile: Dockerfile.smithery-multistage
+  dockerfile: Dockerfile.smithery-minimal
   dockerBuildPath: .
 
 # Environment variables
