@@ -21,18 +21,32 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 - 📈 **Analytics** - Memory usage statistics and insights
 - 🎨 **Modern UI** - Card-based layout with dark theme
 
-## 🚀 Quick Install
+## 🚀 Easy Installation (No Technical Skills Required!)
 
-### Step 1: Install MCP Server
+### Prerequisites: Install Node.js (First Time Only)
+
+**If you don't have Node.js installed**, follow these simple steps:
+
+1. **Visit**: [nodejs.org](https://nodejs.org)
+2. **Download**: The "LTS" version (recommended for most users)
+3. **Install**: Run the downloaded installer with default settings
+4. **Verify**: Open terminal/command prompt and type `node --version`
+
+*Node.js is required to run the MCP server. It's like installing a program that helps your AI remember things.*
+
+### Step 1: One-Command Installation
 ```bash
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
-The installer will:
-- ✅ Auto-detect your AI clients (Claude Desktop, Cursor, Windsurf)
-- ✅ Configure MCP settings automatically  
-- ✅ Test server functionality
-- ✅ Preserve existing MCP servers
+**What this does automatically:**
+- ✅ Downloads and sets up the memory server
+- ✅ Finds your AI apps (Claude Desktop, Cursor, Windsurf) 
+- ✅ Configures everything to work together
+- ✅ Tests that everything is working
+- ✅ Keeps your existing settings safe
+
+**No coding knowledge required! The installer does everything for you.**
 
 ### Step 2: Start the Web Dashboard (Optional)
 ```bash

@@ -1,12 +1,11 @@
 # Smithery deployment configuration for Like-I-Said MCP v2
+# Simple Node.js deployment without Docker
 version: 1
 
-# HTTP transport required for Smithery cloud deployment
+# Direct Node.js execution
 start:
-  type: http-stream
-  command: ["node", "/app/server-http-fixed.js"]
+  command: ["node", "server-http-fixed.js"]
   port: 3001
-  cors: true
 
 # MCP server configuration schema
 configSchema:
@@ -14,22 +13,14 @@ configSchema:
   properties:
     storagePath:
       type: string
-      default: "/memories"
+      default: "./memories"
       description: "Path for markdown memory storage"
-    apiKey:
-      type: string
-      description: "Optional access token for authentication"
     projectName:
       type: string
       default: "default"
       description: "Default project name for memory organization"
 
-# Docker build configuration
-build:
-  dockerfile: Dockerfile.smithery-minimal
-  dockerBuildPath: .
-
 # Environment variables
 env:
   NODE_ENV: production
-  MCP_MEMORY_PATH: "/memories"
+  MCP_MEMORY_PATH: "./memories"
