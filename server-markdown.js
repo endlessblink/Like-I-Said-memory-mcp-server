@@ -8,6 +8,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { DropoffGenerator } from './lib/dropoff-generator.js';
 
 // Markdown storage implementation
 class MarkdownStorage {
@@ -417,6 +418,9 @@ class MarkdownStorage {
 // Initialize storage
 const storage = new MarkdownStorage();
 
+// Initialize dropoff generator
+const dropoffGenerator = new DropoffGenerator();
+
 // Auto-migrate from JSON if it exists (only once)
 const jsonFile = path.join(process.cwd(), 'memories.json');
 const migrationMarker = path.join(process.cwd(), '.migration-complete');
@@ -567,6 +571,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['message'],
+        },
+      },
+      {
+        name: 'generate_dropoff',
+        description: 'Generate conversation dropoff document for session handoff with context from recent memories, git status, and project info',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            session_summary: {
+              type: 'string',
+              description: 'Brief summary of work done in this session',
+              default: 'Session work completed',
+            },
+            include_recent_memories: {
+              type: 'boolean',
+              description: 'Include recent memories in the dropoff',
+              default: true,
+            },
+            include_git_status: {
+              type: 'boolean',
+              description: 'Include git status and recent commits',
+              default: true,
+            },
+            recent_memory_count: {
+              type: 'number',
+              description: 'Number of recent memories to include',
+              default: 5,
+            },
+            output_format: {
+              type: 'string',
+              description: 'Output format: markdown or json',
+              enum: ['markdown', 'json'],
+              default: 'markdown',
+            },
+          },
         },
       },
     ],
@@ -744,6 +783,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
+
+      case 'generate_dropoff': {
+        const {
+          session_summary = 'Session work completed',
+          include_recent_memories = true,
+          include_git_status = true,
+          recent_memory_count = 5,
+          output_format = 'markdown'
+        } = args;
+
+        try {
+          const dropoffContent = await dropoffGenerator.generateDropoff({
+            sessionSummary: session_summary,
+            includeRecentMemories: include_recent_memories,
+            includeGitStatus: include_git_status,
+            recentMemoryCount: recent_memory_count,
+            outputFormat: output_format
+          });
+
+          // Save the dropoff to a file
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `SESSION-DROPOFF-${timestamp}.md`;
+          const filepath = path.join(process.cwd(), filename);
+          
+          if (output_format === 'markdown') {
+            fs.writeFileSync(filepath, dropoffContent, 'utf8');
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: output_format === 'markdown' 
+                  ? `🚀 Session dropoff generated successfully!\n\n📄 File: ${filename}\n📍 Location: ${filepath}\n\n📋 **Content Preview:**\n\n${dropoffContent.substring(0, 500)}${dropoffContent.length > 500 ? '...' : ''}\n\n✅ Copy the content above or use the file for your next session!`
+                  : `🚀 Session dropoff generated (JSON format):\n\n${dropoffContent}`
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Failed to generate dropoff: ${error.message}`,
+              },
+            ],
+            isError: true,
+          };
+        }
       }
 
       default:
