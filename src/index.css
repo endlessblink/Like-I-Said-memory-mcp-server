@@ -295,6 +295,6 @@ body {
 
 /* Modern spacing system */
 .space-section { @apply py-8 px-6; }
-.space-container { @apply max-w-7xl mx-auto; }
+.space-container { @apply max-w-screen-2xl mx-auto; }
 .space-card { @apply p-6; }
 .space-compact { @apply p-4; }

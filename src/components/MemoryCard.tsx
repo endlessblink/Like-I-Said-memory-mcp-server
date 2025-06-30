@@ -1,15 +1,13 @@
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import React from 'react'
 import { Memory, MemoryCategory } from "@/types"
 import { formatDistanceToNow } from "@/utils/helpers"
-import { ButtonSpinner } from "@/components/LoadingStates"
-import { Edit, Trash2, Eye, Clock, Users, FileText } from "lucide-react"
+import { Edit, Trash2, Eye, Clock, Users, FileText, Loader2 } from "lucide-react"
 
 interface MemoryCardProps {
   memory: Memory
   selected?: boolean
   onSelect?: (id: string) => void
-  onEdit: (memory: Memory) => void
+  onEdit: () => void
   onDelete: (id: string) => void
   onView?: (memory: Memory) => void
   isDeleting?: boolean
@@ -22,12 +20,6 @@ const categoryColors: Record<MemoryCategory, string> = {
   research: "bg-orange-500/20 text-orange-300 border-orange-500/30",
   conversations: "bg-pink-500/20 text-pink-300 border-pink-500/30",
   preferences: "bg-gray-500/20 text-gray-300 border-gray-500/30"
-}
-
-const contentTypeIcons = {
-  text: FileText,
-  code: FileText, // TODO: Add code icon
-  structured: FileText // TODO: Add structured data icon
 }
 
 function truncateContent(content: string, maxLength: number = 300): string {
@@ -51,11 +43,9 @@ export function MemoryCard({
     lastAccessed: memory.timestamp,
     accessCount: 0,
     clients: [],
-    contentType: 'text' as const,
+    contentType: 'text',
     size: new Blob([memory.content]).size
   }
-  
-  const ContentIcon = contentTypeIcons[metadata.contentType]
   
   return (
     <div className={`
@@ -78,58 +68,52 @@ export function MemoryCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3 flex-1">
-          <ContentIcon className="h-5 w-5 text-violet-400" />
+          <FileText className="h-5 w-5 text-violet-400" />
           
           {/* Category Badge */}
           {memory.category && (
-            <Badge className={`text-xs font-semibold px-3 py-1 rounded-full ${categoryColors[memory.category]}`}>
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${categoryColors[memory.category]}`}>
               {memory.category}
-            </Badge>
+            </span>
           )}
           
           {/* Project Tag */}
           {memory.project && (
-            <Badge variant="outline" className="text-xs border-violet-500/30 text-violet-300 bg-violet-500/10 px-3 py-1 rounded-full">
+            <span className="text-xs border border-violet-500/30 text-violet-300 bg-violet-500/10 px-3 py-1 rounded-full">
               {memory.project}
-            </Badge>
+            </span>
           )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
           {onView && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => onView(memory)}
-              className="h-8 w-8 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors"
+              className="h-8 w-8 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors rounded-md flex items-center justify-center"
             >
               <Eye className="h-4 w-4" />
-            </Button>
+            </button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(memory)}
-            className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors"
+          <button
+            onClick={onEdit}
+            className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-md flex items-center justify-center"
           >
             <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          </button>
+          <button
             onClick={() => onDelete(memory.id)}
             disabled={isDeleting}
-            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50"
+            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 rounded-md flex items-center justify-center"
           >
-            {isDeleting ? <ButtonSpinner size="sm" /> : <Trash2 className="h-4 w-4" />}
-          </Button>
+            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
       {/* Content Preview */}
       <div className="mb-6 flex-1">
-        <div className="text-body text-gray-200 leading-relaxed">
+        <div className="text-gray-300 text-body-base line-clamp-6 whitespace-pre-wrap">
           {truncateContent(memory.content, 250)}
         </div>
       </div>
@@ -138,14 +122,14 @@ export function MemoryCard({
       {memory.tags && memory.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
           {memory.tags.slice(0, 4).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600/50 px-2 py-1 rounded-md">
+            <span key={tag} className="text-xs bg-gray-700/50 text-gray-300 border border-gray-600/50 px-2 py-1 rounded-md">
               #{tag}
-            </Badge>
+            </span>
           ))}
           {memory.tags.length > 4 && (
-            <Badge variant="secondary" className="text-xs bg-gray-700/30 text-gray-400 border-gray-600/30 px-2 py-1 rounded-md">
+            <span className="text-xs bg-gray-700/30 text-gray-400 border border-gray-600/30 px-2 py-1 rounded-md">
               +{memory.tags.length - 4}
-            </Badge>
+            </span>
           )}
         </div>
       )}
@@ -177,8 +161,8 @@ export function MemoryCard({
         </div>
 
         {/* Size */}
-        <div className="px-2 py-1 bg-gray-700/30 rounded-md">
-          <span className="font-medium">{(metadata.size / 1024).toFixed(1)}KB</span>
+        <div className="text-xs text-gray-600">
+          {(metadata.size / 1024).toFixed(1)} KB
         </div>
       </div>
     </div>

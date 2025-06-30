@@ -1,6 +1,6 @@
 # Claude Code MCP Management Tools
 
-This directory contains two powerful tools for managing MCP (Model Context Protocol) servers in Claude Code:
+This directory contains comprehensive tools for managing MCP (Model Context Protocol) servers in Claude Code:
 
 ## 🛠️ Tools Overview
 
@@ -9,6 +9,41 @@ Automated installation script for MCP servers with support for both global and p
 
 ### 2. MCP Guardian (`mcp-guardian.js`)
 Health monitoring system that automatically protects Claude Code from failing MCP servers.
+
+### 3. Claude Code Error Handling (`claude-code-error-handling/`)
+Comprehensive error handling system specifically designed for Claude Code's MCP integration, providing prevention and recovery mechanisms for tool sequencing errors.
+
+---
+
+## 🚑 Claude Code Error Handling
+
+### Quick Setup
+```bash
+# Make scripts executable
+chmod +x tools/claude-code-error-handling/claude-mcp-init.sh
+chmod +x tools/claude-code-error-handling/claude-mcp-recovery.sh
+
+# Copy to your Claude config directory
+cp tools/claude-code-error-handling/* ~/.claude/
+```
+
+### Before Starting Claude Code
+```bash
+# Initialize MCP-aware session
+~/.claude/claude-mcp-init.sh
+
+# Start Claude Code with awareness
+claude-code
+```
+
+### Key Features
+- **MCP-specific error prevention**: Addresses tool_use/tool_result sequencing errors
+- **Automated recovery**: Intelligent diagnosis and repair of MCP issues
+- **Session initialization**: Pre-flight checks and configuration
+- **Response limiting**: Prevents token overflow issues
+- **Health monitoring**: Continuous MCP server validation
+
+For detailed documentation, see [`claude-code-error-handling/README.md`](claude-code-error-handling/README.md).
 
 ---
 

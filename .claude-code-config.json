@@ -1,0 +1,22 @@
+{
+  "tool_use_protocol": {
+    "mode": "agentic",
+    "max_tokens": 4096,
+    "strict_sequencing": true,
+    "auto_recovery": true,
+    "token_limit_per_response": 20000
+  },
+  "error_handling": {
+    "auto_tool_result_on_error": true,
+    "recovery_message": "Error: Recovery mode activated",
+    "max_retries": 3
+  },
+  "session_management": {
+    "atomic_operations": true,
+    "disable_tool_queuing": true,
+    "force_completion": true
+  },
+  "prompts": {
+    "system_protocol": "**Claude Tool-Use Protocol**\n1. **Strict Sequencing**: After any `tool_use` block, your very next message must be a `tool_result` block referencing the exact `tool_use_id`. Never interleave other content.\n2. **Error Recovery**: If a tool fails, return `tool_result` with `is_error: true` and a concise error description.\n3. **Atomic Operations**: Complete one tool interaction before initiating another.\n4. **Self-Correction**: Upon seeing `API Error: 400`, immediately send a `tool_result` for the pending `tool_use_id` with `is_error: true`.\n5. **Token Management**: Cap tool responses at 20k tokens."
+  }
+}

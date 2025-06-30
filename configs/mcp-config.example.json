@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "like-i-said-v2": {
+      "command": "node",
+      "args": ["/path/to/your/like-i-said-v2/server-markdown.js"],
+      "env": {
+        "GITHUB_TOKEN": ""
+      }
+    }
+  }
+}

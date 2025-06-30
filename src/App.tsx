@@ -28,6 +28,7 @@ import { AdvancedSearch } from '@/components/AdvancedSearch'
 import { ProjectTabs } from '@/components/ProjectTabs'
 import { SortControls } from '@/components/SortControls'
 import { ExportImport } from '@/components/ExportImport'
+import { NavSpacingAdjuster } from '@/components/NavSpacingAdjuster'
 import { StatisticsDashboard } from '@/components/StatisticsDashboard'
 import { AIEnhancement } from '@/components/AIEnhancement'
 import { MemoryRelationships } from '@/components/MemoryRelationships'
@@ -223,11 +224,58 @@ export default function App() {
   const [editingCategory, setEditingCategory] = useState<MemoryCategory | undefined>(undefined)
   const [editingProject, setEditingProject] = useState("")
 
+  // === WEBSOCKET STATE ===
+  const [wsConnected, setWsConnected] = useState(false)
+
   // === EFFECTS ===
   useEffect(() => {
     loadMemories()
     loadSettings()
+    setupWebSocket()
   }, [])
+
+  // === WEBSOCKET SETUP ===
+  const setupWebSocket = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    // Always connect to the API server on port 3001
+    const wsUrl = `${protocol}//${window.location.hostname}:3001`
+    
+    const ws = new WebSocket(wsUrl)
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket connected - Real-time updates enabled')
+      setWsConnected(true)
+    }
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        console.log('📡 WebSocket message:', message)
+        
+        if (message.type === 'file_change') {
+          console.log(`📄 Memory file ${message.data.action}: ${message.data.file}`)
+          // Refresh memories when files change
+          loadMemories(true)
+        }
+      } catch (error) {
+        console.warn('Failed to parse WebSocket message:', error)
+      }
+    }
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket disconnected - Attempting to reconnect...')
+      setWsConnected(false)
+      // Attempt to reconnect after 3 seconds
+      setTimeout(setupWebSocket, 3000)
+    }
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error)
+      setWsConnected(false)
+    }
+    
+    return ws
+  }
 
   // === SETTINGS MANAGEMENT ===
   const loadSettings = () => {
@@ -893,9 +941,9 @@ Respond with JSON format:
       {/* Navigation */}
       <nav className="glass-effect border-b border-gray-700/50 shadow-xl sticky top-0 z-50">
         <div className="space-container">
-          <div className="flex items-center h-25 py-3" style={{paddingLeft: '0px', paddingRight: '16px'}}>
-            {/* Slick Logo Section - Far Left Edge */}
-            <div className="absolute left-0 top-0 h-full flex items-center gap-4 z-10" style={{paddingLeft: '22px'}}>
+          <div className="nav-container flex items-center h-25 py-3" style={{paddingLeft: '22px', paddingRight: '25px'}}>
+            {/* Logo and Title Section */}
+            <div className="nav-logo-section flex items-center gap-4 flex-shrink-0" style={{marginLeft: '-65px', marginRight: '80px'}}>
               {/* MOVED LOGO - SHOULD BE VISIBLE */}
               <div className="relative">
                 <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-white/10">
@@ -916,8 +964,8 @@ Respond with JSON format:
               </div>
             </div>
             
-            {/* Navigation Section - Center with flex-grow */}
-            <div className="flex-1 flex justify-center">
+            {/* Navigation Section - Flex grow to center */}
+            <div className="flex-1 flex justify-center ml-8">
               <div className="hidden md:flex items-center gap-4 bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-lg">
                 {[
                   { id: "dashboard", label: "📊 Dashboard", icon: "📊" },
@@ -941,7 +989,8 @@ Respond with JSON format:
             </div>
             
             {/* Right Section - Settings & Controls */}
-            <div className="flex items-center gap-2 lg:gap-3 ml-8">
+            <div className="nav-right-container" style={{paddingLeft: '40px', paddingRight: '20px'}}>
+              <div className="flex items-center gap-2 lg:gap-3">
               <div className="hidden lg:block">
                 <ExportImport
                   memories={memories}
@@ -949,9 +998,9 @@ Respond with JSON format:
                 />
               </div>
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50">
-                <div className="relative">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <div className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+                <div className="relative" title={wsConnected ? 'Real-time updates active' : 'WebSocket disconnected'}>
+                  <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`}></div>
+                  {wsConnected && <div className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75"></div>}
                 </div>
                 <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   {memories.length}
@@ -1112,6 +1161,7 @@ Respond with JSON format:
                   </div>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
           </div>
         </div>
@@ -1833,6 +1883,9 @@ Respond with JSON format:
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Navigation Spacing Adjuster */}
+      <NavSpacingAdjuster />
     </div>
   )
 }

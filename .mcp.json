@@ -3,6 +3,71 @@
     "like-i-said-memory": {
       "command": "node",
       "args": ["/mnt/d/APPSNospaces/Like-I-said-mcp-server-v2/server.js"]
+    },
+    "like-i-said-v2": {
+      "command": "node",
+      "args": ["/mnt/d/APPSNospaces/Like-I-said-mcp-server-v2/server-markdown.js"]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "playwright-mcp": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "perplexity-ask": {
+      "command": "npx",
+      "args": ["-y", "server-perplexity-ask"],
+      "env": {
+        "PERPLEXITY_API_KEY": "your-perplexity-api-key-here"
+      }
+    },
+    "contentful": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ivotoby/contentful-management-mcp-server",
+        "--management-token",
+        "your-contentful-management-token-here",
+        "--host",
+        "http://api.contentful.com"
+      ]
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-personal-access-token-here"
+      }
+    },
+    "server-sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@smithery-ai/server-sequential-thinking",
+        "--key",
+        "e897d3d5-f1c9-4f3e-83eb-05a0acf23558"
+      ]
+    },
+    "site-control-mcp": {
+      "command": "node",
+      "args": ["./Site-Control-MCP-Export/server.js"],
+      "env": {
+        "CONTENTFUL_SPACE_ID": "hd99ode6traw",
+        "CONTENTFUL_DELIVERY_TOKEN": "placeholder_token",
+        "CONTENTFUL_MANAGEMENT_TOKEN": "placeholder_token",
+        "CONTENTFUL_ENVIRONMENT": "master"
+      }
     }
   }
 }

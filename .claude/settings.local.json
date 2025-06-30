@@ -63,15 +63,21 @@
       "WebFetch(domain:github.com)",
       "mcp__like-i-said-v2__github_create_issue",
       "Bash(git tag:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(./claude-code-init.sh:*)",
+      "Bash(./claude-mcp-init.sh:*)",
+      "Bash(timeout:*)",
+      "Bash(if [ -d tools/claude-code-error-handling ])",
+      "Bash(then mv tools/claude-code-error-handling/* scripts/)",
+      "Bash(NODE_ENV=development npm run build)",
+      "Bash(google-chrome:*)",
+      "Bash(claude config list)",
+      "Bash(claude mcp)",
+      "Bash(claude mcp:*)"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "like-i-said-memory"
-  ],
-  "disabledMcpjsonServers": [
-    "like-i-said-memory"
-  ]
+  "enabledMcpjsonServers": [],
+  "disabledMcpjsonServers": []
 }

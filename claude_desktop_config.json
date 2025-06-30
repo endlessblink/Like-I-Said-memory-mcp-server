@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "like-i-said-memory": {
-      "command": "node",
-      "args": ["D:\\MY PROJECTS\\AI\\LLM\\AI Code Gen\\my-builds\\My MCP\\Like-I-said-mcp-server-Share\\server.js"]
-    }
-  }
-}

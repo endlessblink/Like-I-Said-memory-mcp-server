@@ -1,0 +1,27 @@
+# Simple Smithery configuration without Docker
+version: 1
+
+# Direct Node.js execution
+start:
+  type: http-stream
+  command: ["node", "server-http-fixed.js"]
+  port: 3001
+  cors: true
+
+# MCP server configuration schema
+configSchema:
+  type: object
+  properties:
+    storagePath:
+      type: string
+      default: "./memories"
+      description: "Path for markdown memory storage"
+    projectName:
+      type: string
+      default: "default"
+      description: "Default project name for memory organization"
+
+# Environment variables
+env:
+  NODE_ENV: production
+  MCP_MEMORY_PATH: "./memories"
