@@ -120,7 +120,8 @@
       "Bash(sudo systemctl stop:*)",
       "Bash(sudo rm:*)",
       "WebFetch(domain:gist.github.com)",
-      "Bash(./diagnose-wsl-mcp.sh:*)"
+      "Bash(./diagnose-wsl-mcp.sh:*)",
+      "Bash(./sync-to-windows.sh:*)"
     ],
     "deny": []
   },

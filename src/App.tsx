@@ -1483,20 +1483,20 @@ Respond with JSON format:
             </div>
             
             {/* Right Section - Settings & Controls */}
-            <div className="flex items-center gap-6">
-              <div className="hidden lg:block">
+            <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+              <div className="hidden 2xl:block">
                 <ExportImport
                   memories={memories}
                   onImportMemories={handleImportMemories}
                 />
               </div>
-              <div className="hidden sm:flex items-center gap-4 px-4 py-2 bg-gray-800/40 backdrop-blur-md rounded-lg border border-gray-700/30">
+              <div className="hidden md:flex items-center gap-2 px-2 py-1 bg-gray-800/40 backdrop-blur-md rounded-lg border border-gray-700/30">
                 <div className="flex items-center gap-2">
                   <div className="relative" title={wsConnected ? 'Real-time updates active' : 'WebSocket disconnected'}>
                     <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`}></div>
                     {wsConnected && <div className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75"></div>}
                   </div>
-                  <span className="text-xs text-gray-500 font-medium">Live</span>
+                  <span className="text-xs text-gray-500 font-medium hidden lg:inline">Live</span>
                 </div>
                 
                 {/* Separator */}
@@ -1508,7 +1508,7 @@ Respond with JSON format:
                     <span className="text-sm font-bold text-white">
                       {memories.length}
                     </span>
-                    <span className="text-xs text-gray-500 font-medium -mt-1">
+                    <span className="text-xs text-gray-500 font-medium -mt-1 hidden xl:block">
                       Memories
                     </span>
                   </div>
@@ -1523,7 +1523,7 @@ Respond with JSON format:
                     <span className="text-sm font-bold text-white">
                       {tasks.length}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium -mt-1">
+                  <span className="text-xs text-gray-500 font-medium -mt-1 hidden xl:block">
                     Tasks
                   </span>
                   </div>
@@ -1547,20 +1547,20 @@ Respond with JSON format:
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowGlobalSearch(true)}
-                className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 text-2xs px-2 py-1 h-auto transition-colors rounded-md"
+                className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 text-2xs px-2 py-1 h-auto transition-colors rounded-md hidden xl:flex"
                 title="Global Search (Ctrl+K)"
               >
                 <span className="text-base mr-1">🔍</span>
-                <span className="hidden lg:inline">Global Search</span>
+                <span className="hidden xl:inline">Global Search</span>
               </Button>
               
               {/* Tutorial Launcher */}
-              <TutorialLauncher className="hidden sm:block" />
+              <TutorialLauncher className="hidden 2xl:block" />
               
               {/* Help Button */}
               <button
                 onClick={() => setShowKeyboardHelp(true)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700/40 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700/40 rounded-lg transition-all duration-200 hidden xl:block"
                 title="Keyboard Shortcuts (Ctrl+/)"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
