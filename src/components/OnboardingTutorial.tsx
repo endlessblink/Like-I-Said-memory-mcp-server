@@ -174,7 +174,7 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
     const element = document.querySelector(step.targetSelector) as HTMLElement
     if (element) {
       element.style.position = 'relative'
-      element.style.zIndex = '1001'
+      element.style.zIndex = '45'
       element.style.boxShadow = `0 0 0 4px ${step.highlightColor === 'violet' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)'}, 0 0 20px rgba(59, 130, 246, 0.3)`
       setHighlightedElement(element)
     }
@@ -224,30 +224,43 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
 
   const getTooltipPosition = (): React.CSSProperties => {
     if (!step.targetSelector || step.position === 'center') {
+      // For center position, ensure tooltip doesn't overlap with nav bar
+      // Nav bar is approximately 120px tall
+      const navBarHeight = 120;
+      const viewportHeight = window.innerHeight;
+      const tooltipHeight = 330; // Approximate height of tooltip
+      const centerY = Math.max(navBarHeight + tooltipHeight/2 + 20, viewportHeight/2);
+      
       return {
         position: 'fixed',
-        top: '50%',
+        top: `${centerY}px`,
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 1002
+        zIndex: 48
       }
     }
 
     const element = document.querySelector(step.targetSelector) as HTMLElement
     if (!element) {
+      // Fallback to adjusted center position
+      const navBarHeight = 120;
+      const viewportHeight = window.innerHeight;
+      const tooltipHeight = 330;
+      const centerY = Math.max(navBarHeight + tooltipHeight/2 + 20, viewportHeight/2);
+      
       return {
         position: 'fixed',
-        top: '50%',
+        top: `${centerY}px`,
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 1002
+        zIndex: 48
       }
     }
 
     const rect = element.getBoundingClientRect()
     const style: React.CSSProperties = {
       position: 'fixed',
-      zIndex: 1002
+      zIndex: 48
     }
 
     switch (step.position) {
@@ -287,8 +300,8 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
       {/* Dark overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black bg-opacity-50 z-1000"
-        style={{ zIndex: 1000 }}
+        className="fixed inset-0 bg-black bg-opacity-50"
+        style={{ zIndex: 40 }}
       />
 
       {/* Tutorial tooltip */}

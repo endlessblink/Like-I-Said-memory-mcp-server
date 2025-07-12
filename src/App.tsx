@@ -1750,7 +1750,7 @@ Respond with JSON format:
 
       <div className="flex min-h-[calc(100vh-var(--nav-height-mobile)-2rem)] md:min-h-[calc(100vh-var(--nav-height))] bg-gray-900">
         {/* Sidebar */}
-        <div className="hidden lg:flex w-80 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 flex-col sticky top-[56px] h-[calc(100vh-56px)] overflow-y-auto">
+        <div className="hidden lg:flex w-80 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto">
           {/* Search First */}
           <div className="p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Search</h2>
@@ -2111,14 +2111,14 @@ Respond with JSON format:
                         currentQuery={search}
                         currentFilters={searchFilters}
                         currentCategory={selectedCategory}
-                        currentProject={selectedProject}
+                        currentProject={currentProject}
                         currentSortBy={sortOptions.field}
                         currentSortOrder={sortOptions.order}
                         onApplyPreset={(preset) => {
                           setSearch(preset.query)
                           setSearchFilters(preset.filters)
                           setSelectedCategory(preset.category)
-                          setSelectedProject(preset.project)
+                          setCurrentProject(preset.project)
                           setSortOptions({ field: preset.sortBy as any, order: preset.sortOrder })
                         }}
                       />

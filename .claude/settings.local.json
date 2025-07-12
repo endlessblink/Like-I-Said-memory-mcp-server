@@ -92,7 +92,6 @@
       "Bash(ln:*)",
       "Bash(echo:*)",
       "mcp__server-sequential-thinking__sequentialthinking",
-      "mcp__server-sequential-thinking__sequentialthinking",
       "Bash(md5sum:*)",
       "Bash(diff:*)",
       "mcp__like-i-said-v2__list_tasks",
@@ -107,8 +106,6 @@
       "Bash(powershell.exe:*)",
       "mcp__playwright-mcp__browser_click",
       "Bash(./quick-test.sh:*)",
-      "mcp__playwright-mcp__browser_click",
-      "mcp__playwright-mcp__browser_press_key",
       "mcp__playwright-mcp__browser_press_key",
       "Bash(ollama:*)",
       "mcp__playwright-mcp__browser_resize",
@@ -122,7 +119,8 @@
       "Bash(export:*)",
       "Bash(sudo systemctl stop:*)",
       "Bash(sudo rm:*)",
-      "WebFetch(domain:gist.github.com)"
+      "WebFetch(domain:gist.github.com)",
+      "Bash(./diagnose-wsl-mcp.sh:*)"
     ],
     "deny": []
   },
