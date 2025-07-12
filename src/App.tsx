@@ -35,6 +35,7 @@ import { SortControls } from '@/components/SortControls'
 import { ExportImport } from '@/components/ExportImport'
 import { StatisticsDashboard } from '@/components/StatisticsDashboard'
 import { AIEnhancement } from '@/components/AIEnhancement'
+import { TaskEnhancement } from '@/components/TaskEnhancement'
 import { MemoryRelationships } from '@/components/MemoryRelationships'
 import { TaskManagement } from '@/components/TaskManagement'
 import { MemoryTreeView } from '@/components/MemoryTreeView'
@@ -2073,11 +2074,11 @@ Respond with JSON format:
                     websocket={wsRef.current || undefined}
                   />
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🚀</div>
-                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">Task Enhancement</h3>
-                    <p className="text-muted-foreground">Task AI enhancement coming soon!</p>
-                  </div>
+                  <TaskEnhancement
+                    tasks={tasks}
+                    currentProject={currentProject}
+                    onTasksChange={loadTasks}
+                  />
                 )}
               </div>
             )}

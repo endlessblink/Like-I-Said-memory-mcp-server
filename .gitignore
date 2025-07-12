@@ -251,6 +251,31 @@ perplexity-*.md
 comprehensive-*.js
 complete-*.js
 
+# DXT build system (redundant)
+build-dxt*.js
+*dxt*.json
+*dxt*.js
+dist-dxt/
+test-dxt/
+*.dxt
+
+# Redundant server files
+mcp-server-complete.js
+mcp-production-ready.js
+mcp-server-working.js
+mcp-server-standalone.js
+mcp-production.js
+mcp-stable-server.js
+mcp-server-minimal.js
+mcp-minimal-test.js
+mcp-simple.js
+
+# Report files
+*-report*.json
+*-validation*.json
+*-test-report*.json
+user-experience-*.json
+
 # Keep lib structure markers
 !lib/.gitkeep
 !src/.gitkeep

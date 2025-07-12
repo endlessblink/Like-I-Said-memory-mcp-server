@@ -214,6 +214,7 @@ class DashboardBridge {
     this.app.post('/api/automation/scheduler/force', requireAuth(), this.forceSchedulerCheck.bind(this));
 
     // Protected Ollama endpoints (must come before generic MCP route)
+    this.app.get('/api/ollama/status', requireAuth(), this.getOllamaStatus.bind(this));
     this.app.post('/api/mcp-tools/check_ollama_status', requireAuth(), this.checkOllamaStatus.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_memories_ollama', requireAuth(), this.batchEnhanceMemoriesOllama.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_tasks_ollama', requireAuth(), this.batchEnhanceTasksOllama.bind(this));
