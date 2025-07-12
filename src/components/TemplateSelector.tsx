@@ -396,7 +396,7 @@ export function TemplateSelector({ open, onOpenChange, type, onSelectTemplate }:
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>{type === 'memory' ? '🧠' : '📋'}</span>

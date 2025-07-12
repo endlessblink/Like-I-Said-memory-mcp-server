@@ -177,6 +177,8 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
       element.style.zIndex = '45'
       element.style.boxShadow = `0 0 0 4px ${step.highlightColor === 'violet' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)'}, 0 0 20px rgba(59, 130, 246, 0.3)`
       setHighlightedElement(element)
+    } else {
+      console.warn(`Tutorial: Element not found for selector: ${step.targetSelector}`)
     }
 
     return () => {
@@ -300,8 +302,9 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
       {/* Dark overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black bg-opacity-50"
-        style={{ zIndex: 40 }}
+        className="fixed inset-0 bg-black bg-opacity-30"
+        style={{ zIndex: 30 }}
+        onClick={() => onOpenChange(false)}
       />
 
       {/* Tutorial tooltip */}
@@ -420,13 +423,13 @@ export function TutorialLauncher({ className = '' }: TutorialLauncherProps) {
     const completed = localStorage.getItem('onboarding-completed')
     setHasCompletedOnboarding(completed === 'true')
 
-    // Auto-show tutorial for new users after a short delay
-    if (!completed) {
-      const timer = setTimeout(() => {
-        setShowTutorial(true)
-      }, 2000)
-      return () => clearTimeout(timer)
-    }
+    // Auto-show tutorial for new users after a short delay (disabled for better UX)
+    // if (!completed) {
+    //   const timer = setTimeout(() => {
+    //     setShowTutorial(true)
+    //   }, 1000)
+    //   return () => clearTimeout(timer)
+    // }
   }, [])
 
   const startTutorial = () => {

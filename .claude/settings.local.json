@@ -121,7 +121,11 @@
       "Bash(sudo rm:*)",
       "WebFetch(domain:gist.github.com)",
       "Bash(./diagnose-wsl-mcp.sh:*)",
-      "Bash(./sync-to-windows.sh:*)"
+      "Bash(./sync-to-windows.sh:*)",
+      "WebFetch(domain:localhost)",
+      "mcp__context7__resolve-library-id",
+      "Bash(wget:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   },

@@ -254,6 +254,13 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
     }
   }
 
+  // Filter tasks based on current filter settings
+  const filteredTasks = tasks.filter(task => {
+    if (filter.status && task.status !== filter.status) return false
+    if (filter.priority && task.priority !== filter.priority) return false
+    return true
+  })
+
   // Bulk operations
   const handleTaskSelect = (taskId: string) => {
     setSelectedTasks(prev => {
@@ -466,12 +473,6 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       default: return `${baseClasses} category-personal`
     }
   }
-
-  const filteredTasks = tasks.filter(task => {
-    if (filter.status && task.status !== filter.status) return false
-    if (filter.priority && task.priority !== filter.priority) return false
-    return true
-  })
 
   // Group tasks by project first, then by status within each project
   const tasksByProject = filteredTasks.reduce((acc, task) => {
@@ -1208,7 +1209,12 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
                         ))}
                         {selectedTask.memory_connections.length > 5 && (
                           <div className="text-center">
-                            <Button size="sm" variant="ghost" className="text-xs text-gray-400">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-xs text-gray-400 min-h-[44px] px-4"
+                              aria-label={`Show ${selectedTask.memory_connections.length - 5} more memory connections`}
+                            >
                               +{selectedTask.memory_connections.length - 5} more connections
                             </Button>
                           </div>
@@ -1226,7 +1232,12 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
                               <span className="text-xs text-gray-400">
                                 {memory.connection.type} • {Math.round(memory.connection.relevance * 100)}% relevance
                               </span>
-                              <Button size="sm" variant="ghost" className="text-xs p-1 h-6">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                aria-label={`View memory: ${memory.content.substring(0, 50)}...`}
+                              >
                                 👁️
                               </Button>
                             </div>
@@ -1237,7 +1248,12 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
                         ))}
                         {taskContext.direct_memories.length > 3 && (
                           <div className="text-center">
-                            <Button size="sm" variant="ghost" className="text-xs text-gray-400">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-xs text-gray-400 min-h-[44px] px-4"
+                              aria-label={`Show ${taskContext.direct_memories.length - 3} more direct memory connections`}
+                            >
                               +{taskContext.direct_memories.length - 3} more direct connections
                             </Button>
                           </div>

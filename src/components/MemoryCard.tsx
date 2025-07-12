@@ -268,27 +268,59 @@ export function MemoryCard({
     setQualityScore(validation.score)
   }, [memory, validateMemory])
   
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (onView) {
+          onView(memory)
+        }
+        break
+      case 'e':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          onEdit()
+        }
+        break
+      case 'Delete':
+        if (e.shiftKey) {
+          e.preventDefault()
+          onDelete(memory.id)
+        }
+        break
+    }
+  }
+
   return (
-    <div className={`
-      card-glass ${getComplexityClass(memory.complexity || 1)} group cursor-pointer overflow-hidden
-      ${selected ? 'ring-2 ring-violet-500 border-violet-400' : ''}
-      w-full min-h-[200px] sm:min-h-[220px] h-auto flex
-    `}>
+    <div 
+      className={`
+        card-glass ${getComplexityClass(memory.complexity || 1)} group cursor-pointer overflow-hidden
+        ${selected ? 'ring-2 ring-violet-500 border-violet-400' : ''}
+        w-full min-h-[240px] sm:min-h-[220px] h-auto flex
+        focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900
+      `}
+      tabIndex={0}
+      role="article"
+      aria-label={`Memory: ${extractTitle(memory.content, memory)} - ${memory.category || 'uncategorized'}`}
+      onKeyDown={handleCardKeyDown}
+    >
       {/* Selection Checkbox Column */}
       {onSelect && (
-        <div className="flex-shrink-0 p-4 flex items-start">
+        <div className="flex-shrink-0 p-3 sm:p-4 flex items-start">
           <input
             type="checkbox"
             checked={selected}
             onChange={() => onSelect(memory.id)}
             onClick={(e) => e.stopPropagation()}
-            className="w-4 h-4 mt-0.5 text-violet-600 bg-white/10 border-white/20 rounded focus-ring focus:ring-violet-500 backdrop-blur-sm cursor-pointer"
+            className="min-h-[44px] min-w-[44px] w-5 h-5 mt-0.5 text-violet-600 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900 backdrop-blur-sm cursor-pointer touch-manipulation"
+            aria-label={`Select memory: ${extractTitle(memory.content, memory)}`}
           />
         </div>
       )}
 
       {/* Card Content */}
-      <div className={`flex-1 flex flex-col h-full ${onSelect ? 'pr-4 py-4' : 'p-4'}`}>
+      <div className={`flex-1 flex flex-col h-full ${onSelect ? 'pr-3 sm:pr-4 py-3 sm:py-4' : 'p-3 sm:p-4'}`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3 flex-shrink-0 min-w-0">
         <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
@@ -315,17 +347,21 @@ export function MemoryCard({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0 ml-2">
+        {/* Action Buttons - Enhanced for mobile */}
+        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex-shrink-0 ml-2">
           {onView && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => onView(memory)}
-                    className="h-8 w-8 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors rounded-md flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onView(memory)
+                    }}
+                    className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                    aria-label={`View memory details: ${extractTitle(memory.content, memory)}`}
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -338,10 +374,14 @@ export function MemoryCard({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={onEdit}
-                  className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-md flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                  }}
+                  className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                  aria-label={`Edit memory: ${extractTitle(memory.content, memory)}`}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-5 w-5" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -353,11 +393,15 @@ export function MemoryCard({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => onDelete(memory.id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(memory.id)
+                  }}
                   disabled={isDeleting}
-                  className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 rounded-md flex items-center justify-center"
+                  className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 rounded-lg flex items-center justify-center touch-manipulation"
+                  aria-label={`Delete memory: ${extractTitle(memory.content, memory)}`}
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {isDeleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent>
