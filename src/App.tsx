@@ -1457,26 +1457,27 @@ Respond with JSON format:
             </div>
             
             {/* Navigation Section */}
-            <div className="flex-1 flex justify-center px-8 md:px-12">
-              <div className="hidden md:flex items-center gap-3 bg-gray-800/40 backdrop-blur-md rounded-xl p-3 border border-gray-700/30">
+            <div className="flex-1 flex justify-center px-2 md:px-4 lg:px-8">
+              <div className="hidden md:flex items-center gap-1 lg:gap-3 bg-gray-800/40 backdrop-blur-md rounded-xl p-2 lg:p-3 border border-gray-700/30 max-w-fit overflow-hidden">
                 {[
                   { id: "dashboard", label: "Dashboard" },
                   { id: "memories", label: "Memories" },
                   { id: "tasks", label: "Tasks" },
-                  { id: "relationships", label: "Relationships" },
-                  { id: "ai", label: "AI Enhancement" }
+                  { id: "relationships", label: "Relationships", shortLabel: "Relations" },
+                  { id: "ai", label: "AI Enhancement", shortLabel: "AI" }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setCurrentTab(tab.id as any)}
                     data-tab={tab.id}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-w-[90px] ${
+                    className={`px-2 lg:px-4 py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                       currentTab === tab.id
                         ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/40"
                     }`}
                   >
-                    {tab.label}
+                    <span className="hidden lg:inline">{tab.label}</span>
+                    <span className="lg:hidden">{tab.shortLabel || tab.label}</span>
                   </button>
                 ))}
               </div>

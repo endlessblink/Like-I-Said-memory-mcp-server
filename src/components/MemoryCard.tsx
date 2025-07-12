@@ -290,8 +290,8 @@ export function MemoryCard({
       {/* Card Content */}
       <div className={`flex-1 flex flex-col h-full ${onSelect ? 'pr-4 py-4' : 'p-4'}`}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-3 flex-shrink-0">
-        <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-start justify-between mb-3 flex-shrink-0 min-w-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
           
           {/* Category Badge */}
           {memory.category && (
@@ -309,12 +309,14 @@ export function MemoryCard({
           
           {/* Quality Badge */}
           {qualityScore !== null && (
-            <QualityBadge score={qualityScore} size="sm" />
+            <div className="flex-shrink-0">
+              <QualityBadge score={qualityScore} size="sm" />
+            </div>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0 ml-2">
           {onView && (
             <TooltipProvider>
               <Tooltip>
