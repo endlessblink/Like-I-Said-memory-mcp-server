@@ -183,7 +183,7 @@ class StdioTransport {
             this.sendResponse({
               jsonrpc: '2.0',
               id: null,
-              error: { code: -32700, message: 'Parse error' }
+              error: { code: -32700, message: `Parse error: ${error.message}` }
             });
           }
         }

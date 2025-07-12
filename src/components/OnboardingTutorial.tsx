@@ -51,7 +51,7 @@ const tutorialSteps: TutorialStep[] = [
     id: 'navigation',
     title: 'Navigation Tabs',
     content: 'Use these tabs to switch between different views: Dashboard for overview, Memories for browsing content, Tasks for project management, and AI Enhancement for content processing.',
-    targetSelector: 'nav .hidden.md\\:flex',
+    targetSelector: 'nav .hidden.md\\:flex, nav .md\\:flex',
     position: 'bottom',
     action: 'observe',
     icon: '🧭'
@@ -106,7 +106,7 @@ const tutorialSteps: TutorialStep[] = [
     id: 'tasks',
     title: 'Task Management',
     content: 'Switch to the Tasks tab to manage your to-do items. Tasks can be linked to relevant memories automatically, creating a connected knowledge system.',
-    targetSelector: 'button[data-tab="tasks"]',
+    targetSelector: '[data-tab="tasks"]',
     position: 'bottom',
     action: 'click',
     actionText: 'Click to view Tasks',
@@ -123,7 +123,7 @@ const tutorialSteps: TutorialStep[] = [
     id: 'ai-enhancement',
     title: 'AI-Powered Features',
     content: 'The AI Enhancement tab offers content processing, automatic summarization, and intelligent suggestions to help you work more efficiently with your information.',
-    targetSelector: 'button[data-tab="ai"]',
+    targetSelector: '[data-tab="ai"]',
     position: 'bottom',
     action: 'observe',
     icon: '🤖'
@@ -171,14 +171,31 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
       return
     }
 
-    const element = document.querySelector(step.targetSelector) as HTMLElement
-    if (element) {
+    // Try multiple times to find the element (useful for dynamic content)
+    const findElement = () => {
+      return document.querySelector(step.targetSelector) as HTMLElement
+    }
+
+    let element = findElement()
+    
+    // If element not found, try again after a short delay
+    if (!element) {
+      setTimeout(() => {
+        element = findElement()
+        if (element) {
+          element.style.position = 'relative'
+          element.style.zIndex = '50'
+          element.style.boxShadow = `0 0 0 4px ${step.highlightColor === 'violet' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)'}, 0 0 20px rgba(59, 130, 246, 0.3)`
+          setHighlightedElement(element)
+        } else {
+          console.warn(`Tutorial: Element not found after retry for selector: ${step.targetSelector}`)
+        }
+      }, 100)
+    } else {
       element.style.position = 'relative'
-      element.style.zIndex = '45'
+      element.style.zIndex = '50'
       element.style.boxShadow = `0 0 0 4px ${step.highlightColor === 'violet' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)'}, 0 0 20px rgba(59, 130, 246, 0.3)`
       setHighlightedElement(element)
-    } else {
-      console.warn(`Tutorial: Element not found for selector: ${step.targetSelector}`)
     }
 
     return () => {
@@ -227,53 +244,86 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
   const getTooltipPosition = (): React.CSSProperties => {
     if (!step.targetSelector || step.position === 'center') {
       // For center position, ensure tooltip doesn't overlap with nav bar
-      // Nav bar is approximately 120px tall
-      const navBarHeight = 120;
+      // Nav bar is approximately 80px tall (from minHeight in App.tsx)
+      const navBarHeight = 80;
       const viewportHeight = window.innerHeight;
-      const tooltipHeight = 330; // Approximate height of tooltip
-      const centerY = Math.max(navBarHeight + tooltipHeight/2 + 20, viewportHeight/2);
+      const tooltipHeight = 400; // Approximate height of tooltip with all content
+      const availableHeight = viewportHeight - navBarHeight;
+      
+      // Position tooltip in the center of available space below nav
+      const centerY = navBarHeight + (availableHeight / 2);
       
       return {
         position: 'fixed',
         top: `${centerY}px`,
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 48
+        zIndex: 60,
+        maxHeight: `${availableHeight - 40}px`, // Leave some margin
+        overflowY: 'auto'
       }
     }
 
     const element = document.querySelector(step.targetSelector) as HTMLElement
     if (!element) {
       // Fallback to adjusted center position
-      const navBarHeight = 120;
+      const navBarHeight = 80;
       const viewportHeight = window.innerHeight;
-      const tooltipHeight = 330;
-      const centerY = Math.max(navBarHeight + tooltipHeight/2 + 20, viewportHeight/2);
+      const availableHeight = viewportHeight - navBarHeight;
+      const centerY = navBarHeight + (availableHeight / 2);
       
       return {
         position: 'fixed',
         top: `${centerY}px`,
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 48
+        zIndex: 60,
+        maxHeight: `${availableHeight - 40}px`,
+        overflowY: 'auto'
       }
     }
 
     const rect = element.getBoundingClientRect()
     const style: React.CSSProperties = {
       position: 'fixed',
-      zIndex: 48
+      zIndex: 60
     }
 
     switch (step.position) {
       case 'top':
-        style.bottom = `${window.innerHeight - rect.top + 10}px`
-        style.left = `${rect.left + rect.width / 2}px`
+        const tooltipWidthTop = Math.min(320, window.innerWidth - 40) // w-80 capped by viewport
+        const marginTop = 20 // Safety margin from viewport edges
+        
+        let topY = rect.top - 10 // Position above element with margin
+        let topX = rect.left + rect.width / 2
+        
+        // Keep horizontally within viewport bounds
+        if (topX - tooltipWidthTop/2 < marginTop) {
+          topX = marginTop + tooltipWidthTop/2
+        } else if (topX + tooltipWidthTop/2 > window.innerWidth - marginTop) {
+          topX = window.innerWidth - marginTop - tooltipWidthTop/2
+        }
+        
+        style.bottom = `${window.innerHeight - topY}px`
+        style.left = `${topX}px`
         style.transform = 'translateX(-50%)'
         break
       case 'bottom':
-        style.top = `${rect.bottom + 10}px`
-        style.left = `${rect.left + rect.width / 2}px`
+        const tooltipWidth = Math.min(320, window.innerWidth - 40) // w-80 capped by viewport
+        const margin = 20 // Safety margin from viewport edges
+        
+        let bottomY = rect.bottom + 10
+        let bottomX = rect.left + rect.width / 2
+        
+        // Keep horizontally within viewport bounds
+        if (bottomX - tooltipWidth/2 < margin) {
+          bottomX = margin + tooltipWidth/2
+        } else if (bottomX + tooltipWidth/2 > window.innerWidth - margin) {
+          bottomX = window.innerWidth - margin - tooltipWidth/2
+        }
+        
+        style.top = `${bottomY}px`
+        style.left = `${bottomX}px`
         style.transform = 'translateX(-50%)'
         break
       case 'left':
@@ -282,8 +332,32 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
         style.transform = 'translateY(-50%)'
         break
       case 'right':
-        style.left = `${rect.right + 10}px`
-        style.top = `${rect.top + rect.height / 2}px`
+        const tooltipWidthRight = Math.min(320, window.innerWidth - 40) // w-80 capped by viewport
+        const marginRight = 20 // Safety margin from viewport edges
+        const navBarHeight = 80
+        
+        let rightX = rect.right + 10
+        let rightY = rect.top + rect.height / 2
+        
+        // Keep within viewport bounds horizontally 
+        if (rightX + tooltipWidthRight > window.innerWidth - marginRight) {
+          // Switch to left side if no room on right
+          rightX = rect.left - tooltipWidthRight - 10
+          if (rightX < marginRight) {
+            rightX = marginRight
+          }
+        }
+        
+        // Keep within viewport bounds vertically
+        const tooltipHeight = 400
+        if (rightY - tooltipHeight/2 < navBarHeight + marginRight) {
+          rightY = navBarHeight + marginRight + tooltipHeight/2
+        } else if (rightY + tooltipHeight/2 > window.innerHeight - marginRight) {
+          rightY = window.innerHeight - marginRight - tooltipHeight/2
+        }
+        
+        style.left = `${rightX}px`
+        style.top = `${rightY}px`
         style.transform = 'translateY(-50%)'
         break
       default:
@@ -303,13 +377,13 @@ export function OnboardingTutorial({ open, onOpenChange, onComplete }: Onboardin
       <div
         ref={overlayRef}
         className="fixed inset-0 bg-black bg-opacity-30"
-        style={{ zIndex: 30 }}
+        style={{ zIndex: 40 }}
         onClick={() => onOpenChange(false)}
       />
 
       {/* Tutorial tooltip */}
       <Card
-        className="w-80 max-w-sm bg-gray-800 border-gray-600 text-white shadow-xl"
+        className="w-80 max-w-[calc(100vw-40px)] bg-gray-800 border-gray-600 text-white shadow-xl"
         style={getTooltipPosition()}
       >
         <CardContent className="p-6">
@@ -415,7 +489,7 @@ interface TutorialLauncherProps {
   className?: string
 }
 
-export function TutorialLauncher({ className = '' }: TutorialLauncherProps) {
+export function TutorialLauncher({ className = '', ...props }: TutorialLauncherProps & React.HTMLAttributes<HTMLDivElement>) {
   const [showTutorial, setShowTutorial] = useState(false)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false)
 
@@ -444,7 +518,7 @@ export function TutorialLauncher({ className = '' }: TutorialLauncherProps) {
 
   return (
     <>
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-2 ${className}`} {...props}>
         <Button
           variant="outline"
           size="sm"

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import './theme-reset.css';
 @import './fix-theme.css'; /* Provides fallback theme values while JS loads */
+@import './theme-improvements.css'; /* Enhanced theme support and visual fixes */
 
 @tailwind base;
 @tailwind components;

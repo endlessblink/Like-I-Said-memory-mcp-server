@@ -247,8 +247,7 @@ export function MemoryCard({
   isDeleting = false
 }: MemoryCardProps) {
   // Temporarily disable quality validation to prevent WebSocket errors
-  // const { validateMemory } = useQualityStandards()
-  const validateMemory = () => ({ score: 0, issues: [] }) // Mock function
+  const { validateMemory } = useQualityStandards()
   const [qualityScore, setQualityScore] = useState<number | null>(null)
   
   // Ensure backward compatibility with existing memory format

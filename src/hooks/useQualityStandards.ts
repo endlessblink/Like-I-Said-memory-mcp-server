@@ -34,31 +34,7 @@ interface QualityValidation {
 }
 
 export function useQualityStandards() {
-  // TEMPORARILY DISABLED - Return mock data to prevent WebSocket errors
-  return {
-    standards: {
-      titleMinLength: 15,
-      titleMaxLength: 80,
-      descriptionMinLength: 50,
-      descriptionMaxLength: 300,
-      forbiddenPatterns: [],
-      weakWords: [],
-      strongActions: [],
-      qualityThresholds: {
-        excellent: 90,
-        good: 70,
-        fair: 60,
-        poor: 40,
-        critical: 0,
-        passing: 70
-      }
-    },
-    loading: false,
-    validateMemory: () => ({ score: 75, issues: [], suggestions: [], meetsStandards: true }),
-    suggestImprovedTitle: () => Promise.resolve("Sample Title"),
-    addListener: () => {},
-    removeListener: () => {}
-  }
+  // Enable quality validation - using real implementation
   
   const [standards, setStandards] = useState<QualityStandards | null>(cachedStandards)
   const [loading, setLoading] = useState(!cachedStandards)
@@ -79,7 +55,7 @@ export function useQualityStandards() {
     }
 
     // Start new fetch
-    fetchPromise = fetch('http://localhost:3001/api/quality/standards')
+    fetchPromise = fetch('/api/quality/standards')
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch standards')
         return response.json()
@@ -136,6 +112,7 @@ export function useQualityStandards() {
     }
 
     // WebSocket disabled to prevent duplicate connections - using main App.tsx WebSocket instead
+    // Quality validation works fine without WebSocket for now
     return
     
     // Temporarily disable WebSocket in useQualityStandards to prevent duplicate connections

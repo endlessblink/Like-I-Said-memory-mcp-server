@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AdvancedFilters, MemoryCategory, ContentType } from "@/types"
 import { Search, Filter, X, ChevronDown, ChevronUp } from "lucide-react"
+import { FilterPresets } from "@/components/FilterPresets"
 
 interface AdvancedSearchProps {
   query: string
@@ -84,9 +85,9 @@ export function AdvancedSearch({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Main Search Bar */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      {/* Main Search Bar with Presets */}
+      <div className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             value={query}
@@ -95,6 +96,16 @@ export function AdvancedSearch({
             className="pl-10 pr-4"
           />
         </div>
+        
+        {/* Filter Presets Component */}
+        <FilterPresets
+          currentFilters={filters}
+          onApplyPreset={(presetFilters) => {
+            onFiltersChange({ ...filters, ...presetFilters });
+          }}
+          onFiltersChange={onFiltersChange}
+          className="flex-shrink-0"
+        />
         
         <Button
           variant={showFilters ? "default" : "outline"}

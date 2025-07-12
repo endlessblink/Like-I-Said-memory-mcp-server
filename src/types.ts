@@ -53,10 +53,15 @@ export interface AdvancedFilters {
   text?: string
   tags?: string[]
   project?: string
-  category?: MemoryCategory
+  category?: MemoryCategory | MemoryCategory[]
   contentType?: ContentType
   dateRange?: { start: string; end: string }
   clients?: string[]
+  priority?: string[]
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  hasNoTags?: boolean
+  searchQuery?: string
   // Logical operators
   AND?: AdvancedFilters[]
   OR?: AdvancedFilters[]

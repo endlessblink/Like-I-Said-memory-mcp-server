@@ -88,7 +88,7 @@ export const darkTheme: Theme = {
   },
 };
 
-// Light Professional Theme
+// Light Professional Theme (Improved)
 export const lightTheme: Theme = {
   id: 'light',
   name: 'Light Professional',
@@ -125,19 +125,19 @@ export const lightTheme: Theme = {
       l4: colorPalettes.red,
     },
     
-    // UI colors
+    // UI colors - Enhanced for better contrast and readability
     background: 'hsl(0, 0%, 100%)',
     foreground: 'hsl(222, 84%, 4.9%)',
-    card: 'hsl(0, 0%, 100%)',
+    card: 'hsl(0, 0%, 98%)',
     cardForeground: 'hsl(222, 84%, 4.9%)',
     popover: 'hsl(0, 0%, 100%)',
     popoverForeground: 'hsl(222, 84%, 4.9%)',
-    muted: 'hsl(210, 40%, 96%)',
-    mutedForeground: 'hsl(215, 16%, 46.9%)',
-    border: 'hsl(214, 32%, 91.4%)',
-    input: 'hsl(214, 32%, 91.4%)',
+    muted: 'hsl(210, 40%, 94%)',
+    mutedForeground: 'hsl(215, 16%, 40%)',
+    border: 'hsl(214, 32%, 88%)',
+    input: 'hsl(214, 32%, 88%)',
     ring: 'hsl(262, 73%, 60%)',
-    destructive: 'hsl(0, 84%, 60%)',
+    destructive: 'hsl(0, 84%, 50%)',
     destructiveForeground: 'hsl(210, 40%, 98%)',
   },
   spacing: defaultSpacing,
@@ -148,16 +148,90 @@ export const lightTheme: Theme = {
   borderRadius: defaultBorderRadius,
   effects: {
     glassmorphism: {
-      background: 'rgba(255, 255, 255, 0.7)',
-      border: 'rgba(0, 0, 0, 0.1)',
+      background: 'rgba(255, 255, 255, 0.8)',
+      border: 'rgba(0, 0, 0, 0.12)',
       backdrop: 'blur(16px)',
-      shadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+      shadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
     },
     gradients: {
       primary: 'linear-gradient(135deg, hsl(262, 73%, 60%) 0%, hsl(280, 73%, 65%) 100%)',
-      secondary: 'linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 98%) 100%)',
+      secondary: 'linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 96%) 100%)',
       accent: 'linear-gradient(135deg, hsl(280, 73%, 60%) 0%, hsl(290, 73%, 65%) 100%)',
-      card: 'linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 98%) 100%)',
+      card: 'linear-gradient(145deg, hsl(0, 0%, 98%) 0%, hsl(210, 40%, 96%) 100%)',
+    },
+  },
+};
+
+// Neutral Bright Theme (New)
+export const neutralBrightTheme: Theme = {
+  id: 'neutral-bright',
+  name: 'Neutral Bright',
+  colors: {
+    // Base colors - Using neutral gray palette
+    slate: colorPalettes.slate,
+    gray: colorPalettes.gray,
+    zinc: colorPalettes.zinc,
+    neutral: colorPalettes.gray,
+    stone: colorPalettes.stone,
+    
+    // Brand colors - Softer, neutral-focused
+    primary: colorPalettes.slate,
+    secondary: colorPalettes.gray,
+    accent: colorPalettes.blue,
+    
+    // Semantic colors
+    success: colorPalettes.emerald,
+    warning: colorPalettes.amber,
+    error: colorPalettes.red,
+    info: colorPalettes.blue,
+    
+    // Category colors
+    personal: colorPalettes.purple,
+    work: colorPalettes.emerald,
+    code: colorPalettes.red,
+    research: colorPalettes.blue,
+    
+    // Complexity colors
+    complexity: {
+      l1: colorPalettes.emerald,
+      l2: colorPalettes.blue,
+      l3: colorPalettes.amber,
+      l4: colorPalettes.red,
+    },
+    
+    // UI colors - Optimized for neutral brightness
+    background: 'hsl(0, 0%, 97%)',
+    foreground: 'hsl(0, 0%, 15%)',
+    card: 'hsl(0, 0%, 100%)',
+    cardForeground: 'hsl(0, 0%, 15%)',
+    popover: 'hsl(0, 0%, 100%)',
+    popoverForeground: 'hsl(0, 0%, 15%)',
+    muted: 'hsl(0, 0%, 92%)',
+    mutedForeground: 'hsl(0, 0%, 45%)',
+    border: 'hsl(0, 0%, 85%)',
+    input: 'hsl(0, 0%, 90%)',
+    ring: 'hsl(215, 20%, 65%)',
+    destructive: 'hsl(0, 84%, 50%)',
+    destructiveForeground: 'hsl(0, 0%, 98%)',
+  },
+  spacing: defaultSpacing,
+  typography: defaultTypography,
+  breakpoints: defaultBreakpoints,
+  animations: defaultAnimations,
+  elevation: defaultElevation,
+  borderRadius: defaultBorderRadius,
+  effects: {
+    glassmorphism: {
+      background: 'rgba(255, 255, 255, 0.85)',
+      border: 'rgba(0, 0, 0, 0.08)',
+      backdrop: 'blur(20px)',
+      shadow: '0 8px 32px rgba(0, 0, 0, 0.06)',
+    },
+    gradients: {
+      primary: 'linear-gradient(135deg, hsl(215, 20%, 65%) 0%, hsl(215, 25%, 70%) 100%)',
+      secondary: 'linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(0, 0%, 95%) 100%)',
+      accent: 'linear-gradient(135deg, hsl(215, 84%, 65%) 0%, hsl(220, 84%, 70%) 100%)',
+      card: 'linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(0, 0%, 97%) 100%)',
     },
   },
 };
@@ -314,6 +388,7 @@ export const greenTheme: Theme = {
 export const themes = {
   dark: darkTheme,
   light: lightTheme,
+  'neutral-bright': neutralBrightTheme,
   blue: blueTheme,
   green: greenTheme,
 };

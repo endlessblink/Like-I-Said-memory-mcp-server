@@ -63,24 +63,82 @@ setup_install_dir() {
 
 # Download and install binary
 install_binary() {
-    local binary_url="$RELEASES_URL/mcp-server-standalone-$PLATFORM"
+    local binary_url="$RELEASES_URL/like-i-said-mcp-$PLATFORM"
     if [ "$PLATFORM" = "win-x64" ]; then
         binary_url="$binary_url.exe"
     fi
     
     echo -e "${BLUE}Downloading Like-I-Said MCP Server for $PLATFORM...${NC}"
+    echo -e "${BLUE}From: $binary_url${NC}"
+    
+    # Check if binary already exists and is recent (less than 24 hours old)
+    if [ -f "$INSTALL_DIR/$BINARY_NAME" ] && [ $(($(date +%s) - $(stat -c %Y "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null || echo 0))) -lt 86400 ]; then
+        echo -e "${YELLOW}Recent binary found, skipping download...${NC}"
+        return
+    fi
+    
+    # Create temporary download location
+    local temp_file="/tmp/$BINARY_NAME.$$"
     
     if command -v curl > /dev/null; then
-        curl -L -o "$INSTALL_DIR/$BINARY_NAME" "$binary_url"
+        if curl -L --fail --silent --show-error -o "$temp_file" "$binary_url"; then
+            echo -e "${GREEN}Download successful${NC}"
+        else
+            echo -e "${RED}Download failed with curl${NC}"
+            # Try fallback URL structure
+            binary_url="$RELEASES_URL/mcp-server-standalone-$PLATFORM"
+            if [ "$PLATFORM" = "win-x64" ]; then
+                binary_url="$binary_url.exe"
+            fi
+            echo -e "${YELLOW}Trying fallback URL: $binary_url${NC}"
+            if ! curl -L --fail --silent --show-error -o "$temp_file" "$binary_url"; then
+                echo -e "${RED}Fallback download also failed${NC}"
+                rm -f "$temp_file"
+                exit 1
+            fi
+        fi
     elif command -v wget > /dev/null; then
-        wget -O "$INSTALL_DIR/$BINARY_NAME" "$binary_url"
+        if wget -q -O "$temp_file" "$binary_url"; then
+            echo -e "${GREEN}Download successful${NC}"
+        else
+            echo -e "${RED}Download failed with wget${NC}"
+            # Try fallback URL structure
+            binary_url="$RELEASES_URL/mcp-server-standalone-$PLATFORM"
+            if [ "$PLATFORM" = "win-x64" ]; then
+                binary_url="$binary_url.exe"
+            fi
+            echo -e "${YELLOW}Trying fallback URL: $binary_url${NC}"
+            if ! wget -q -O "$temp_file" "$binary_url"; then
+                echo -e "${RED}Fallback download also failed${NC}"
+                rm -f "$temp_file"
+                exit 1
+            fi
+        fi
     else
         echo -e "${RED}Error: curl or wget is required${NC}"
         exit 1
     fi
     
+    # Verify download
+    if [ ! -f "$temp_file" ] || [ ! -s "$temp_file" ]; then
+        echo -e "${RED}Error: Downloaded file is empty or missing${NC}"
+        rm -f "$temp_file"
+        exit 1
+    fi
+    
+    # Move to final location
+    mv "$temp_file" "$INSTALL_DIR/$BINARY_NAME"
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
-    echo -e "${GREEN}Binary installed to $INSTALL_DIR/$BINARY_NAME${NC}"
+    
+    # Verify file size (should be at least 1MB for a valid binary)
+    local file_size=$(stat -c%s "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null || echo 0)
+    if [ "$file_size" -lt 1048576 ]; then
+        echo -e "${RED}Error: Downloaded binary seems too small ($file_size bytes)${NC}"
+        rm -f "$INSTALL_DIR/$BINARY_NAME"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}Binary installed to $INSTALL_DIR/$BINARY_NAME (${file_size} bytes)${NC}"
 }
 
 # Detect MCP clients and configure them
@@ -196,12 +254,51 @@ EOF
 test_installation() {
     echo -e "${BLUE}Testing installation...${NC}"
     
-    if echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | timeout 5s "$INSTALL_DIR/$BINARY_NAME" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Installation successful!${NC}"
-        echo -e "${GREEN}✅ MCP Server is working correctly${NC}"
+    # Basic file tests
+    if [ ! -f "$INSTALL_DIR/$BINARY_NAME" ]; then
+        echo -e "${RED}❌ Binary file not found${NC}"
+        return 1
+    fi
+    
+    if [ ! -x "$INSTALL_DIR/$BINARY_NAME" ]; then
+        echo -e "${RED}❌ Binary is not executable${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Binary file exists and is executable${NC}"
+    
+    # Test binary execution
+    local test_output
+    if test_output=$(echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | timeout 10s "$INSTALL_DIR/$BINARY_NAME" 2>&1); then
+        if echo "$test_output" | grep -q "add_memory\|list_memories"; then
+            echo -e "${GREEN}✅ MCP Server is working correctly${NC}"
+            echo -e "${GREEN}✅ Found memory management tools${NC}"
+            
+            # Count available tools
+            local tool_count=$(echo "$test_output" | grep -o '"name"' | wc -l)
+            echo -e "${GREEN}✅ Available tools: $tool_count${NC}"
+            
+            return 0
+        else
+            echo -e "${YELLOW}⚠️  Server responds but tools not detected${NC}"
+            echo -e "${BLUE}Debug output: $test_output${NC}"
+            return 1
+        fi
     else
-        echo -e "${RED}❌ Installation test failed${NC}"
-        echo -e "${YELLOW}The binary was installed but may have runtime issues${NC}"
+        echo -e "${RED}❌ Server test failed${NC}"
+        echo -e "${BLUE}Error output: $test_output${NC}"
+        
+        # Additional debugging
+        echo -e "${BLUE}Debugging binary...${NC}"
+        if file "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null; then
+            echo -e "${GREEN}File type detected${NC}"
+        fi
+        
+        if ldd "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null | head -5; then
+            echo -e "${YELLOW}Dependencies check (showing first 5)${NC}"
+        fi
+        
+        return 1
     fi
 }
 

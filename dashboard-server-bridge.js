@@ -14,6 +14,7 @@ import { TaskStorage } from './lib/task-storage.js';
 import { MemoryStorageWrapper } from './lib/memory-storage-wrapper.js';
 import { SystemSafeguards } from './lib/system-safeguards.js';
 import { FileSystemMonitor } from './lib/file-system-monitor.js';
+import { ContentAnalyzer } from './lib/content-analyzer.js';
 import { AutomationConfig } from './lib/automation-config.js';
 import { AutomationScheduler } from './lib/automation-scheduler.js';
 import { OllamaClient } from './lib/ollama-client.js';
@@ -39,6 +40,7 @@ class DashboardBridge {
     this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
     this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
     this.safeguards = new SystemSafeguards();
+    this.contentAnalyzer = new ContentAnalyzer();
     
     // Initialize authentication system
     this.authSystem = new AuthSystem();
@@ -65,9 +67,52 @@ class DashboardBridge {
   }
 
   setupExpress() {
-    // Security middleware
+    // Security middleware with CSP
     this.app.use(helmet({
-      contentSecurityPolicy: false // Allow inline scripts for dashboard
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'", // Required for React dev tools and dynamic imports
+            "'unsafe-eval'", // Required for development mode
+            "blob:", // Required for Monaco Editor
+            "data:", // Required for inline scripts
+          ],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'", // Required for styled components and CSS-in-JS
+            "fonts.googleapis.com"
+          ],
+          fontSrc: [
+            "'self'",
+            "fonts.gstatic.com",
+            "data:"
+          ],
+          imgSrc: [
+            "'self'",
+            "data:",
+            "blob:"
+          ],
+          connectSrc: [
+            "'self'",
+            "ws:",
+            "wss:",
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://localhost:*",
+            "https://127.0.0.1:*"
+          ],
+          frameSrc: ["'none'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"]
+        },
+        reportOnly: process.env.NODE_ENV !== 'production' // Report-only in development
+      },
+      crossOriginEmbedderPolicy: false, // Disable to allow iframes if needed
+      crossOriginResourcePolicy: { policy: "cross-origin" }
     }));
     
     // Rate limiting - increased limits for development
@@ -87,7 +132,18 @@ class DashboardBridge {
     });
     this.app.use('/api/', limiter);
     
-    this.app.use(cors());
+    // Secure CORS configuration
+    const corsOptions = {
+      origin: process.env.NODE_ENV === 'production' 
+        ? ['https://localhost:3001', 'https://127.0.0.1:3001'] // Production origins
+        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'], // Development origins
+      credentials: true,
+      optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
+      exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
+    };
+    this.app.use(cors(corsOptions));
     this.app.use(express.json());
     this.app.use(express.static('dist'));
 
@@ -128,8 +184,13 @@ class DashboardBridge {
     this.app.post('/api/memories', requireAuth(), this.createMemory.bind(this));
     this.app.put('/api/memories/:id', requireAuth(), this.updateMemory.bind(this));
     this.app.delete('/api/memories/:id', requireAuth(), this.deleteMemory.bind(this));
+    this.app.post('/api/memories/suggest-for-task', requireAuth(), this.suggestMemoriesForTask.bind(this));
     this.app.get('/api/projects', requireAuth(), this.getProjects.bind(this));
     this.app.get('/api/status', this.getStatus.bind(this)); // Keep status public for health checks
+
+    // Category Analysis API Routes
+    this.app.post('/api/analyze/categories', requireAuth(), this.analyzeCategories.bind(this));
+    this.app.post('/api/analyze/categories/feedback', requireAuth(), this.submitCategoryFeedback.bind(this));
 
     // Protected Task API Routes
     this.app.get('/api/tasks', requireAuth(), this.getTasks.bind(this));
@@ -179,6 +240,28 @@ class DashboardBridge {
     // Serve React app for non-API routes
     this.app.get('*', (req, res) => {
       res.sendFile(path.resolve('dist/index.html'));
+    });
+
+    // Global error handler - must be last
+    this.app.use((err, req, res, next) => {
+      // Log the full error for debugging
+      console.error('Express error:', err);
+      
+      // Don't expose sensitive error details in production
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const statusCode = err.statusCode || err.status || 500;
+      
+      const errorResponse = {
+        error: isDevelopment ? err.message : 'Internal Server Error',
+        status: statusCode
+      };
+      
+      // Include stack trace only in development
+      if (isDevelopment && err.stack) {
+        errorResponse.stack = err.stack;
+      }
+      
+      res.status(statusCode).json(errorResponse);
     });
   }
 
@@ -2161,20 +2244,26 @@ class DashboardBridge {
       const config = parser.loadConfig();
       
       const standards = {
-        titleMinLength: config.title.length?.min_length || 15,
-        titleMaxLength: config.title.length?.max_length || 80,
-        descriptionMinLength: config.description.length?.min_length || 50,
-        descriptionMaxLength: config.description.length?.max_length || 300,
-        forbiddenPatterns: config.title.forbiddenPatterns?.map(p => p.pattern.source) || [],
-        weakWords: config.title.weakWords || [],
-        strongActions: config.title.strongActions || [],
-        qualityThresholds: config.compliance || {
-          excellent: 90,
-          good: 70,
-          fair: 60,
-          poor: 40,
-          critical: 0,
-          passing: 70
+        titleMinLength: config.title?.length?.min_length || 15,
+        titleMaxLength: config.title?.length?.max_length || 80,
+        descriptionMinLength: config.description?.length?.min_length || 50,
+        descriptionMaxLength: config.description?.length?.max_length || 300,
+        forbiddenPatterns: config.title?.forbiddenPatterns?.map(p => p.pattern.source) || [
+          'dashboard improvements',
+          'session\\s*\\(',
+          '\\(\\s*\\w+\\s+\\d{1,2},?\\s+\\d{4}\\s*\\)',
+          'major|complete|comprehensive',
+          'status|update|progress'
+        ],
+        weakWords: config.title?.weakWords || ['improvements', 'session', 'update', 'status', 'changes', 'modifications'],
+        strongActions: config.title?.strongActions || ['implement', 'fix', 'add', 'create', 'configure', 'optimize', 'refactor'],
+        qualityThresholds: {
+          excellent: config.compliance?.excellent || 90,
+          good: config.compliance?.good || 70,
+          fair: config.compliance?.fair || 60,
+          poor: config.compliance?.poor || 40,
+          critical: config.compliance?.critical || 0,
+          passing: config.compliance?.passing_score || 70
         }
       };
       
@@ -2340,6 +2429,163 @@ class DashboardBridge {
       console.error('Setup authentication error:', error);
       res.status(500).json({ error: error.message });
     }
+  }
+
+  // Suggest memories for task creation
+  async suggestMemoriesForTask(req, res) {
+    try {
+      const { title, description, project, category, tags } = req.body;
+      
+      if (!title?.trim()) {
+        return res.status(400).json({ error: 'Title is required' });
+      }
+
+      // Create a mock task object for the linker
+      const mockTask = {
+        title: title.trim(),
+        description: description?.trim() || '',
+        project: project || 'default',
+        category: category || 'code',
+        tags: Array.isArray(tags) ? tags : []
+      };
+
+      // Use the task-memory linker to find related memories
+      if (this.taskStorage.taskMemoryLinker) {
+        const suggestions = await this.taskStorage.taskMemoryLinker.autoLinkMemories(mockTask);
+        
+        // Convert to frontend format
+        const memories = [];
+        for (const suggestion of suggestions) {
+          try {
+            const memory = await this.memoryStorage.getMemory(suggestion.memory_id);
+            if (memory) {
+              memories.push({
+                id: suggestion.memory_id,
+                title: memory.title || this.extractTitle(memory.content),
+                content: memory.content,
+                relevance: suggestion.relevance,
+                connection_type: suggestion.connection_type,
+                matched_terms: suggestion.matched_terms
+              });
+            }
+          } catch (err) {
+            console.warn('Failed to load suggested memory:', suggestion.memory_id, err.message);
+          }
+        }
+
+        res.json(memories);
+      } else {
+        res.json([]);
+      }
+    } catch (error) {
+      console.error('Suggest memories error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Category Analysis API Methods
+  async analyzeCategories(req, res) {
+    try {
+      const { content, tags = [], maxSuggestions = 3, minConfidence = 0.15 } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Content is required for analysis' });
+      }
+
+      // Get existing memories to improve suggestions via learning
+      try {
+        const existingMemories = await this.getAllMemories();
+        this.contentAnalyzer.learnFromExistingData(existingMemories);
+      } catch (err) {
+        console.warn('Could not load existing memories for learning:', err.message);
+      }
+
+      // Analyze content for category suggestions
+      const suggestions = this.contentAnalyzer.suggestCategories(content, {
+        maxSuggestions,
+        minConfidence,
+        tags // Pass tags to enhance analysis
+      });
+
+      // Log analysis for monitoring
+      console.log(`📊 Category analysis: ${suggestions.length} suggestions for ${content.length} chars`);
+
+      res.json({
+        suggestions,
+        analysis: {
+          contentLength: content.length,
+          wordCount: content.split(/\s+/).filter(w => w.length > 0).length,
+          tagCount: tags.length,
+          suggestionsCount: suggestions.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error('Category analysis error:', error);
+      res.status(500).json({ 
+        error: 'Failed to analyze categories',
+        details: error.message 
+      });
+    }
+  }
+
+  async submitCategoryFeedback(req, res) {
+    try {
+      const { suggestion, action, content, tags = [], userCategory } = req.body;
+      
+      if (!suggestion || !action || !['accept', 'reject'].includes(action)) {
+        return res.status(400).json({ 
+          error: 'Valid suggestion and action (accept/reject) are required' 
+        });
+      }
+
+      // Store feedback for future improvements
+      const feedback = {
+        timestamp: new Date().toISOString(),
+        suggestion,
+        action,
+        content: content?.substring(0, 500), // Store partial content for context
+        tags,
+        userCategory,
+        contentLength: content?.length || 0,
+        confidence: suggestion.confidence
+      };
+
+      // TODO: Implement feedback storage system to improve future suggestions
+      // This could be stored in a feedback.json file or database
+      console.log(`📝 Category feedback: ${action} for ${suggestion.category} (${suggestion.confidence}% confidence)`);
+
+      // For now, just log and acknowledge
+      res.json({
+        success: true,
+        message: `Feedback recorded: ${action} for ${suggestion.category}`,
+        feedback: {
+          action,
+          category: suggestion.category,
+          confidence: suggestion.confidence,
+          timestamp: feedback.timestamp
+        }
+      });
+    } catch (error) {
+      console.error('Category feedback error:', error);
+      res.status(500).json({ 
+        error: 'Failed to record feedback',
+        details: error.message 
+      });
+    }
+  }
+
+  // Helper method to extract title from content
+  extractTitle(content) {
+    if (!content) return 'Untitled';
+    
+    // Try to find markdown header
+    const headerMatch = content.match(/^#+\s+(.+)$/m);
+    if (headerMatch) return headerMatch[1].trim();
+    
+    // Fallback to first line
+    const firstLine = content.split('\n')[0].trim();
+    return firstLine.length > 60 ? firstLine.substring(0, 60) + '...' : firstLine;
   }
 
   async start() {

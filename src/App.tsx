@@ -42,7 +42,7 @@ import { TemplateSelector } from '@/components/TemplateSelector'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { CategorySuggestions } from '@/components/CategorySuggestions'
 import { SearchPresets } from '@/components/SearchPresets'
-import { TutorialLauncher } from '@/components/OnboardingTutorial'
+import { TutorialLauncher, OnboardingTutorial } from '@/components/OnboardingTutorial'
 import { ToastProvider, useToast, toastHelpers } from '@/components/ToastNotifications'
 import { ProgressProvider, useOperationProgress } from '@/components/ProgressIndicators'
 import { SettingsDropdown } from '@/components/SettingsDropdown'
@@ -240,6 +240,7 @@ function AppContent() {
   const [editingProject, setEditingProject] = useState("")
   const [showScrollToTop, setShowScrollToTop] = useState(false)
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
   const [showMemoryTemplateSelector, setShowMemoryTemplateSelector] = useState(false)
   const [showGlobalSearch, setShowGlobalSearch] = useState(false)
 
@@ -920,6 +921,7 @@ function AppContent() {
       setShowBulkTagDialog(false)
       setSelectedMemories(new Set())
       setShowKeyboardHelp(false)
+      setShowTutorial(false)
       setShowGlobalSearch(false)
       setShowMemoryTemplateSelector(false)
     },
@@ -1218,6 +1220,10 @@ Respond with JSON format:
     memories.flatMap(memory => extractTags(memory))
   )).sort()
 
+  // Calculate active tasks (exclude 'done' status)
+  const activeTasks = tasks.filter(task => task.status !== 'done')
+  const activeTaskCount = activeTasks.length
+
   // Generate categories based on current tab
   const getCategories = () => {
     if (currentTab === "memories") {
@@ -1307,31 +1313,31 @@ Respond with JSON format:
           id: "all",
           name: "All Tasks",
           icon: "📋",
-          count: tasks.length
+          count: activeTasks.length
         },
         {
           id: "personal",
           name: "Personal",
           icon: "👤",
-          count: tasks.filter(task => task.category === "personal").length
+          count: tasks.filter(task => task.category === "personal" && task.status !== "done").length
         },
         {
           id: "work",
           name: "Work",
           icon: "💼",
-          count: tasks.filter(task => task.category === "work").length
+          count: tasks.filter(task => task.category === "work" && task.status !== "done").length
         },
         {
           id: "code",
           name: "Code",
           icon: "💻",
-          count: tasks.filter(task => task.category === "code").length
+          count: tasks.filter(task => task.category === "code" && task.status !== "done").length
         },
         {
           id: "research",
           name: "Research",
           icon: "🔬",
-          count: tasks.filter(task => task.category === "research").length
+          count: tasks.filter(task => task.category === "research" && task.status !== "done").length
         },
         {
           id: "todo",
@@ -1429,6 +1435,7 @@ Respond with JSON format:
   const avgSize = total > 0
     ? Math.round(memories.reduce((sum, memory) => sum + memory.content.length, 0) / total)
     : 0
+
 
   // === RENDER ===
   return (
@@ -1542,7 +1549,7 @@ Respond with JSON format:
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end">
                     <span className="text-sm font-bold text-foreground">
-                      {tasks.length}
+                      {activeTaskCount}
                   </span>
                   <span className="text-xs text-muted-foreground font-medium -mt-1 hidden xl:block">
                     Tasks
@@ -1565,10 +1572,7 @@ Respond with JSON format:
               {/* Settings Dropdown - Consolidates theme, shortcuts, tutorial, etc. */}
               <SettingsDropdown
                 onShowKeyboardShortcuts={() => setShowKeyboardHelp(true)}
-                onShowTutorial={() => {
-                  const launcher = document.querySelector('[data-tutorial-launcher]');
-                  if (launcher) launcher.click();
-                }}
+                onShowTutorial={() => setShowTutorial(true)}
               />
               
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -1656,6 +1660,14 @@ Respond with JSON format:
                               tags={newTags.split(',').map(t => t.trim()).filter(Boolean)}
                               currentCategory={newCategory}
                               onSelectCategory={(category) => setNewCategory(category)}
+                              onSuggestionAccept={(suggestion) => {
+                                console.log('Category suggestion accepted:', suggestion);
+                              }}
+                              onSuggestionReject={(suggestion) => {
+                                console.log('Category suggestion rejected:', suggestion);
+                              }}
+                              useAdvancedAnalysis={true}
+                              className="mt-3"
                             />
                           </div>
                         )}
@@ -2434,6 +2446,14 @@ Respond with JSON format:
                       tags={editingTags.split(',').map(t => t.trim()).filter(Boolean)}
                       currentCategory={editingCategory}
                       onSelectCategory={(category) => setEditingCategory(category)}
+                      onSuggestionAccept={(suggestion) => {
+                        console.log('Edit form category suggestion accepted:', suggestion);
+                      }}
+                      onSuggestionReject={(suggestion) => {
+                        console.log('Edit form category suggestion rejected:', suggestion);
+                      }}
+                      useAdvancedAnalysis={true}
+                      className="mt-3"
                     />
                   </div>
                 )}
@@ -2627,6 +2647,13 @@ Respond with JSON format:
       <KeyboardShortcutsHelp 
         open={showKeyboardHelp} 
         onOpenChange={setShowKeyboardHelp} 
+      />
+
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial
+        open={showTutorial}
+        onOpenChange={setShowTutorial}
+        onComplete={() => setShowTutorial(false)}
       />
     </div>
   )

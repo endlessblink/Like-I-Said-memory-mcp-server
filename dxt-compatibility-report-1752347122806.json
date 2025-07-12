@@ -1,0 +1,82 @@
+{
+  "platform": {
+    "os": "linux",
+    "arch": "x64",
+    "version": "5.15.167.4-microsoft-standard-WSL2",
+    "node": "v22.17.0",
+    "isWSL": true
+  },
+  "tests": [
+    {
+      "name": "Manifest.json Compatibility",
+      "passed": false,
+      "issues": [
+        "Non-portable variable: ${arguments.content}",
+        "Non-portable variable: ${arguments.topic}",
+        "Non-portable variable: ${arguments.task_description}",
+        "Non-portable variable: ${arguments.project}"
+      ],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.802Z"
+    },
+    {
+      "name": "Path Handling",
+      "passed": true,
+      "issues": [],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.803Z"
+    },
+    {
+      "name": "File Permissions",
+      "passed": true,
+      "issues": [],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.804Z"
+    },
+    {
+      "name": "Import/Export Compatibility",
+      "passed": true,
+      "issues": [],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.805Z"
+    },
+    {
+      "name": "Environment Variables",
+      "passed": true,
+      "issues": [],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.805Z"
+    },
+    {
+      "name": "Platform-Specific Code",
+      "passed": true,
+      "issues": [],
+      "warnings": [
+        "cli.js: Contains Windows-specific code"
+      ],
+      "timestamp": "2025-07-12T19:05:22.805Z"
+    },
+    {
+      "name": "Directory Separators",
+      "passed": false,
+      "issues": [
+        "Path normalization issue: memories\\project\\file.md",
+        "Path normalization issue: memories/project\\file.md"
+      ],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.806Z"
+    },
+    {
+      "name": "Line Endings",
+      "passed": true,
+      "issues": [],
+      "warnings": [],
+      "timestamp": "2025-07-12T19:05:22.806Z"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 2,
+    "warnings": 1
+  }
+}

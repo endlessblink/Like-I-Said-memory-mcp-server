@@ -1,0 +1,138 @@
+name: Build DXT Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 2.3.8)'
+        required: false
+        type: string
+
+jobs:
+  build-dxt:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build React dashboard
+      run: npm run build
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event.inputs.version }}" != "" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=$(node -p "require('./package.json').version")
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+
+    - name: Build DXT package
+      run: npm run build:dxt -- --version=${{ steps.version.outputs.VERSION }}
+
+    - name: Validate DXT package
+      run: |
+        DXT_FILE="dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt"
+        if [ -f "$DXT_FILE" ]; then
+          npm run validate:dxt "$DXT_FILE"
+        else
+          echo "DXT file not found: $DXT_FILE"
+          exit 1
+        fi
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt
+        body: |
+          ## Like-I-Said Memory v2 - Version ${{ steps.version.outputs.VERSION }}
+
+          ### Installation Instructions
+
+          1. Download `like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt`
+          2. Open Claude Desktop
+          3. Go to Settings → Extensions
+          4. Click "Install from file" or drag the `.dxt` file
+          5. The extension will be installed automatically
+
+          ### What's New
+          - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details
+
+          ### Features
+          - 🧠 Persistent memory across conversations
+          - 📋 Task management with auto-linking  
+          - 🔍 Advanced search and filtering
+          - 📊 Real-time web dashboard
+          - 🔄 Automatic backups
+          - 📁 Project-based organization
+
+          ### Support
+          - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Issues](https://github.com/${{ github.repository }}/issues)
+        draft: false
+        prerelease: false
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: like-i-said-dxt-${{ steps.version.outputs.VERSION }}
+        path: dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt
+        retention-days: 30
+
+  test-dxt:
+    needs: build-dxt
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Download DXT artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: like-i-said-dxt-${{ needs.build-dxt.outputs.version }}
+        path: dist/
+
+    - name: Extract and test DXT
+      run: |
+        cd dist
+        unzip like-i-said-v2-*.dxt -d test-extract
+        cd test-extract
+        node server/mcp-server-wrapper.js --version || echo "Version check completed"
+        
+    - name: Verify contents
+      run: |
+        cd dist/test-extract
+        test -f manifest.json || exit 1
+        test -f icon.png || exit 1
+        test -d server || exit 1
+        test -d dashboard || exit 1
+        test -d node_modules || exit 1
+        echo "✅ All required files present"

@@ -125,7 +125,15 @@
       "WebFetch(domain:localhost)",
       "mcp__context7__resolve-library-id",
       "Bash(wget:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "mcp__like-i-said-v2__smart_status_update",
+      "Bash(./test-installer.sh:*)",
+      "Bash(awk:*)",
+      "Bash(./test-complete-installation.sh:*)",
+      "Bash(./test-pkg-binary)",
+      "mcp__like-i-said-v2__delete_task",
+      "Bash(unzip:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   },

@@ -65,11 +65,19 @@
     "test:coverage": "jest --coverage",
     "test:mcp": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}' | node server-markdown.js",
     "test:api": "curl -s http://localhost:3001/api/status",
+    "test:comprehensive": "node tests/comprehensive-mcp-test-suite.js",
+    "test:protocol": "node tests/json-rpc-protocol-test.js",
+    "test:persistence": "node tests/memory-persistence-test.js",
+    "test:validation": "node tests/final-comprehensive-validation.js",
+    "test:demo": "node tests/demo-working-server.js",
+    "test:all": "node tests/run-all-tests.js",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "build:standalone": "pkg mcp-server-standalone.js --targets node18-linux-x64,node18-win-x64,node18-macos-x64,node18-macos-arm64 --output-path dist/binaries",
-    "build:binaries": "npm run build:standalone",
-    "test:standalone": "node mcp-server-standalone.js"
+    "test:standalone": "node mcp-server-standalone.js",
+    "build:dxt": "node scripts/build-dxt.js",
+    "validate:dxt": "node scripts/validate-dxt.js",
+    "export:data": "node scripts/export-user-data.js",
+    "import:data": "node scripts/import-user-data.js"
   },
   "dependencies": {
     "@chroma-core/default-embed": "^0.1.8",
@@ -88,6 +96,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@xenova/transformers": "^2.17.2",
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.2",
     "chokidar": "^4.0.3",
     "chromadb": "^3.0.6",
@@ -108,6 +117,7 @@
     "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
+    "unzipper": "^0.12.3",
     "ws": "^8.18.2",
     "zod": "^3.22.4"
   },
@@ -126,31 +136,11 @@
     "cross-env": "^7.0.3",
     "jest": "^30.0.4",
     "mocha": "^11.7.1",
-    "pkg": "^5.8.1",
     "postcss": "^8.4.21",
     "puppeteer": "^24.10.1",
     "storybook": "^8.6.14",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.0.4",
     "vite": "^4.4.9"
-  },
-  "pkg": {
-    "scripts": [
-      "mcp-server-standalone.js",
-      "lib/**/*.js",
-      "lib/**/*.cjs"
-    ],
-    "assets": [
-      "memories/**/*",
-      "tasks/**/*",
-      "data/**/*"
-    ],
-    "targets": [
-      "node18-linux-x64",
-      "node18-win-x64",
-      "node18-macos-x64",
-      "node18-macos-arm64"
-    ],
-    "outputPath": "dist/binaries"
   }
 }

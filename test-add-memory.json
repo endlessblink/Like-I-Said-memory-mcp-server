@@ -1,0 +1,1 @@
+{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "add_memory", "arguments": {"content": "This is a test memory to verify the complete MCP server works with real persistent storage", "project": "mcp-testing", "category": "code", "tags": ["testing", "mcp", "memory"], "priority": "high"}}}
