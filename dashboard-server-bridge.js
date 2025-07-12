@@ -215,6 +215,7 @@ class DashboardBridge {
 
     // Protected Ollama endpoints (must come before generic MCP route)
     this.app.get('/api/ollama/status', requireAuth(), this.getOllamaStatus.bind(this));
+    this.app.post('/api/mcp/batch_enhance_tasks_ollama', requireAuth(), this.batchEnhanceTasksOllama.bind(this));
     this.app.post('/api/mcp-tools/check_ollama_status', requireAuth(), this.checkOllamaStatus.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_memories_ollama', requireAuth(), this.batchEnhanceMemoriesOllama.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_tasks_ollama', requireAuth(), this.batchEnhanceTasksOllama.bind(this));
@@ -1915,6 +1916,31 @@ class DashboardBridge {
     } catch (error) {
       console.error('Error in batch enhancement:', error);
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getOllamaStatus(req, res) {
+    try {
+      // Use the OllamaClient to check status
+      const ollamaClient = new OllamaClient();
+      const available = await ollamaClient.isAvailable();
+      
+      let models = [];
+      if (available) {
+        models = await ollamaClient.listModels();
+      }
+      
+      res.json({
+        available,
+        models: models.map(model => model.name || model)
+      });
+    } catch (error) {
+      console.error('Error checking Ollama status:', error);
+      res.json({
+        available: false,
+        models: [],
+        error: error.message
+      });
     }
   }
 
