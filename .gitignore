@@ -166,7 +166,20 @@ docker-compose*
 !.gitignore
 !.gitattributes
 
-<<<<<<< HEAD
+# Debug and test files
+debug-*.js
+diagnose-*.js
+test-*.js
+test-*.mjs
+test-*.html
+test_*.js
+debug_*.js
+*_test.js
+*-test.js
+test-*.txt
+test-*.sh
+test-ollama-*.sh
+
 # Documentation artifacts
 SESSION-DROPOFF-*.md
 TASKS-*.md
@@ -184,83 +197,60 @@ DROP-OFF-*.md
 DROPOFF-*.md
 DESIGN-*.md
 COMPREHENSIVE-*.md
+AUDIT-REPORT.md
+FINAL-STEPS.txt
+REACT-ERROR-HELP.md
+SIMPLE-TEST.md
+root-file-analysis.md
+SCRIPT-CLEANUP-ANALYSIS.md
+DIAGNOSTIC-*.md
+DIAGNOSTICS-*.md
+MEMORY-*-ANALYSIS-*.md
+MEMORY-*-REPORT.md
+OLLAMA-*.md
+QUALITY-*.md
+memory-quality-*.md
+
+# One-off scripts
+setup-*.js
+migrate-*.js
+fix-*.js
+auto-setup-*.sh
+configure-*.sh
+verify-*.sh
+check-*.sh
+full-*.sh
 
 # Screenshot files
 *.png
 !assets/images/*.png
 !documentation/Screenshots/*.png
 
-# Sync tool files
-.stignore
-auto-setup-*.sh
-setup-*.sh
-configure-*.sh
-verify-*.sh
-check-*.sh
-full-*.sh
-start-syncthing-*.bat
-windows-*.ps1
-
-# Performance and debug test files
-cytoscape-*.md
-perplexity-*.md
-test-*.js
-test-*.mjs
-test-*.html
-debug-*.js
-comprehensive-*.js
-complete-*.js
-test_*.js
-debug_*.js
-*_icons.js
-*_all_icons.js
-*_comprehensive_icons.js
-
-# Build artifacts
-tsconfig.tsbuildinfo
-.vite/
-
 # Windows scripts (keep only essential ones)
 RUN-THIS-*.bat
 auto-install-syncthing*.ps1
+start-syncthing-*.bat
+windows-*.ps1
+windows-*.bat
 
-# Temporary files
-test.txt
-*.tmp
-*.temp
-\r
-
-# Sync databases
+# Sync tool files
+.stignore
 sync.ffs_db
 *.ffs_db
-
-# Data directories
-data-backups/
-backup-*/
 
 # Icon test files
 test*icon*.js
 debug*icon*.js
+*_icons.js
+*_all_icons.js
+*_comprehensive_icons.js
 
-# Migration scripts (already run)
-fix-*.js
-migrate-*.js
+# Performance and debug test files
+cytoscape-*.md
+perplexity-*.md
+comprehensive-*.js
+complete-*.js
 
-# Session files
-SESSION-DROPOFF-*.md
-DROPOFF-*.md
-
-# Documentation drafts
-AUDIT-REPORT.md
-FINAL-STEPS.txt
-REACT-ERROR-HELP.md
-SIMPLE-TEST.md
-
-# Analysis reports (keep main report)
-root-file-analysis.md
-SCRIPT-CLEANUP-ANALYSIS.md 
-=======
 # Keep lib structure markers
 !lib/.gitkeep
 !src/.gitkeep
->>>>>>> 7c5c523fb9463ada25dde085d7189dda43eddae7
