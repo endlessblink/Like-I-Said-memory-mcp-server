@@ -272,6 +272,19 @@ class DashboardBridge {
     this.wss.on('connection', (ws, req) => {
       const clientIP = req.socket.remoteAddress;
       const clientId = `${clientIP}:${req.socket.remotePort}`;
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      
+      // Basic origin validation
+      const origin = req.headers.origin;
+      const allowedOrigins = process.env.NODE_ENV === 'production' 
+        ? ['https://localhost:3001', 'https://127.0.0.1:3001']
+        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'];
+      
+      if (origin && !allowedOrigins.includes(origin)) {
+        console.warn(`🚫 WebSocket connection rejected from unauthorized origin: ${origin}`);
+        ws.close(1003, 'Unauthorized origin');
+        return;
+      }
       
       // Get current connections for this IP
       let currentConnections = this.connectionsByIP.get(clientIP);
