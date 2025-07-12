@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -96,6 +96,15 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
     autoLinkMemories: true
   })
   const [showTaskTemplateSelector, setShowTaskTemplateSelector] = useState(false)
+
+  // Filter tasks based on current filter settings using useMemo
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      if (filter.status && task.status !== filter.status) return false
+      if (filter.priority && task.priority !== filter.priority) return false
+      return true
+    })
+  }, [tasks, filter.status, filter.priority])
 
   // Template handling
   const handleTaskTemplate = (template: any, variables: Record<string, string>) => {
@@ -254,15 +263,8 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
     }
   }
 
-  // Filter tasks based on current filter settings
-  const filteredTasks = tasks.filter(task => {
-    if (filter.status && task.status !== filter.status) return false
-    if (filter.priority && task.priority !== filter.priority) return false
-    return true
-  })
-
   // Bulk operations
-  const handleTaskSelect = (taskId: string) => {
+  const handleTaskSelect = useCallback((taskId: string) => {
     setSelectedTasks(prev => {
       const newSet = new Set(prev)
       if (newSet.has(taskId)) {
@@ -272,16 +274,16 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       }
       return newSet
     })
-  }
+  }, [])
 
-  const selectAllTasks = () => {
+  const selectAllTasks = useCallback(() => {
     const visibleTaskIds = filteredTasks.map(t => t.id)
     setSelectedTasks(new Set(visibleTaskIds))
-  }
+  }, [filteredTasks])
 
-  const clearTaskSelection = () => {
+  const clearTaskSelection = useCallback(() => {
     setSelectedTasks(new Set())
-  }
+  }, [])
 
   const bulkDeleteTasks = async () => {
     if (confirm(`Delete ${selectedTasks.size} selected tasks?`)) {
@@ -378,7 +380,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       const task = event.detail
       if (task) {
         setSelectedTask(task)
-        loadTaskContext(task.id)
+        getTaskContext(task.id)
       }
     }
 
@@ -393,7 +395,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       document.removeEventListener('clearTaskSelection', handleClearTaskSelection)
       document.removeEventListener('selectTask', handleSelectTask)
     }
-  }, [filteredTasks])
+  }, [selectAllTasks, clearTaskSelection])
 
   // Extract unique projects from tasks
   useEffect(() => {
@@ -475,29 +477,33 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
   }
 
   // Group tasks by project first, then by status within each project
-  const tasksByProject = filteredTasks.reduce((acc, task) => {
-    const project = task.project || 'default'
-    if (!acc[project]) {
-      acc[project] = {
-        todo: [],
-        in_progress: [],
-        done: [],
-        blocked: []
+  const tasksByProject = useMemo(() => {
+    return filteredTasks.reduce((acc, task) => {
+      const project = task.project || 'default'
+      if (!acc[project]) {
+        acc[project] = {
+          todo: [],
+          in_progress: [],
+          done: [],
+          blocked: []
+        }
       }
-    }
-    // Ensure the status exists in our predefined statuses, default to 'todo' if not
-    const status = task.status in acc[project] ? task.status : 'todo'
-    acc[project][status].push(task)
-    return acc
-  }, {} as Record<string, Record<Task['status'], Task[]>>)
+      // Ensure the status exists in our predefined statuses, default to 'todo' if not
+      const status = task.status in acc[project] ? task.status : 'todo'
+      acc[project][status].push(task)
+      return acc
+    }, {} as Record<string, Record<Task['status'], Task[]>>)
+  }, [filteredTasks])
 
   // Legacy grouping for backward compatibility
-  const tasksByStatus = {
-    todo: filteredTasks.filter(t => t.status === 'todo'),
-    in_progress: filteredTasks.filter(t => t.status === 'in_progress'),
-    done: filteredTasks.filter(t => t.status === 'done'),
-    blocked: filteredTasks.filter(t => t.status === 'blocked')
-  }
+  const tasksByStatus = useMemo(() => {
+    return {
+      todo: filteredTasks.filter(t => t.status === 'todo'),
+      in_progress: filteredTasks.filter(t => t.status === 'in_progress'),
+      done: filteredTasks.filter(t => t.status === 'done'),
+      blocked: filteredTasks.filter(t => t.status === 'blocked')
+    }
+  }, [filteredTasks])
 
   if (isLoading) {
     return (

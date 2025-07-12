@@ -297,7 +297,7 @@ export function MemoryCard({
       className={`
         card-glass ${getComplexityClass(memory.complexity || 1)} group cursor-pointer overflow-hidden
         ${selected ? 'ring-2 ring-violet-500 border-violet-400' : ''}
-        w-full min-h-[240px] sm:min-h-[220px] h-auto flex
+        w-full h-[300px] flex flex-col
         focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900
       `}
       tabIndex={0}
@@ -305,174 +305,190 @@ export function MemoryCard({
       aria-label={`Memory: ${extractTitle(memory.content, memory)} - ${memory.category || 'uncategorized'}`}
       onKeyDown={handleCardKeyDown}
     >
-      {/* Selection Checkbox Column */}
+      {/* Selection Checkbox - Top Row */}
       {onSelect && (
-        <div className="flex-shrink-0 p-3 sm:p-4 flex items-start">
+        <div className="absolute top-3 left-3 z-10">
           <input
             type="checkbox"
             checked={selected}
             onChange={() => onSelect(memory.id)}
             onClick={(e) => e.stopPropagation()}
-            className="min-h-[44px] min-w-[44px] w-5 h-5 mt-0.5 text-violet-600 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900 backdrop-blur-sm cursor-pointer touch-manipulation"
+            className="w-5 h-5 text-violet-600 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900 backdrop-blur-sm cursor-pointer touch-manipulation"
             aria-label={`Select memory: ${extractTitle(memory.content, memory)}`}
           />
         </div>
       )}
 
       {/* Card Content */}
-      <div className={`flex-1 flex flex-col h-full ${onSelect ? 'pr-3 sm:pr-4 py-3 sm:py-4' : 'p-3 sm:p-4'}`}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3 flex-shrink-0 min-w-0">
-        <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
-          
-          {/* Category Badge */}
-          {memory.category && (
-            <span className={getCategoryClass(memory.category)}>
-              {memory.category}
+      <div className="flex-1 flex flex-col h-full p-4 relative">
+        {/* Header with badges */}
+        <div className={`flex items-start justify-between mb-4 flex-shrink-0 ${onSelect ? 'ml-6' : ''}`}>
+          <div className="flex items-center flex-wrap gap-1.5 flex-1 min-w-0">
+            {/* Category Badge */}
+            {memory.category && (
+              <span className={`${getCategoryClass(memory.category)} text-2xs px-2 py-1 rounded-md font-medium`}>
+                {memory.category.toUpperCase()}
+              </span>
+            )}
+            
+            {/* Complexity Badge */}
+            <span className="inline-flex items-center px-2 py-1 text-2xs font-semibold rounded-md bg-gray-700/50 text-gray-300">
+              {getComplexityLabel(memory.complexity || 1)}
             </span>
-          )}
-          
-          {/* Project Tag */}
-          {memory.project && (
-            <span className="text-xs text-gray-400 truncate max-w-[100px]" title={memory.project}>
-              📁 {memory.project}
-            </span>
-          )}
-          
-          {/* Quality Badge */}
-          {qualityScore !== null && (
-            <div className="flex-shrink-0">
-              <QualityBadge score={qualityScore} size="sm" />
-            </div>
-          )}
-        </div>
+            
+            {/* Quality Badge */}
+            {qualityScore !== null && (
+              <div className="flex-shrink-0">
+                <QualityBadge score={qualityScore} size="sm" />
+              </div>
+            )}
+          </div>
 
-        {/* Action Buttons - Enhanced for mobile */}
-        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex-shrink-0 ml-2">
-          {onView && (
+          {/* Action Buttons - Enhanced for mobile */}
+          <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
+            {onView && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onView(memory)
+                      }}
+                      className="h-8 w-8 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                      aria-label={`View memory details: ${extractTitle(memory.content, memory)}`}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View memory details</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      onView(memory)
+                      onEdit()
                     }}
-                    className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-violet-500/20 hover:text-violet-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
-                    aria-label={`View memory details: ${extractTitle(memory.content, memory)}`}
+                    className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                    aria-label={`Edit memory: ${extractTitle(memory.content, memory)}`}
                   >
-                    <Eye className="h-5 w-5" />
+                    <Edit className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>View memory details</p>
+                  <p>Edit memory content</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEdit()
-                  }}
-                  className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
-                  aria-label={`Edit memory: ${extractTitle(memory.content, memory)}`}
-                >
-                  <Edit className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit memory content</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(memory.id)
-                  }}
-                  disabled={isDeleting}
-                  className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 rounded-lg flex items-center justify-center touch-manipulation"
-                  aria-label={`Delete memory: ${extractTitle(memory.content, memory)}`}
-                >
-                  {isDeleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isDeleting ? 'Deleting memory...' : 'Delete memory permanently'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete(memory.id)
+                    }}
+                    disabled={isDeleting}
+                    className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 rounded-lg flex items-center justify-center touch-manipulation"
+                    aria-label={`Delete memory: ${extractTitle(memory.content, memory)}`}
+                  >
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isDeleting ? 'Deleting memory...' : 'Delete memory permanently'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
-      </div>
 
-      {/* Title and Summary */}
-      <div className="flex-1 min-h-0 mb-3">
-        {/* Title */}
-        <h3 className="text-card-title mb-2 leading-tight line-clamp-2">
-          {extractTitle(memory.content, memory)}
-        </h3>
-        
-        {/* Summary */}
-        <div className="text-card-description leading-relaxed line-clamp-2">
-          {generateSummary(memory.content, memory)}
-        </div>
-      </div>
-
-      {/* Tags */}
-      {(() => {
-        const visibleTags = extractVisibleTags(memory)
-        const maxVisibleTags = 4
-        const displayTags = visibleTags.slice(0, maxVisibleTags)
-        const remainingCount = Math.max(0, visibleTags.length - maxVisibleTags)
-        
-        return visibleTags.length > 0 && (
-          <div className="mt-auto mb-3 flex-shrink-0">
-            <div className="flex flex-wrap gap-1">
-              {displayTags.map((tag) => (
-                <span key={tag} className="inline-flex items-center text-2xs bg-white/5 text-gray-300 border border-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap" title={tag}>
-                  #{tag}
-                </span>
-              ))}
-              {remainingCount > 0 && (
-                <span className="inline-flex items-center text-2xs bg-white/10 text-gray-400 border border-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap" title={`${remainingCount} more tags: ${visibleTags.slice(maxVisibleTags).join(', ')}`}>
-                  +{remainingCount}
-                </span>
-              )}
+        {/* Title and Summary */}
+        <div className="flex-1 min-h-0 mb-3">
+          {/* Title */}
+          <h3 className="text-base font-semibold mb-2 leading-tight text-white overflow-hidden">
+            <div className="line-clamp-2 break-words">
+              {extractTitle(memory.content, memory)}
             </div>
-          </div>
-        )
-      })()}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between text-card-meta mt-auto pt-2 border-t border-white/10 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          {/* Last Modified */}
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-gray-500" />
-            <span className="text-2xs">{formatDistanceToNow(metadata.modified)}</span>
-          </div>
+          </h3>
           
-          {/* Access Count */}
-          {metadata.accessCount > 0 && (
-            <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3 text-blue-400" />
-              <span className="text-2xs">{metadata.accessCount}</span>
+          {/* Summary */}
+          <div className="text-sm text-gray-300 leading-relaxed overflow-hidden">
+            <div className="line-clamp-3 break-words">
+              {generateSummary(memory.content, memory)}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Size */}
-        <div className="text-2xs text-gray-500">
-          {(metadata.size / 1024).toFixed(1)}KB
+        {/* Tags */}
+        {(() => {
+          const visibleTags = extractVisibleTags(memory)
+          const maxVisibleTags = 3
+          const displayTags = visibleTags.slice(0, maxVisibleTags)
+          const remainingCount = Math.max(0, visibleTags.length - maxVisibleTags)
+          
+          return visibleTags.length > 0 && (
+            <div className="mb-3 flex-shrink-0 h-8 overflow-hidden">
+              <div className="flex items-start gap-1 h-full">
+                {displayTags.map((tag, index) => (
+                  <span 
+                    key={`${tag}-${index}`} 
+                    className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[80px] truncate" 
+                    title={`#${tag}`}
+                  >
+                    #{tag.length > 10 ? tag.substring(0, 10) + '...' : tag}
+                  </span>
+                ))}
+                {remainingCount > 0 && (
+                  <span 
+                    className="inline-flex items-center text-2xs bg-gray-600/90 text-gray-300 px-1.5 py-0.5 rounded-sm font-medium whitespace-nowrap" 
+                    title={`${remainingCount} more tags: ${visibleTags.slice(maxVisibleTags).join(', ')}`}
+                  >
+                    +{remainingCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-600/30 flex-shrink-0 h-8">
+          <div className="flex items-center gap-2 text-2xs text-gray-500 min-w-0 flex-1">
+            {/* Last Modified */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Clock className="h-3 w-3" />
+              <span className="whitespace-nowrap">{formatDistanceToNow(metadata.modified)}</span>
+            </div>
+            
+            {/* Project */}
+            {memory.project && (
+              <div className="flex items-center gap-1 min-w-0" title={memory.project}>
+                <FileText className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate max-w-[50px]">{memory.project}</span>
+              </div>
+            )}
+            
+            {/* Access Count */}
+            {metadata.accessCount > 0 && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Eye className="h-3 w-3 text-blue-400" />
+                <span>{metadata.accessCount}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Size */}
+          <div className="text-2xs text-gray-500 font-mono flex-shrink-0">
+            {(metadata.size / 1024).toFixed(1)}KB
+          </div>
         </div>
-      </div>
       </div>
     </div>
   )
