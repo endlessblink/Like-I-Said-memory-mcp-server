@@ -1,0 +1,26 @@
+{
+  "authentication": {
+    "enabled": false,
+    "requireAuth": false,
+    "allowRegistration": false,
+    "sessionTimeout": "24h",
+    "refreshTokenTimeout": "7d"
+  },
+  "server": {
+    "port": 3001,
+    "host": "localhost",
+    "corsOrigins": ["http://localhost:5173"]
+  },
+  "features": {
+    "autoBackup": true,
+    "backupInterval": 3600000,
+    "maxBackups": 10,
+    "enableWebSocket": true,
+    "enableOllama": true
+  },
+  "logging": {
+    "level": "info",
+    "enableFileLogging": false,
+    "logDirectory": "./logs"
+  }
+}

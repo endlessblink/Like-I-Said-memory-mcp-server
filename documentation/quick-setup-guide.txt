@@ -1,0 +1,22 @@
+QUICK SETUP GUIDE
+=================
+
+WSL Device ID: L3H6WRG-TIDBWRH-IQU562R-DPSQNRP-H6XNPDH-5MM2KSQ-4ZHLX2B-JFTMQQM
+
+1. Windows Setup:
+   - Run: windows-syncthing-setup.ps1
+   - Start: start-syncthing-windows.bat
+
+2. In WSL Syncthing (http://localhost:8384):
+   - Add Device → (Windows Device ID from http://localhost:8385)
+   - Advanced → Address: tcp://127.0.0.1:22001
+
+3. In Windows Syncthing (http://localhost:8385):
+   - Add Device → L3H6WRG-TIDBWRH-IQU562R-DPSQNRP-H6XNPDH-5MM2KSQ-4ZHLX2B-JFTMQQM
+   - Advanced → Address: tcp://127.0.0.1:22000
+
+4. Share folder from WSL:
+   - Edit folder → Sharing → Check Windows device
+
+5. Accept on Windows:
+   - Change path to: D:\APPSNospaces\Like-I-said-mcp-server-v2

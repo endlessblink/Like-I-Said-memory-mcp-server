@@ -1,0 +1,10 @@
+
+# Logs
+*.log
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# User configs
+.mcp.json
+.claude-*

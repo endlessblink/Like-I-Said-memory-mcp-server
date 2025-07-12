@@ -1,0 +1,53 @@
+# Multi-stage Dockerfile for Smithery deployment
+# Stage 1: Build with all dependencies
+FROM node:20-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files and install ALL dependencies (including dev)
+COPY package*.json ./
+RUN npm ci
+
+# Copy source files
+COPY . .
+
+# Build the React dashboard (requires vite from devDependencies)
+RUN npm run build
+
+# Stage 2: Production runtime
+FROM node:20-alpine
+
+# Install only runtime dependencies
+RUN apk add --no-cache python3 curl
+
+WORKDIR /app
+
+# Copy package files and install production dependencies only
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy server files
+COPY server-markdown.js ./
+COPY server-http-fixed.js ./
+COPY memory-sanitizer.js ./
+COPY backup-scheduler.js ./
+
+# Copy built dashboard from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Create memories directory and declare as volume
+RUN mkdir -p /app/memories
+VOLUME ["/app/memories"]
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Run HTTP server
+CMD ["node", "server-http-fixed.js"]

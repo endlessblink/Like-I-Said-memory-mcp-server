@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "command": "node",
+      "args": ["/home/endlessblink/projects/like-i-said-mcp-server-v2/mcp-server-clean.js"]
+    }
+  }
+}

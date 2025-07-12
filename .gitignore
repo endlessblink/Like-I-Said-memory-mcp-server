@@ -1,0 +1,266 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+.vite/
+tsconfig.tsbuildinfo
+storybook-static/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Data directories (synced separately via FreeFileSync)
+memories/
+tasks/
+data/
+vectors/
+data-backups/
+backup-*/
+
+# Development & Testing
+test-tasks/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+test-*.js
+test-*.mjs
+test-*.html
+test_*.js
+test_*.py
+*_test.js
+*-test.js
+test.txt
+test-*.txt
+test-input.txt
+test-sync-file.txt
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# One-off configuration files
+CLAUDE-DESKTOP-*.json
+claude-desktop-*.json
+claude_desktop_*.json
+backup_claude_*.json
+*-CONFIG.json
+*-config.json
+STABLE-*.json
+WINDOWS-*.json
+mcp-config.json
+.mcp.json
+
+# One-off documentation & fixes
+CLAUDE-*.md
+MCP-*.md
+FIX-*.md
+UNIVERSAL-*.md
+MEMORY-*.md
+QUALITY-*.md
+OLLAMA-*.md
+DIAGNOSTIC*.md
+SAFEGUARDS-*.md
+COMPLETE-*.md
+SESSION-*.md
+DROPOFF-*.md
+DROP-OFF-*.md
+*-GUIDE.md
+*-REPORT.md
+*-ANALYSIS.md
+*-SETUP.md
+
+# Scripts and utilities (one-off)
+claude-mcp-fix.js
+diagnose-*.js
+reset-*.js
+setup-*.js
+migrate-*.js
+fix-*.js
+mcp-*-test.js
+quick-test.sh
+test-*.sh
+restart-*.sh
+start-*.bat
+start-*.sh
+windows-*.bat
+*.ps1
+
+# Configuration directories
+configs/
+documentation/storybook/
+documentation/Screenshots/
+
+# Session management
+session-dropoffs/
+SESSION-DROPOFF-*.md
+DROPOFF-*.md
+
+# Reports and analysis
+*-report.json
+*-results.json
+memory-*.json
+task-index.json
+
+# Sync tool files
+.sync-pid
+.syncthing*
+.stfolder
+.stversions
+.stignore
+sync.ffs_db
+*.ffs_db
+"documentation/Screenshots/WSL FreeFileSync.xml"
+
+# Environment files
+.env
+.env.*
+
+# PM2 & process management
+.pm2/
+ecosystem.config.json
+
+# Docker files (for local testing)
+Dockerfile*
+docker-compose*
+
+# Keep only essential documentation
+!README.md
+!CLAUDE.md
+!LICENSE
+
+# Keep essential config files
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.node.json
+!vite.config.ts
+!.gitignore
+!.gitattributes
+
+<<<<<<< HEAD
+# Documentation artifacts
+SESSION-DROPOFF-*.md
+TASKS-*.md
+TEST-*.md
+USER-FLOW-*.md
+VERIFICATION-*.md
+WSL-*.md
+SYNCTHING-*.md
+SIGMA-*.md
+RAG-*.md
+QUICK-*.md
+PLATFORM-*.md
+NAVIGATION-*.md
+DROP-OFF-*.md
+DROPOFF-*.md
+DESIGN-*.md
+COMPREHENSIVE-*.md
+
+# Screenshot files
+*.png
+!assets/images/*.png
+!documentation/Screenshots/*.png
+
+# Sync tool files
+.stignore
+auto-setup-*.sh
+setup-*.sh
+configure-*.sh
+verify-*.sh
+check-*.sh
+full-*.sh
+start-syncthing-*.bat
+windows-*.ps1
+
+# Performance and debug test files
+cytoscape-*.md
+perplexity-*.md
+test-*.js
+test-*.mjs
+test-*.html
+debug-*.js
+comprehensive-*.js
+complete-*.js
+test_*.js
+debug_*.js
+*_icons.js
+*_all_icons.js
+*_comprehensive_icons.js
+
+# Build artifacts
+tsconfig.tsbuildinfo
+.vite/
+
+# Windows scripts (keep only essential ones)
+RUN-THIS-*.bat
+auto-install-syncthing*.ps1
+
+# Temporary files
+test.txt
+*.tmp
+*.temp
+\r
+
+# Sync databases
+sync.ffs_db
+*.ffs_db
+
+# Data directories
+data-backups/
+backup-*/
+
+# Icon test files
+test*icon*.js
+debug*icon*.js
+
+# Migration scripts (already run)
+fix-*.js
+migrate-*.js
+
+# Session files
+SESSION-DROPOFF-*.md
+DROPOFF-*.md
+
+# Documentation drafts
+AUDIT-REPORT.md
+FINAL-STEPS.txt
+REACT-ERROR-HELP.md
+SIMPLE-TEST.md
+
+# Analysis reports (keep main report)
+root-file-analysis.md
+SCRIPT-CLEANUP-ANALYSIS.md 
+=======
+# Keep lib structure markers
+!lib/.gitkeep
+!src/.gitkeep
+>>>>>>> 7c5c523fb9463ada25dde085d7189dda43eddae7

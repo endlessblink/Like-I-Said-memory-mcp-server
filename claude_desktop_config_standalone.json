@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "like-i-said-memory-standalone": {
+      "command": "node",
+      "args": [
+        "D:/APPSNospaces/Like-I-said-mcp-server-v2/mcp-server-standalone.js"
+      ]
+    }
+  }
+}
