@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/tooltip'
 import Editor from '@monaco-editor/react'
 import { MemoryCard } from '@/components/MemoryCard'
+import { MemoryEditModal } from '@/components/MemoryEditModal'
 import { AdvancedSearch } from '@/components/AdvancedSearch'
 import { ProjectTabs } from '@/components/ProjectTabs'
 import { SortControls } from '@/components/SortControls'
@@ -217,6 +218,8 @@ function AppContent() {
   const [editingValue, setEditingValue] = useState("")
   const [editingTags, setEditingTags] = useState("")
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [isEditLoading, setIsEditLoading] = useState(false)
   const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "relationships" | "ai">("memories")
   const [aiMode, setAiMode] = useState<'memories' | 'tasks'>('memories')
   const [useAdvancedEditor, setUseAdvancedEditor] = useState(false)
@@ -624,7 +627,34 @@ function AppContent() {
       setEditingTags(extractTags(memory).join(', '))
       setEditingCategory(memory.category)
       setEditingProject(memory.project || "")
-      setShowEditDialog(true)
+      setShowEditModal(true)
+    }
+  }
+
+  const handleSaveMemoryFromModal = async (updatedMemory: Memory) => {
+    setIsEditLoading(true)
+    try {
+      await fetch(`/api/memories/${updatedMemory.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: updatedMemory.content,
+          category: updatedMemory.category,
+          priority: updatedMemory.priority,
+          tags: updatedMemory.tags,
+          project: updatedMemory.project
+        })
+      })
+
+      setShowEditModal(false)
+      setEditingMemory(null)
+      loadMemories()
+      toast.success('Memory updated', 'Your changes have been saved')
+    } catch (error) {
+      console.error('Failed to update memory:', error)
+      toast.error('Failed to update memory', 'Please try again')
+    } finally {
+      setIsEditLoading(false)
     }
   }
 
@@ -918,6 +948,7 @@ function AppContent() {
     'Escape': () => {
       setShowAddDialog(false)
       setShowEditDialog(false)
+      setShowEditModal(false)
       setShowBulkTagDialog(false)
       setSelectedMemories(new Set())
       setShowKeyboardHelp(false)
@@ -2494,6 +2525,15 @@ Respond with JSON format:
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Memory Edit Modal */}
+      <MemoryEditModal
+        memory={editingMemory}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSaveMemoryFromModal}
+        isLoading={isEditLoading}
+      />
 
       {/* Bulk Tag Management Dialog */}
       <Dialog open={showBulkTagDialog} onOpenChange={setShowBulkTagDialog}>

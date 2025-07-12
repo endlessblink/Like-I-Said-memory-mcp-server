@@ -133,7 +133,8 @@
       "Bash(./test-pkg-binary)",
       "mcp__like-i-said-v2__delete_task",
       "Bash(unzip:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(docker:*)"
     ],
     "deny": []
   },
