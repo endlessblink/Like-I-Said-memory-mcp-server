@@ -45,6 +45,7 @@ import { SearchPresets } from '@/components/SearchPresets'
 import { TutorialLauncher } from '@/components/OnboardingTutorial'
 import { ToastProvider, useToast, toastHelpers } from '@/components/ToastNotifications'
 import { ProgressProvider, useOperationProgress } from '@/components/ProgressIndicators'
+import { SettingsDropdown } from '@/components/SettingsDropdown'
 import { 
   PageLoadingSpinner, 
   RefreshSpinner, 
@@ -53,6 +54,7 @@ import {
   MemoryTableSkeleton,
   EmptyState 
 } from '@/components/LoadingStates'
+import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X } from 'lucide-react'
 import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
 import { searchMemories, sortMemories } from '@/utils/helpers'
 
@@ -208,6 +210,7 @@ function AppContent() {
   const [searchFilters, setSearchFilters] = useState<AdvancedFilters>({})
   const [tagFilter, setTagFilter] = useState("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [newValue, setNewValue] = useState("")
   const [newTags, setNewTags] = useState("")
   const [editingMemory, setEditingMemory] = useState<Memory | null>(null)
@@ -1429,57 +1432,74 @@ Respond with JSON format:
 
   // === RENDER ===
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
+    <div className="min-h-screen" style={{ 
+      backgroundColor: 'hsl(var(--background))',
+      color: 'hsl(var(--foreground))'
+    }}>
       {/* Navigation */}
-      <nav className="glass-effect border-b border-gray-700/50 shadow-xl sticky top-0 z-50" style={{ minHeight: '80px' }}>
-        <div className="max-w-screen-2xl mx-auto px-8 md:px-10 lg:px-12 h-full">
+      <nav className="border-b shadow-xl sticky top-0 z-50" style={{ 
+        minHeight: '80px',
+        background: 'var(--glass-bg)',
+        backdropFilter: 'var(--glass-backdrop)',
+        borderColor: 'var(--glass-border)'
+      }}>
+        <div className="w-full px-4 md:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full py-4">
             {/* Logo and Title Section */}
             <div className="flex items-center gap-6 flex-shrink-0 min-w-0">
               {/* Logo */}
               <div className="relative">
-                <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-white/10 transform hover:scale-105 transition-transform">
-                  <div className="w-7 h-7 md:w-8 md:h-8 bg-white/90 rounded-md flex items-center justify-center">
-                    <span className="text-indigo-600 font-black text-base md:text-lg">L</span>
+                <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-primary rounded-lg flex items-center justify-center shadow-lg border border-border/10 transform hover:scale-105 transition-transform">
+                  <div className="w-7 h-7 md:w-8 md:h-8 bg-background/90 rounded-md flex items-center justify-center">
+                    <span className="text-primary-600 font-black text-base md:text-lg">L</span>
                   </div>
                 </div>
-                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse"></div>
+                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse"></div>
               </div>
               {/* Typography */}
               <div className="hidden sm:flex flex-col justify-center">
-                <h1 className="text-lg md:text-xl font-black text-white tracking-tight leading-none bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                <h1 className="text-lg md:text-xl font-black text-foreground tracking-tight leading-none">
                   LIKE I SAID
                 </h1>
-                <div className="text-2xs text-gray-500 font-medium tracking-[0.2em] uppercase">
+                <div className="text-2xs text-muted-foreground font-medium tracking-[0.2em] uppercase">
                   Memory System
                 </div>
               </div>
             </div>
             
             {/* Navigation Section */}
-            <div className="flex-1 flex justify-center px-2 md:px-4 lg:px-8">
-              <div className="hidden md:flex items-center gap-1 lg:gap-3 bg-gray-800/40 backdrop-blur-md rounded-xl p-2 lg:p-3 border border-gray-700/30 max-w-fit overflow-hidden">
+            <div className="flex-1 flex justify-start">
+              <div className="hidden md:flex items-center gap-1 lg:gap-2 xl:gap-3 rounded-xl p-2 lg:p-3 border lg:ml-8 xl:ml-10" style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'var(--glass-backdrop)',
+                borderColor: 'var(--glass-border)'
+              }}>
                 {[
-                  { id: "dashboard", label: "Dashboard" },
-                  { id: "memories", label: "Memories" },
-                  { id: "tasks", label: "Tasks" },
-                  { id: "relationships", label: "Relationships", shortLabel: "Relations" },
-                  { id: "ai", label: "AI Enhancement", shortLabel: "AI" }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setCurrentTab(tab.id as any)}
-                    data-tab={tab.id}
-                    className={`px-2 lg:px-4 py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                      currentTab === tab.id
-                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md"
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/40"
-                    }`}
-                  >
-                    <span className="hidden lg:inline">{tab.label}</span>
-                    <span className="lg:hidden">{tab.shortLabel || tab.label}</span>
-                  </button>
-                ))}
+                  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
+                  { id: "memories", label: "Memories", icon: Brain },
+                  { id: "tasks", label: "Tasks", icon: ListTodo },
+                  { id: "relationships", label: "Relationships", shortLabel: "Relations", icon: Link },
+                  { id: "ai", label: "AI Enhancement", shortLabel: "AI", icon: Bot }
+                ].map((tab) => {
+                  const IconComponent = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setCurrentTab(tab.id as any)}
+                      data-tab={tab.id}
+                      className={`flex items-center gap-2 min-h-[44px] px-3 lg:px-4 py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                        currentTab === tab.id
+                          ? "bg-gradient-primary text-foreground shadow-md"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`}
+                      aria-label={`Switch to ${tab.label}`}
+                    >
+                      <IconComponent size={16} className="flex-shrink-0" />
+                      <span className="hidden lg:inline">{tab.label}</span>
+                      <span className="lg:hidden">{tab.shortLabel || tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
@@ -1491,83 +1511,65 @@ Respond with JSON format:
                   onImportMemories={handleImportMemories}
                 />
               </div>
-              <div className="hidden md:flex items-center gap-2 px-2 py-1 bg-gray-800/40 backdrop-blur-md rounded-lg border border-gray-700/30">
+              <div className="hidden md:flex items-center gap-2 px-2 py-1 bg-card/40 backdrop-blur-md rounded-lg border border-border/30">
                 <div className="flex items-center gap-2">
                   <div className="relative" title={wsConnected ? 'Real-time updates active' : 'WebSocket disconnected'}>
                     <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`}></div>
                     {wsConnected && <div className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75"></div>}
                   </div>
-                  <span className="text-xs text-gray-500 font-medium hidden lg:inline">Live</span>
+                  <span className="text-xs text-muted-foreground font-medium hidden lg:inline">Live</span>
                 </div>
                 
                 {/* Separator */}
-                <div className="w-px h-6 bg-gray-700"></div>
+                <div className="w-px h-6 bg-muted"></div>
                 
                 {/* Memory Counter */}
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end">
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-foreground">
                       {memories.length}
                     </span>
-                    <span className="text-xs text-gray-500 font-medium -mt-1 hidden xl:block">
+                    <span className="text-xs text-muted-foreground font-medium -mt-1 hidden xl:block">
                       Memories
                     </span>
                   </div>
                 </div>
                 
                 {/* Separator */}
-                <div className="w-px h-6 bg-gray-700"></div>
+                <div className="w-px h-6 bg-muted"></div>
                 
                 {/* Task Counter */}
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end">
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-foreground">
                       {tasks.length}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium -mt-1 hidden xl:block">
+                  <span className="text-xs text-muted-foreground font-medium -mt-1 hidden xl:block">
                     Tasks
                   </span>
                   </div>
                 </div>
               </div>
-              {llmProvider !== "none" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={enhanceAllMemories}
-                  disabled={isEnhancing}
-                  className="text-green-400 hover:text-green-300 hover:bg-green-500/10 text-2xs px-2 py-1 h-auto transition-colors rounded-md"
-                >
-                  <span className="text-base mr-1">{isEnhancing ? "🔄" : "✨"}</span>
-                  <span className="hidden lg:inline">{isEnhancing ? "Enhancing..." : "Enhance All"}</span>
-                </Button>
-              )}
               
-              {/* Global Search Button */}
+              {/* Global Search Button - Keep visible as it's frequently used */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowGlobalSearch(true)}
-                className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 text-2xs px-2 py-1 h-auto transition-colors rounded-md hidden xl:flex"
+                className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 text-2xs px-2 py-1 h-auto transition-colors rounded-md"
                 title="Global Search (Ctrl+K)"
               >
-                <span className="text-base mr-1">🔍</span>
-                <span className="hidden xl:inline">Global Search</span>
+                <span className="text-base">🔍</span>
               </Button>
               
-              {/* Tutorial Launcher */}
-              <TutorialLauncher className="hidden 2xl:block" />
-              
-              {/* Help Button */}
-              <button
-                onClick={() => setShowKeyboardHelp(true)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700/40 rounded-lg transition-all duration-200 hidden xl:block"
-                title="Keyboard Shortcuts (Ctrl+/)"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
+              {/* Settings Dropdown - Consolidates theme, shortcuts, tutorial, etc. */}
+              <SettingsDropdown
+                onShowKeyboardShortcuts={() => setShowKeyboardHelp(true)}
+                onShowTutorial={() => {
+                  const launcher = document.querySelector('[data-tutorial-launcher]');
+                  if (launcher) launcher.click();
+                }}
+              />
               
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
@@ -1577,15 +1579,15 @@ Respond with JSON format:
                     <span className="sm:hidden">Add</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-gray-800 border border-gray-600 max-w-2xl text-white">
+                <DialogContent className="bg-card border border-border max-w-[95vw] sm:max-w-2xl text-foreground max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="text-white text-lg">Add New Memory</DialogTitle>
+                    <DialogTitle className="text-foreground text-lg">Add New Memory</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-300">Content</label>
+                      <label className="text-sm font-medium text-muted-foreground">Content</label>
                       {useAdvancedEditorCreate ? (
-                        <div className="rounded-lg overflow-hidden border border-gray-600">
+                        <div className="rounded-lg overflow-hidden border border-border">
                           <Editor
                             height="200px"
                             defaultLanguage="markdown"
@@ -1608,7 +1610,7 @@ Respond with JSON format:
                           value={newValue}
                           onChange={e => setNewValue(e.target.value)}
                           placeholder="Memory content..."
-                          className="bg-gray-700 border-gray-600 text-white min-h-[120px] placeholder-gray-400"
+                          className="bg-muted border-border text-foreground min-h-[140px] sm:min-h-[120px] placeholder-muted-foreground"
                         />
                       )}
                       <Button
@@ -1621,19 +1623,19 @@ Respond with JSON format:
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-300">Tags (comma-separated)</label>
+                      <label className="text-sm font-medium text-muted-foreground">Tags (comma-separated)</label>
                       <Input
                         value={newTags}
                         onChange={e => setNewTags(e.target.value)}
                         placeholder="tag1, tag2, tag3"
-                        className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                        className="bg-muted border-border text-foreground placeholder-muted-foreground min-h-[44px]"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Category</label>
+                        <label className="text-sm font-medium text-muted-foreground">Category</label>
                         <Select value={newCategory || "auto"} onValueChange={(value) => setNewCategory(value === "auto" ? undefined : value as MemoryCategory)}>
-                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectTrigger className="bg-muted border-border text-foreground min-h-[44px]">
                             <SelectValue placeholder="Auto-detect or select..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -1659,10 +1661,10 @@ Respond with JSON format:
                         )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Project</label>
+                        <label className="text-sm font-medium text-muted-foreground">Project</label>
                         <div className="flex gap-2">
                           <Select value={newProject || "general"} onValueChange={(value) => setNewProject(value === "general" ? "" : value)}>
-                            <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                            <SelectTrigger className="bg-muted border-border text-foreground min-h-[44px]">
                               <SelectValue placeholder="Select or create..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -1678,7 +1680,7 @@ Respond with JSON format:
                             value={newProject}
                             onChange={e => setNewProject(e.target.value)}
                             placeholder="Or type new project..."
-                            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 flex-1"
+                            className="bg-muted border-border text-foreground placeholder-muted-foreground flex-1"
                           />
                         </div>
                       </div>
@@ -1687,7 +1689,7 @@ Respond with JSON format:
                       <Button 
                         variant="outline" 
                         onClick={() => setShowMemoryTemplateSelector(true)}
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                        className="border-border text-muted-foreground hover:bg-muted"
                       >
                         📋 Templates
                       </Button>
@@ -1707,7 +1709,7 @@ Respond with JSON format:
                         setNewTags("")
                         setNewCategory(undefined)
                         setNewProject("")
-                      }} className="border-gray-600 text-gray-300">
+                      }} className="border-border text-muted-foreground">
                         Cancel
                       </Button>
                     </div>
@@ -1720,55 +1722,101 @@ Respond with JSON format:
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="flex items-center justify-between px-3 py-2">
-          {/* Mobile Tab Selector */}
-          <select 
-            value={currentTab}
-            onChange={(e) => setCurrentTab(e.target.value as any)}
-            className="flex-1 bg-gray-700/50 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            <option value="dashboard">Dashboard</option>
-            <option value="memories">Memories</option>
-            <option value="tasks">Tasks</option>
-            <option value="relationships">Relationships</option>
-            <option value="ai">AI Enhancement</option>
-          </select>
-          
-          {/* Mobile Stats */}
-          <div className="flex items-center gap-3 ml-3">
-            <div className="flex items-center gap-1 text-xs">
-              <span className="font-bold text-white">{memories.length}</span>
-              <span className="text-gray-500">M</span>
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <span className="font-bold text-white">{tasks.length}</span>
-              <span className="text-gray-500">T</span>
+      <div className="md:hidden bg-card/90 backdrop-blur-sm border-b border-border/50">
+        <div className="px-3 py-2 space-y-3">
+          {/* Top Row: Tab Selector and Stats */}
+          <div className="flex items-center justify-between">
+            {/* Mobile Tab Selector */}
+            <select 
+              value={currentTab}
+              onChange={(e) => setCurrentTab(e.target.value as any)}
+              className="flex-1 bg-muted/50 border border-border text-foreground rounded-lg px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 min-h-[44px]"
+              aria-label="Select navigation section"
+            >
+              <option value="dashboard">Dashboard</option>
+              <option value="memories">Memories</option>
+              <option value="tasks">Tasks</option>
+              <option value="relationships">Relationships</option>
+              <option value="ai">AI Enhancement</option>
+            </select>
+            
+            {/* Mobile Stats */}
+            <div className="flex items-center gap-3 ml-3">
+              <div className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-1 rounded">
+                <span className="font-bold text-foreground">{memories.length}</span>
+                <span className="text-muted-foreground">M</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-1 rounded">
+                <span className="font-bold text-foreground">{tasks.length}</span>
+                <span className="text-muted-foreground">T</span>
+              </div>
             </div>
           </div>
+
+          {/* Bottom Row: Quick Actions */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Search Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowMobileSearch(!showMobileSearch)
+                if (!showMobileSearch && searchInputRef.current) {
+                  setTimeout(() => searchInputRef.current?.focus(), 100)
+                }
+              }}
+              className="flex-1 bg-muted/50 border-border text-muted-foreground hover:bg-muted hover:text-foreground min-h-[40px]"
+            >
+              🔍 Search
+            </Button>
+            
+            {/* Quick Add Memory */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddDialog(true)}
+              className="flex-1 bg-violet-600/20 border-violet-600/50 text-violet-300 hover:bg-violet-600/30 hover:text-violet-200 min-h-[40px]"
+            >
+              ➕ Add
+            </Button>
+          </div>
+
+          {/* Mobile Search Bar (collapsible) */}
+          {showMobileSearch && (
+            <div className="mt-2">
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search memories and tasks..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-muted/50 border-border text-foreground placeholder-muted-foreground text-base min-h-[44px]"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex min-h-[calc(100vh-var(--nav-height-mobile)-2rem)] md:min-h-[calc(100vh-var(--nav-height))] bg-gray-900">
+      <div className="flex min-h-[calc(100vh-var(--nav-height-mobile)-2rem)] md:min-h-[calc(100vh-var(--nav-height))] bg-background">
         {/* Sidebar */}
-        <div className="hidden lg:flex w-80 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="hidden lg:flex w-72 xl:w-80 bg-card/50 backdrop-blur-sm border-r border-border/50 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto">
           {/* Search First */}
           <div className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Search</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">Search</h2>
             <Input
               ref={searchInputRef}
               type="text"
               placeholder="Search memories..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 text-sm sm:text-base"
+              className="w-full bg-muted border-border text-foreground placeholder-muted-foreground text-sm sm:text-base"
             />
           </div>
 
           {/* Categories - Only show for memories and tasks tabs */}
           {(currentTab === "memories" || currentTab === "tasks") && (
-            <div className="p-4 sm:p-6 border-t border-gray-700">
-              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Categories</h2>
+            <div className="p-4 sm:p-6 border-t border-border">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">Categories</h2>
               <div className="space-y-1">
                 {categories.map((category) => (
                   <button
@@ -1776,8 +1824,8 @@ Respond with JSON format:
                     onClick={() => setSelectedCategory(category.id)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-200 ${
                       selectedCategory === category.id
-                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg"
-                        : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-foreground shadow-lg"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1791,7 +1839,7 @@ Respond with JSON format:
                     <span className={`text-xs px-2.5 py-0.5 rounded-lg font-medium ${
                       selectedCategory === category.id 
                         ? "bg-violet-600/20 text-violet-300" 
-                        : "bg-gray-700/50 text-gray-400"
+                        : "bg-muted/50 text-muted-foreground"
                     }`}>
                       {category.count}
                     </span>
@@ -1802,7 +1850,7 @@ Respond with JSON format:
           )}
 
           {/* Projects */}
-          <div className="p-6 border-t border-gray-700">
+          <div className="p-6 border-t border-border">
             <div data-tutorial="projects">
               <ProjectTabs
                 memories={memories}
@@ -1816,18 +1864,18 @@ Respond with JSON format:
           </div>
 
           {/* Filters */}
-          <div className="p-6 border-t border-gray-700">
-            <h2 className="text-lg font-semibold text-white mb-4">Filters</h2>
+          <div className="p-6 border-t border-border">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Filters</h2>
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">Filter by Tag</label>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">Filter by Tag</label>
               <Select value={tagFilter} onValueChange={setTagFilter}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
+                <SelectTrigger className="bg-muted border-border text-foreground hover:bg-muted">
                   <SelectValue placeholder="All tags" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                  <SelectItem value="all" className="hover:bg-gray-600 focus:bg-gray-600 text-white">All tags</SelectItem>
+                <SelectContent className="bg-muted border-border text-foreground">
+                  <SelectItem value="all" className="hover:bg-muted focus:bg-muted text-foreground">All tags</SelectItem>
                   {allTags.filter(tag => tag && tag.trim() !== "").map(tag => (
-                    <SelectItem key={tag} value={tag} className="hover:bg-gray-600 focus:bg-gray-600 text-white">{tag}</SelectItem>
+                    <SelectItem key={tag} value={tag} className="hover:bg-muted focus:bg-muted text-foreground">{tag}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1835,41 +1883,41 @@ Respond with JSON format:
           </div>
 
           {/* Stats */}
-          <div className="p-6 border-t border-gray-700 mt-auto">
-            <h3 className="text-sm font-medium text-gray-300 mb-3">Statistics</h3>
+          <div className="p-6 border-t border-border mt-auto">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Statistics</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-gray-400">
+              <div className="flex justify-between text-muted-foreground">
                 <span>Total memories:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white">{total}</span>
+                  <span className="text-foreground">{total}</span>
                   <button
                     onClick={() => loadMemories(true)}
                     disabled={isRefreshing}
-                    className="text-gray-400 hover:text-violet-400 transition-colors disabled:opacity-50"
+                    className="text-muted-foreground hover:text-violet-400 transition-colors disabled:opacity-50"
                     title="Refresh memories"
                   >
                     {isRefreshing ? <RefreshSpinner className="h-3 w-3" /> : "🔄"}
                   </button>
                 </div>
               </div>
-              <div className="flex justify-between text-gray-400">
+              <div className="flex justify-between text-muted-foreground">
                 <span>Recent (24h):</span>
-                <span className="text-white">{recent}</span>
+                <span className="text-foreground">{recent}</span>
               </div>
-              <div className="flex justify-between text-gray-400">
+              <div className="flex justify-between text-muted-foreground">
                 <span>Avg. size:</span>
-                <span className="text-white">{avgSize} chars</span>
+                <span className="text-foreground">{avgSize} chars</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col bg-gray-900">
+        <div className="flex-1 flex flex-col bg-background">
           {/* View Controls */}
-          <div className="p-4 lg:p-6 border-b border-gray-700/50 bg-gray-800/80 backdrop-blur-sm">
+          <div className="p-4 lg:p-6 border-b border-border/50 bg-card/80 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg lg:text-xl font-semibold text-white">
+              <h2 className="text-lg lg:text-xl font-semibold text-foreground">
                 {currentTab === "dashboard" && "Dashboard"}
                 {currentTab === "memories" && "Memories"}
                 {currentTab === "tasks" && "Tasks"}
@@ -1878,7 +1926,7 @@ Respond with JSON format:
               </h2>
               {currentTab === "memories" && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
-                  <div className="flex bg-gray-700/50 backdrop-blur-sm rounded-xl p-1 w-full sm:w-auto border border-gray-600/50">
+                  <div className="flex bg-muted/50 backdrop-blur-sm rounded-xl p-1 w-full sm:w-auto border border-border/50">
                     {[
                       { id: "cards", label: "Cards" },
                       { id: "table", label: "Table" },
@@ -1889,8 +1937,8 @@ Respond with JSON format:
                         onClick={() => setViewMode(mode.id as any)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                           viewMode === mode.id
-                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg"
-                            : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-foreground shadow-lg"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         }`}
                       >
                         {mode.label}
@@ -1947,7 +1995,7 @@ Respond with JSON format:
             {currentTab === "ai" && (
               <div className="space-y-6">
                 <div className="flex justify-center mb-6">
-                  <div className="flex bg-gray-700/50 backdrop-blur-sm rounded-xl p-1 border border-gray-600/50">
+                  <div className="flex bg-muted/50 backdrop-blur-sm rounded-xl p-1 border border-border/50">
                     {[
                       { id: "memories", label: "Memory Enhancement" },
                       { id: "tasks", label: "Task Enhancement" }
@@ -1957,8 +2005,8 @@ Respond with JSON format:
                         onClick={() => setAiMode(mode.id as 'memories' | 'tasks')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                           aiMode === mode.id
-                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg"
-                            : "text-gray-300 hover:text-white hover:bg-gray-600/50"
+                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-foreground shadow-lg"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         }`}
                       >
                         {mode.label}
@@ -1984,8 +2032,8 @@ Respond with JSON format:
                 ) : (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🚀</div>
-                    <h3 className="text-lg font-semibold text-gray-300 mb-2">Task Enhancement</h3>
-                    <p className="text-gray-500">Task AI enhancement coming soon!</p>
+                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">Task Enhancement</h3>
+                    <p className="text-muted-foreground">Task AI enhancement coming soon!</p>
                   </div>
                 )}
               </div>
@@ -2007,7 +2055,7 @@ Respond with JSON format:
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedMemories(new Set())}
-                          className="text-gray-400 hover:text-white text-xs sm:text-sm"
+                          className="text-muted-foreground hover:text-foreground text-xs sm:text-sm"
                         >
                           Clear Selection
                         </Button>
@@ -2016,7 +2064,7 @@ Respond with JSON format:
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         {/* Move to Project */}
                         <Select onValueChange={moveSelectedMemoriesToProject}>
-                          <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
+                          <SelectTrigger className="w-40 bg-muted border-border text-foreground">
                             <SelectValue placeholder="Move to project..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -2031,7 +2079,7 @@ Respond with JSON format:
 
                         {/* Change Category */}
                         <Select onValueChange={(value) => bulkUpdateCategory(value as MemoryCategory)}>
-                          <SelectTrigger className="w-36 bg-gray-700 border-gray-600 text-white">
+                          <SelectTrigger className="w-36 bg-muted border-border text-foreground">
                             <SelectValue placeholder="Set category..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -2049,7 +2097,7 @@ Respond with JSON format:
                           variant="outline"
                           size="sm"
                           onClick={() => setShowBulkTagDialog(true)}
-                          className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                          className="bg-muted border-border text-foreground hover:bg-muted"
                         >
                           🏷️ Manage Tags
                         </Button>
@@ -2163,7 +2211,7 @@ Respond with JSON format:
 
                 {/* Table View */}
                 {viewMode === "table" && (
-                  <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
+                  <div className="bg-card border border-border rounded-xl overflow-hidden">
                     {isLoading ? (
                       <div className="p-6">
                         <MemoryTableSkeleton count={8} />
@@ -2179,26 +2227,26 @@ Respond with JSON format:
                     ) : (
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-300">Title</TableHead>
-                            <TableHead className="text-gray-300">Content</TableHead>
-                            <TableHead className="text-gray-300">Tags</TableHead>
-                            <TableHead className="text-gray-300">Created</TableHead>
-                            <TableHead className="text-gray-300">Actions</TableHead>
+                          <TableRow className="border-border">
+                            <TableHead className="text-muted-foreground">Title</TableHead>
+                            <TableHead className="text-muted-foreground">Content</TableHead>
+                            <TableHead className="text-muted-foreground">Tags</TableHead>
+                            <TableHead className="text-muted-foreground">Created</TableHead>
+                            <TableHead className="text-muted-foreground">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {sortedAndFiltered.map((memory) => {
+                        {sortedAndFiltered.map((memory, index) => {
                           const memoryTags = extractVisibleTags(memory)
                           const title = extractTitle(memory.content, memory)
                           const summary = generateSummary(memory.content, memory)
                           
                           return (
-                            <TableRow key={`table-${memory.id}`} className="border-gray-700 hover:bg-gray-750">
-                              <TableCell className="text-white font-medium max-w-48">
+                            <TableRow key={`table-row-${index}-${memory.id || 'no-id'}`} className="border-border hover:bg-muted">
+                              <TableCell className="text-foreground font-medium max-w-48">
                                 <div className="truncate">{title}</div>
                               </TableCell>
-                              <TableCell className="text-gray-400 max-w-96">
+                              <TableCell className="text-muted-foreground max-w-96">
                                 <div className="truncate">{summary}</div>
                               </TableCell>
                               <TableCell>
@@ -2219,11 +2267,11 @@ Respond with JSON format:
                                     )
                                   })}
                                   {memoryTags.length > 3 && (
-                                    <span className="text-xs text-gray-500">+{memoryTags.length - 3}</span>
+                                    <span className="text-xs text-muted-foreground">+{memoryTags.length - 3}</span>
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-gray-400 text-sm">
+                              <TableCell className="text-muted-foreground text-sm">
                                 {new Date(memory.timestamp).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
@@ -2232,7 +2280,7 @@ Respond with JSON format:
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleEdit(memory.id)}
-                                    className="text-gray-400 hover:text-white"
+                                    className="text-muted-foreground hover:text-foreground"
                                   >
                                     ✏️
                                   </Button>
@@ -2244,7 +2292,7 @@ Respond with JSON format:
                                           size="sm"
                                           onClick={() => deleteMemory(memory.id)}
                                           disabled={isDeleting.has(memory.id)}
-                                          className="text-gray-400 hover:text-red-400 disabled:opacity-50"
+                                          className="text-muted-foreground hover:text-red-400 disabled:opacity-50"
                                         >
                                           {isDeleting.has(memory.id) ? <ButtonSpinner size="sm" /> : "🗑️"}
                                         </Button>
@@ -2272,12 +2320,12 @@ Respond with JSON format:
                       <div className="p-6">
                         <div className="animate-pulse space-y-4">
                           {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-gray-800 rounded-lg p-4">
+                            <div key={i} className="bg-card rounded-lg p-4">
                               <div className="flex items-center space-x-4">
-                                <div className="w-6 h-6 bg-gray-700 rounded"></div>
+                                <div className="w-6 h-6 bg-muted rounded"></div>
                                 <div className="flex-1 space-y-2">
-                                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                                  <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                                  <div className="h-3 bg-muted rounded w-1/2"></div>
                                 </div>
                               </div>
                             </div>
@@ -2311,15 +2359,15 @@ Respond with JSON format:
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="bg-gray-800 border border-gray-600 max-w-2xl text-white">
+        <DialogContent className="bg-card border border-border max-w-[95vw] sm:max-w-2xl text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">Edit Memory</DialogTitle>
+            <DialogTitle className="text-foreground">Edit Memory</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Content</label>
+              <label className="text-sm font-medium text-muted-foreground">Content</label>
               {useAdvancedEditor ? (
-                <div className="rounded-lg overflow-hidden border border-gray-600">
+                <div className="rounded-lg overflow-hidden border border-border">
                   <Editor
                     height="200px"
                     defaultLanguage="markdown"
@@ -2341,7 +2389,7 @@ Respond with JSON format:
                 <Textarea
                   value={editingValue}
                   onChange={e => setEditingValue(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white min-h-[120px]"
+                  className="bg-muted border-border text-foreground min-h-[120px]"
                 />
               )}
               <Button
@@ -2354,18 +2402,18 @@ Respond with JSON format:
               </Button>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Tags (comma-separated)</label>
+              <label className="text-sm font-medium text-muted-foreground">Tags (comma-separated)</label>
               <Input
                 value={editingTags}
                 onChange={e => setEditingTags(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-muted border-border text-foreground"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Category</label>
+                <label className="text-sm font-medium text-muted-foreground">Category</label>
                 <Select value={editingCategory || "auto"} onValueChange={(value) => setEditingCategory(value === "auto" ? undefined : value as MemoryCategory)}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger className="bg-muted border-border text-foreground">
                     <SelectValue placeholder="Auto-detect or select..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -2391,10 +2439,10 @@ Respond with JSON format:
                 )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Project</label>
+                <label className="text-sm font-medium text-muted-foreground">Project</label>
                 <div className="flex gap-2">
                   <Select value={editingProject || "general"} onValueChange={(value) => setEditingProject(value === "general" ? "" : value)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-muted border-border text-foreground">
                       <SelectValue placeholder="Select or create..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -2410,7 +2458,7 @@ Respond with JSON format:
                     value={editingProject}
                     onChange={e => setEditingProject(e.target.value)}
                     placeholder="Or type new project..."
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 flex-1"
+                    className="bg-muted border-border text-foreground placeholder-muted-foreground flex-1"
                   />
                 </div>
               </div>
@@ -2419,7 +2467,7 @@ Respond with JSON format:
               <Button onClick={updateMemory} className="bg-violet-600 hover:bg-violet-700">
                 Update Memory
               </Button>
-              <Button variant="outline" onClick={() => setShowEditDialog(false)} className="border-gray-600 text-gray-300">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)} className="border-border text-muted-foreground">
                 Cancel
               </Button>
             </div>
@@ -2429,19 +2477,19 @@ Respond with JSON format:
 
       {/* Bulk Tag Management Dialog */}
       <Dialog open={showBulkTagDialog} onOpenChange={setShowBulkTagDialog}>
-        <DialogContent className="bg-gray-800 border border-gray-600 text-white">
+        <DialogContent className="bg-card border border-border max-w-[95vw] sm:max-w-2xl text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">Manage Tags for Selected Memories</DialogTitle>
+            <DialogTitle className="text-foreground">Manage Tags for Selected Memories</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Managing tags for {selectedMemories.size} selected memories
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Action</label>
+              <label className="text-sm font-medium text-muted-foreground">Action</label>
               <Select value={bulkTagAction} onValueChange={(value) => setBulkTagAction(value as "add" | "remove")}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -2452,14 +2500,14 @@ Respond with JSON format:
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-muted-foreground">
                 Tags (comma-separated)
               </label>
               <Input
                 value={bulkTagInput}
                 onChange={(e) => setBulkTagInput(e.target.value)}
                 placeholder={bulkTagAction === "add" ? "tag1, tag2, tag3" : "tag1, tag2, tag3"}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                className="bg-muted border-border text-foreground placeholder-muted-foreground"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -2481,13 +2529,13 @@ Respond with JSON format:
             {/* Quick tag suggestions */}
             {availableTags.length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Quick select:</label>
+                <label className="text-sm font-medium text-muted-foreground">Quick select:</label>
                 <div className="flex flex-wrap gap-1">
                   {availableTags.slice(0, 15).map((tag) => (
                     <Badge
                       key={tag}
                       variant="outline"
-                      className="cursor-pointer hover:bg-gray-600 text-xs text-gray-300 border-gray-600"
+                      className="cursor-pointer hover:bg-muted text-xs text-muted-foreground border-border"
                       onClick={() => {
                         const currentTags = bulkTagInput.split(',').map(t => t.trim()).filter(Boolean)
                         if (!currentTags.includes(tag)) {
@@ -2527,7 +2575,7 @@ Respond with JSON format:
                   setShowBulkTagDialog(false)
                   setBulkTagInput("")
                 }}
-                className="border-gray-600 text-gray-300"
+                className="border-border text-muted-foreground"
               >
                 Cancel
               </Button>
@@ -2548,7 +2596,7 @@ Respond with JSON format:
               contentArea.scrollTo({ top: 0, behavior: 'smooth' })
             }
           }}
-          className="fixed bottom-8 right-8 w-12 h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50"
+          className="fixed bottom-8 right-8 w-12 h-12 bg-violet-600 hover:bg-violet-700 text-foreground rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50"
           aria-label="Scroll to top"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
