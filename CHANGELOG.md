@@ -1,0 +1,140 @@
+# Changelog
+
+All notable changes to Like-I-Said MCP Server v2 will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.4.0] - 2024-07-13
+
+### 🎉 Major Release: Zero-Dependency Installation!
+
+This release introduces DXT (Desktop Extensions) packaging, making installation as simple as drag-and-drop - no Node.js or technical knowledge required!
+
+### Added
+- **DXT Package Support** - One-click installation for Claude Desktop
+  - Zero dependencies - no Node.js required
+  - 30-second installation process
+  - Automatic configuration
+  - All 23 tools included and pre-configured
+- **Enhanced Tool Suite** - Expanded from 6 to 23 tools
+  - Smart status updates with natural language processing
+  - Task analytics and productivity tracking
+  - Workflow validation and automation suggestions
+  - Ollama integration for local AI processing
+  - Memory deduplication utilities
+- **Improved Documentation**
+  - Comprehensive DXT installation guide
+  - Visual installation instructions
+  - Troubleshooting guide for common issues
+  - Comparison table: DXT vs Manual installation
+
+### Changed
+- Primary installation method is now DXT (drag-and-drop)
+- Manual NPX installation moved to secondary option
+- Updated README with dual installation paths
+- Optimized package size for faster downloads
+
+### Technical Details
+- DXT package size: 1.13 MB (includes all dependencies)
+- Compatible with Claude Desktop on Windows, macOS, and Linux
+- Maintains backward compatibility with manual installation
+- All existing features and tools preserved
+
+### Migration Guide
+Existing users can continue using their current installation. To switch to DXT:
+1. Uninstall the manual version from Claude Desktop settings
+2. Download and install the DXT package
+3. Your existing memories and tasks will be preserved
+
+---
+
+## [2.3.7] - 2024-07-11
+
+### Added
+- Task management system with 5 dedicated tools
+- Memory-task auto-linking based on content similarity
+- Enhanced metadata with titles and summaries
+- Batch enhancement capabilities
+- Natural language task updates
+
+### Changed
+- Improved memory search algorithm
+- Better error handling and recovery
+- Enhanced dashboard UI with real-time updates
+
+### Fixed
+- WebSocket connection stability
+- Memory persistence across restarts
+- Cross-platform path handling
+
+---
+
+## [2.3.0] - 2024-07-01
+
+### Added
+- Modern React dashboard with real-time updates
+- Advanced search with filters and operators
+- Memory categorization system
+- Project-based organization
+- Analytics and statistics dashboard
+
+### Changed
+- Migrated from JSON to Markdown storage
+- Improved performance with lazy loading
+- Enhanced UI with card-based layout
+
+---
+
+## [2.2.0] - 2024-06-15
+
+### Added
+- Cross-platform support (Windows, macOS, Linux)
+- WSL integration for Windows users
+- One-command installation via NPX
+- Automatic client configuration
+
+### Changed
+- Simplified installation process
+- Improved error messages
+- Better documentation
+
+---
+
+## [2.1.0] - 2024-06-01
+
+### Added
+- Initial MCP server implementation
+- 6 core memory management tools
+- Basic search functionality
+- File-based storage system
+
+### Technical Stack
+- Node.js with ES modules
+- MCP SDK for protocol implementation
+- React + TypeScript for dashboard
+- Vite for build tooling
+
+---
+
+## Future Roadmap
+
+### Planned Features
+- [ ] Cloud sync capabilities
+- [ ] Team collaboration features
+- [ ] Advanced AI-powered insights
+- [ ] Mobile companion app
+- [ ] Browser extension
+- [ ] Export/import functionality
+- [ ] Backup automation
+
+### Under Consideration
+- GraphQL API
+- Plugin system
+- Custom themes
+- Voice input support
+- Multi-language support
+
+---
+
+For more details on each release, see the [GitHub Releases](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases) page.

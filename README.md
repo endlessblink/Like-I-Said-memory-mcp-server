@@ -15,15 +15,34 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 - 🚀 **One-Command Install** - Auto-configures all AI clients
 - 🌍 **Cross-Platform** - Windows, macOS, Linux (including WSL)
 - 📊 **React Dashboard** - Modern web interface with real-time updates
-- 🔧 **6 Memory Tools** - Complete memory management suite
+- 🔧 **23 Powerful Tools** - Memory, task management, analytics, and AI enhancements
 - 📝 **Markdown Storage** - Enhanced frontmatter with categories and relationships
 - 🔍 **Advanced Search** - Full-text search with filters and tags
 - 📈 **Analytics** - Memory usage statistics and insights
 - 🎨 **Modern UI** - Card-based layout with dark theme
 
-## 🚀 Easy Installation (No Technical Skills Required!)
+## 🚀 Installation Options
 
-### Step 1: Install Node.js (First Time Only)
+### Option 1: Zero-Dependency DXT Installation (Recommended!) 🎉
+
+**NEW! Install in 30 seconds without Node.js or any technical setup!**
+
+1. **Download**: [**⬇️ like-i-said-memory-v2.dxt**](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
+2. **Open Claude Desktop Settings** → Extensions
+3. **Drag & Drop** the `.dxt` file
+4. **Done!** Start using all 23 tools immediately
+
+No Node.js, no npm, no command line - just drag, drop, and use!
+
+[📖 DXT Installation Guide](./DXT-INSTALLATION-README.md)
+
+---
+
+### Option 2: NPX Installation (Traditional Method)
+
+**If you prefer the traditional installation or need more control:**
+
+#### Step 1: Install Node.js (First Time Only)
 
 **For complete beginners - Node.js is like installing a program that helps run JavaScript apps on your computer.**
 
