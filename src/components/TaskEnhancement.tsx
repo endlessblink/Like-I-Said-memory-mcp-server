@@ -99,7 +99,7 @@ export function TaskEnhancement({
   const [showProgressDetails, setShowProgressDetails] = useState(false)
   const [selectedInsight, setSelectedInsight] = useState<TaskInsight | null>(null)
   const [enhancementSettings, setEnhancementSettings] = useState({
-    model: 'llama3.1:8b',
+    model: 'llama3.1:latest',
     batchSize: 5,
     skipExisting: true,
     enhanceDescriptions: true,
@@ -341,8 +341,88 @@ export function TaskEnhancement({
     }
   }
 
+  // Start memory linking for tasks
+  const startMemoryLinking = async (insight: TaskInsight) => {
+    const tasksToLink = insight.tasks
+
+    if (tasksToLink.length === 0) {
+      alert('No tasks need memory linking.')
+      return
+    }
+
+    setIsEnhancing(true)
+    setEnhancementProgress({
+      completed: 0,
+      total: tasksToLink.length,
+      stage: 'linking',
+      errors: [],
+      startTime: new Date()
+    })
+
+    try {
+      let completed = 0
+      let errors: string[] = []
+
+      for (const task of tasksToLink) {
+        try {
+          // Use the update_task MCP tool to trigger memory linking
+          const response = await fetch('/api/mcp-tools/update_task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              task_id: task.id,
+              // Just update with current values to trigger memory linking
+              title: task.title,
+              description: task.description,
+              status: task.status,
+              priority: task.priority
+            })
+          })
+
+          if (response.ok) {
+            completed++
+          } else {
+            errors.push(`Failed to link memories for task: ${task.title}`)
+          }
+        } catch (error) {
+          errors.push(`Error linking memories for task: ${task.title}`)
+        }
+
+        // Update progress
+        setEnhancementProgress(prev => ({ 
+          ...prev, 
+          completed,
+          errors
+        }))
+      }
+
+      // Refresh tasks after linking
+      onTasksChange()
+      
+      // Set linking as complete
+      setTimeout(() => {
+        setIsEnhancing(false)
+        setEnhancementProgress(prev => ({ ...prev, stage: 'idle' }))
+      }, 2000)
+
+    } catch (error) {
+      console.error('Memory linking failed:', error)
+      setEnhancementProgress(prev => ({
+        ...prev,
+        errors: [...prev.errors, 'Memory linking operation failed']
+      }))
+      setIsEnhancing(false)
+    }
+  }
+
   // Start batch enhancement
   const startBatchEnhancement = async (insight?: TaskInsight) => {
+    // Handle specific insight actions
+    if (insight?.action === 'Link Memories') {
+      return await startMemoryLinking(insight)
+    }
+
     if (!ollamaStatus.available) {
       alert('Ollama is not available. Please ensure Ollama is running and try again.')
       return

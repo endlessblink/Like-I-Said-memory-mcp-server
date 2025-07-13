@@ -10,7 +10,7 @@ export class OllamaClient {
     // Auto-detect best URL if not provided
     this.baseUrl = baseUrl || this.getDefaultBaseUrl()
     this.options = {
-      model: options.model || 'llama3.1:8b',
+      model: options.model || 'llama3.1:latest',
       temperature: options.temperature || 0.1,
       maxTokens: options.maxTokens || 200,
       batchSize: options.batchSize || 5,
@@ -25,23 +25,24 @@ export class OllamaClient {
   getDefaultBaseUrl() {
     // Check environment variable first
     if (process.env.OLLAMA_HOST) {
-      if (process.env.DEBUG_MCP) console.error(`🔌 Using OLLAMA_HOST from environment: ${process.env.OLLAMA_HOST}`);
-      return process.env.OLLAMA_HOST;
+      const host = process.env.OLLAMA_HOST.startsWith('http') ? 
+        process.env.OLLAMA_HOST : 
+        `http://${process.env.OLLAMA_HOST}`;
+      if (process.env.DEBUG_MCP) console.error(`🔌 Using OLLAMA_HOST from environment: ${host}`);
+      return host;
     }
     
     // Check if running in WSL
     if (process.platform === 'linux' && (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP)) {
-      // For WSL, try to get Windows host IP from resolv.conf
-      try {
-        // fs already imported at top
-        const resolv = fs.readFileSync('/etc/resolv.conf', 'utf8');
-        const match = resolv.match(/nameserver\s+(\d+\.\d+\.\d+\.\d+)/);
-        if (match && match[1]) {
-          if (process.env.DEBUG_MCP) console.error(`🔌 WSL detected, using Windows host IP: ${match[1]}`);
-          return `http://${match[1]}:11434`;
-        }
-      } catch (e) {
-        if (process.env.DEBUG_MCP) console.error('Could not read Windows host IP from /etc/resolv.conf');
+      if (process.env.DEBUG_MCP) console.error(`🔌 WSL detected - WSL_DISTRO_NAME: ${process.env.WSL_DISTRO_NAME}`);
+      
+      // Try multiple methods to get Windows host IP
+      const candidateIPs = this.getWSLHostIPs();
+      
+      if (candidateIPs.length > 0) {
+        const primaryIP = candidateIPs[0];
+        if (process.env.DEBUG_MCP) console.error(`🔌 WSL detected, using Windows host IP: ${primaryIP}`);
+        return `http://${primaryIP}:11434`;
       }
       
       // Fallback to common WSL host IPs
@@ -53,48 +54,203 @@ export class OllamaClient {
   }
 
   /**
+   * Get potential Windows host IPs from various sources in WSL
+   */
+  getWSLHostIPs() {
+    const candidates = [];
+    
+    try {
+      // Method 1: Get gateway IP from routing table
+      const { execSync } = require('child_process');
+      const routeOutput = execSync('ip route show default', { encoding: 'utf8' });
+      const gatewayMatch = routeOutput.match(/default via (\d+\.\d+\.\d+\.\d+)/);
+      if (gatewayMatch && gatewayMatch[1]) {
+        candidates.push(gatewayMatch[1]);
+        if (process.env.DEBUG_MCP) console.error(`🔍 Found gateway IP: ${gatewayMatch[1]}`);
+      }
+    } catch (e) {
+      if (process.env.DEBUG_MCP) console.error('Could not get gateway IP from routing table');
+    }
+    
+    try {
+      // Method 2: Get nameserver from resolv.conf
+      const resolv = fs.readFileSync('/etc/resolv.conf', 'utf8');
+      const match = resolv.match(/nameserver\s+(\d+\.\d+\.\d+\.\d+)/);
+      if (match && match[1] && !candidates.includes(match[1])) {
+        candidates.push(match[1]);
+        if (process.env.DEBUG_MCP) console.error(`🔍 Found nameserver IP: ${match[1]}`);
+      }
+    } catch (e) {
+      if (process.env.DEBUG_MCP) console.error('Could not read Windows host IP from /etc/resolv.conf');
+    }
+    
+    // Add common fallback IPs that aren't already in the list
+    const fallbacks = ['172.17.0.1', '192.168.65.2', '172.20.144.1'];
+    fallbacks.forEach(ip => {
+      if (!candidates.includes(ip)) {
+        candidates.push(ip);
+      }
+    });
+    
+    return candidates;
+  }
+
+  /**
    * Check if Ollama server is available
    */
   async isAvailable() {
     // Try the configured URL first
     try {
+      if (process.env.DEBUG_MCP) console.error(`🔄 Testing primary URL: ${this.baseUrl}`);
       const response = await fetch(`${this.baseUrl}/api/version`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(5000)
       })
-      if (response.ok) return true
+      if (response.ok) {
+        if (process.env.DEBUG_MCP) console.error(`✅ Ollama available at primary URL: ${this.baseUrl}`);
+        return true;
+      }
     } catch (error) {
-      if (process.env.DEBUG_MCP) console.error(`Ollama not available at ${this.baseUrl}:`, error.message)
+      if (process.env.DEBUG_MCP) console.error(`❌ Primary URL failed (${this.baseUrl}):`, error.message);
     }
     
-    // If in WSL and primary URL failed, try alternative URLs
+    // If in WSL and primary URL failed, try comprehensive alternative URLs
     if (process.platform === 'linux' && (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP)) {
+      if (process.env.DEBUG_MCP) console.error(`🔍 WSL detected, trying alternative URLs...`);
+      
+      // Build comprehensive list of alternative URLs
+      const wslIPs = this.getWSLHostIPs();
       const alternativeUrls = [
+        ...wslIPs.map(ip => `http://${ip}:11434`),
         'http://localhost:11434',
-        'http://host.docker.internal:11434',
-        'http://172.17.0.1:11434'
-      ].filter(url => url !== this.baseUrl)
+        'http://127.0.0.1:11434',
+        'http://host.docker.internal:11434'
+      ].filter((url, index, array) => {
+        // Remove duplicates and filter out the primary URL
+        return array.indexOf(url) === index && url !== this.baseUrl;
+      });
+      
+      if (process.env.DEBUG_MCP) console.error(`🔍 Testing ${alternativeUrls.length} alternative URLs`);
       
       for (const url of alternativeUrls) {
+        try {
+          if (process.env.DEBUG_MCP) console.error(`🔄 Testing: ${url}`);
+          const response = await fetch(`${url}/api/version`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(3000)
+          })
+          if (response.ok) {
+            if (process.env.DEBUG_MCP) console.error(`✅ Ollama found at alternative URL: ${url}`);
+            this.baseUrl = url // Update to working URL
+            return true
+          }
+        } catch (e) {
+          if (process.env.DEBUG_MCP) console.error(`❌ Failed: ${url} - ${e.message}`);
+        }
+      }
+    }
+    
+    if (process.env.DEBUG_MCP) console.error(`❌ Ollama not available at any tested URL`);
+    return false
+  }
+
+  /**
+   * Get detailed diagnostics and troubleshooting information
+   */
+  async getDiagnostics() {
+    const isWSL = process.platform === 'linux' && (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP);
+    const diagnostics = {
+      environment: {
+        platform: process.platform,
+        isWSL,
+        wslDistro: process.env.WSL_DISTRO_NAME,
+        ollamaHost: process.env.OLLAMA_HOST
+      },
+      urls: {
+        primary: this.baseUrl,
+        alternatives: []
+      },
+      connectivity: {},
+      recommendations: []
+    };
+
+    // Test primary URL
+    try {
+      const response = await fetch(`${this.baseUrl}/api/version`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(3000)
+      });
+      diagnostics.connectivity.primary = {
+        url: this.baseUrl,
+        success: response.ok,
+        status: response.status,
+        error: response.ok ? null : `HTTP ${response.status}`
+      };
+    } catch (error) {
+      diagnostics.connectivity.primary = {
+        url: this.baseUrl,
+        success: false,
+        error: error.message
+      };
+    }
+
+    // Test alternative URLs if in WSL
+    if (isWSL) {
+      const wslIPs = this.getWSLHostIPs();
+      const alternativeUrls = [
+        ...wslIPs.map(ip => `http://${ip}:11434`),
+        'http://localhost:11434',
+        'http://host.docker.internal:11434'
+      ].filter((url, index, array) => array.indexOf(url) === index);
+
+      diagnostics.urls.alternatives = alternativeUrls;
+      diagnostics.connectivity.alternatives = [];
+
+      for (const url of alternativeUrls.slice(0, 5)) { // Test max 5 alternatives
         try {
           const response = await fetch(`${url}/api/version`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(2000)
-          })
-          if (response.ok) {
-            if (process.env.DEBUG_MCP) console.error(`✅ Ollama found at alternative URL: ${url}`)
-            this.baseUrl = url // Update to working URL
-            return true
-          }
-        } catch (e) {
-          // Continue to next URL
+          });
+          diagnostics.connectivity.alternatives.push({
+            url,
+            success: response.ok,
+            status: response.status,
+            error: response.ok ? null : `HTTP ${response.status}`
+          });
+        } catch (error) {
+          diagnostics.connectivity.alternatives.push({
+            url,
+            success: false,
+            error: error.message
+          });
         }
       }
     }
-    
-    return false
+
+    // Generate recommendations
+    if (!diagnostics.connectivity.primary?.success) {
+      if (isWSL) {
+        diagnostics.recommendations.push(
+          'Configure Ollama on Windows to bind to all interfaces:',
+          'Set environment variable: OLLAMA_HOST=0.0.0.0:11434',
+          'Allow port 11434 through Windows Firewall',
+          'Restart Ollama service after configuration changes'
+        );
+      } else {
+        diagnostics.recommendations.push(
+          'Ensure Ollama is running: ollama serve',
+          'Check if port 11434 is accessible',
+          'Verify Ollama installation: ollama --version'
+        );
+      }
+    }
+
+    return diagnostics;
   }
 
   /**
@@ -218,7 +374,12 @@ export class OllamaClient {
   async generateCompletion(prompt) {
     const payload = {
       model: this.options.model,
-      prompt: prompt,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
       stream: false,
       options: {
         temperature: this.options.temperature,
@@ -231,9 +392,9 @@ export class OllamaClient {
     const timeoutId = setTimeout(() => controller.abort(), this.options.requestTimeout)
 
     try {
-      if (process.env.DEBUG_MCP) console.error(`🔌 Calling Ollama API at ${this.baseUrl}/api/generate with model ${this.options.model}`)
+      if (process.env.DEBUG_MCP) console.error(`🔌 Calling Ollama API at ${this.baseUrl}/api/chat with model ${this.options.model}`)
       
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -248,11 +409,11 @@ export class OllamaClient {
 
       const data = await response.json()
       
-      if (!data.response) {
+      if (!data.message || !data.message.content) {
         throw new Error('No response from Ollama model')
       }
 
-      return data.response.trim()
+      return data.message.content.trim()
     } catch (error) {
       clearTimeout(timeoutId)
       
