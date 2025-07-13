@@ -219,6 +219,7 @@ class DashboardBridge {
     this.app.post('/api/mcp-tools/check_ollama_status', requireAuth(), this.checkOllamaStatus.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_memories_ollama', requireAuth(), this.batchEnhanceMemoriesOllama.bind(this));
     this.app.post('/api/mcp-tools/batch_enhance_tasks_ollama', requireAuth(), this.batchEnhanceTasksOllama.bind(this));
+    this.app.post('/api/mcp-tools/batch_link_memories', requireAuth(), this.batchLinkMemories.bind(this));
     
     // Protected Enhancement log endpoints
     this.app.get('/api/enhancement-logs', requireAuth(), this.getEnhancementLogs.bind(this));
@@ -229,7 +230,7 @@ class DashboardBridge {
     this.app.get('/api/quality/validate/:id', requireAuth(), this.validateMemoryQuality.bind(this));
     this.app.post('/api/quality/validate/:id', requireAuth(), this.validateMemoryQuality.bind(this));
     
-    // Protected MCP Tool Routes for Tasks  
+    // Protected MCP Tool Routes - MUST come after specific routes to avoid conflicts
     this.app.post('/api/mcp-tools/:toolName', requireAuth(), this.callMcpTool.bind(this));
 
     // Settings Management Routes (partially protected)
@@ -2151,6 +2152,104 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
       res.json(response);
     } catch (error) {
       console.error('Error in task enhancement:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async batchLinkMemories(req, res) {
+    try {
+      const { task_ids, project, category, status, limit = 100 } = req.body;
+      
+      // Get tasks to link memories to
+      let tasks = await this.taskStorage.getAllTasks();
+      
+      // Filter by specific task IDs if provided
+      if (task_ids && Array.isArray(task_ids)) {
+        tasks = tasks.filter(t => task_ids.includes(t.id));
+      } else {
+        // Filter by project if specified
+        if (project) {
+          tasks = tasks.filter(t => t.project === project);
+        }
+        
+        // Filter by category if specified
+        if (category && category !== 'all') {
+          tasks = tasks.filter(t => t.category === category);
+        }
+        
+        // Filter by status if specified
+        if (status && status !== 'all') {
+          tasks = tasks.filter(t => t.status === status);
+        }
+        
+        // Filter out tasks that already have memory connections
+        tasks = tasks.filter(t => !t.memory_connections || t.memory_connections.length === 0);
+      }
+      
+      // Limit the number of tasks to process
+      tasks = tasks.slice(0, limit);
+      
+      if (tasks.length === 0) {
+        return res.json({
+          content: '📭 No tasks found that need memory linking.'
+        });
+      }
+      
+      const startTime = Date.now();
+      let successCount = 0;
+      let failedCount = 0;
+      let totalConnections = 0;
+      
+      // Process each task
+      for (const task of tasks) {
+        try {
+          // Use the task-memory linker to find and link relevant memories
+          const linkedMemories = await this.taskStorage.taskMemoryLinker.autoLinkMemories(task);
+          
+          if (linkedMemories && linkedMemories.length > 0) {
+            // Update the task with new memory connections
+            task.memory_connections = linkedMemories;
+            await this.taskStorage.updateTask(task.id, task);
+            
+            // Update each linked memory with task connection
+            for (const memConn of linkedMemories) {
+              await this.taskStorage.taskMemoryLinker.updateMemoryWithTaskConnection(memConn.memory_id, {
+                task_id: task.id,
+                task_serial: task.serial,
+                connection_type: memConn.connection_type,
+                relevance: memConn.relevance
+              });
+            }
+            
+            successCount++;
+            totalConnections += linkedMemories.length;
+          } else {
+            successCount++; // Still count as success even if no memories found
+          }
+        } catch (error) {
+          console.error(`Failed to link memories for task ${task.id}:`, error);
+          failedCount++;
+        }
+      }
+      
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      
+      const response = {
+        content: `🔗 Memory linking completed!
+
+📊 Results:
+✅ Successfully processed: ${successCount} tasks
+❌ Failed to process: ${failedCount} tasks
+🧠 Total memories linked: ${totalConnections}
+📊 Total tasks processed: ${tasks.length}
+⏱️ Duration: ${duration} seconds
+
+💡 Memory connections are based on content similarity and relevance.`
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Error in batch memory linking:', error);
       res.status(500).json({ error: error.message });
     }
   }

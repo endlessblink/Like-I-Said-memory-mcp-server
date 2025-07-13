@@ -360,51 +360,51 @@ export function TaskEnhancement({
     })
 
     try {
-      let completed = 0
-      let errors: string[] = []
+      // Use the new batch memory linking endpoint
+      const response = await fetch('/api/mcp-tools/batch_link_memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          task_ids: tasksToLink.map(t => t.id),
+          limit: tasksToLink.length
+        })
+      })
 
-      for (const task of tasksToLink) {
-        try {
-          // Use the update_task MCP tool to trigger memory linking
-          const response = await fetch('/api/mcp-tools/update_task', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              task_id: task.id,
-              // Just update with current values to trigger memory linking
-              title: task.title,
-              description: task.description,
-              status: task.status,
-              priority: task.priority
-            })
-          })
-
-          if (response.ok) {
-            completed++
-          } else {
-            errors.push(`Failed to link memories for task: ${task.title}`)
+      if (response.ok) {
+        const result = await response.json()
+        
+        if (result.content) {
+          // Parse results for stats
+          const successMatch = result.content.match(/✅ Successfully processed: (\d+)/)
+          const failedMatch = result.content.match(/❌ Failed to process: (\d+)/)
+          const connectionsMatch = result.content.match(/🧠 Total memories linked: (\d+)/)
+          
+          if (successMatch && failedMatch) {
+            const successful = parseInt(successMatch[1])
+            const failed = parseInt(failedMatch[1])
+            const connections = connectionsMatch ? parseInt(connectionsMatch[1]) : 0
+            
+            setEnhancementProgress(prev => ({ 
+              ...prev, 
+              completed: successful + failed,
+              stage: 'completed',
+              errors: failed > 0 ? [`${failed} tasks failed to link memories`] : []
+            }))
           }
-        } catch (error) {
-          errors.push(`Error linking memories for task: ${task.title}`)
         }
-
-        // Update progress
-        setEnhancementProgress(prev => ({ 
-          ...prev, 
-          completed,
-          errors
-        }))
+        
+        // Refresh tasks after linking
+        onTasksChange()
+        
+        // Set linking as complete
+        setTimeout(() => {
+          setIsEnhancing(false)
+          setEnhancementProgress(prev => ({ ...prev, stage: 'idle' }))
+        }, 2000)
+      } else {
+        throw new Error(`Memory linking failed: ${response.status} ${response.statusText}`)
       }
-
-      // Refresh tasks after linking
-      onTasksChange()
-      
-      // Set linking as complete
-      setTimeout(() => {
-        setIsEnhancing(false)
-        setEnhancementProgress(prev => ({ ...prev, stage: 'idle' }))
-      }, 2000)
 
     } catch (error) {
       console.error('Memory linking failed:', error)
@@ -416,11 +416,100 @@ export function TaskEnhancement({
     }
   }
 
+  // Start tag generation for tasks
+  const startTagGeneration = async (insight?: TaskInsight) => {
+    if (!ollamaStatus.available) {
+      alert('Ollama is not available. Please ensure Ollama is running and try again.')
+      return
+    }
+
+    const tasksToTag = insight?.tasks || filteredTasks.filter(task => 
+      !task.tags || task.tags.length === 0
+    )
+
+    if (tasksToTag.length === 0) {
+      alert('No tasks need tag generation.')
+      return
+    }
+
+    setIsEnhancing(true)
+    setEnhancementProgress({
+      completed: 0,
+      total: tasksToTag.length,
+      stage: 'generating tags',
+      errors: [],
+      startTime: new Date()
+    })
+
+    try {
+      // Use the batch enhancement endpoint with specific settings
+      const response = await fetch('/api/mcp-tools/batch_enhance_tasks_ollama', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          project: currentProject === 'all' ? undefined : currentProject,
+          limit: tasksToTag.length,
+          model: enhancementSettings.model,
+          batchSize: enhancementSettings.batchSize,
+          skipExisting: false, // Force tag generation even if task has title
+          category: 'all',
+          status: 'all'
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        if (result.content) {
+          // Parse results for stats
+          const successMatch = result.content.match(/✅ Successfully enhanced: (\d+)/)
+          const failedMatch = result.content.match(/❌ Failed to enhance: (\d+)/)
+          const totalMatch = result.content.match(/📊 Total processed: (\d+)/)
+          
+          if (successMatch && failedMatch && totalMatch) {
+            const total = parseInt(totalMatch[1])
+            const successful = parseInt(successMatch[1])
+            const failed = parseInt(failedMatch[1])
+            
+            setEnhancementProgress(prev => ({ 
+              ...prev, 
+              completed: total,
+              stage: 'completed',
+              errors: failed > 0 ? [`${failed} tasks failed tag generation`] : []
+            }))
+          }
+        }
+        
+        // Refresh tasks after tag generation
+        onTasksChange()
+        
+        // Set generation as complete
+        setTimeout(() => {
+          setIsEnhancing(false)
+          setEnhancementProgress(prev => ({ ...prev, stage: 'idle' }))
+        }, 2000)
+      } else {
+        throw new Error(`Tag generation failed: ${response.status} ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('Tag generation failed:', error)
+      setEnhancementProgress(prev => ({
+        ...prev,
+        errors: [...prev.errors, 'Tag generation operation failed']
+      }))
+      setIsEnhancing(false)
+    }
+  }
+
   // Start batch enhancement
   const startBatchEnhancement = async (insight?: TaskInsight) => {
     // Handle specific insight actions
     if (insight?.action === 'Link Memories') {
       return await startMemoryLinking(insight)
+    }
+    if (insight?.action === 'Generate Tags') {
+      return await startTagGeneration(insight)
     }
 
     if (!ollamaStatus.available) {
@@ -765,7 +854,7 @@ export function TaskEnhancement({
 
                 <Button
                   variant="outline"
-                  onClick={() => {/* TODO: Implement specific enhancements */}}
+                  onClick={() => startTagGeneration()}
                   disabled={!ollamaStatus.available || isEnhancing}
                   className="h-20 flex flex-col items-center justify-center gap-2"
                 >
