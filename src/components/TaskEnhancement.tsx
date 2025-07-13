@@ -129,15 +129,65 @@ export function TaskEnhancement({
   const checkOllamaStatus = async () => {
     setOllamaStatus(prev => ({ ...prev, checking: true }))
     try {
-      const response = await fetch('/api/ollama/status')
+      const response = await fetch('/api/mcp-tools/check_ollama_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ show_models: true })
+      })
+      
       if (response.ok) {
-        const data = await response.json()
-        setOllamaStatus({
-          available: data.available,
-          models: data.models || [],
-          checking: false
-        })
+        const result = await response.json()
+        
+        if (result.content) {
+          // Parse the response text to extract status (same as OllamaEnhancement)
+          const content = result.content
+          const isAvailable = content.includes('✅ Ollama server is running')
+          
+          if (isAvailable) {
+            // Extract models from response
+            const models: string[] = []
+            const modelLines = content.split('\n').filter((line: string) => line.includes('→'))
+            
+            for (const line of modelLines) {
+              const match = line.match(/→\s*(.+?)\s*\((.+?)\)/)
+              if (match) {
+                models.push(match[1].trim())
+              }
+            }
+            
+            setOllamaStatus({
+              available: true,
+              models,
+              checking: false
+            })
+          } else {
+            setOllamaStatus({
+              available: false,
+              models: [],
+              checking: false
+            })
+          }
+        } else if (result.available !== undefined) {
+          // Fallback to direct API response format
+          const modelNames = result.models?.map((model: any) => 
+            typeof model === 'string' ? model : model.name
+          ) || []
+          
+          setOllamaStatus({
+            available: result.available || false,
+            models: modelNames,
+            checking: false
+          })
+        } else {
+          setOllamaStatus({
+            available: false,
+            models: [],
+            checking: false
+          })
+        }
       } else {
+        console.log('Response not ok:', response.status, response.statusText)
         setOllamaStatus({
           available: false,
           models: [],
@@ -317,9 +367,10 @@ export function TaskEnhancement({
     })
 
     try {
-      const response = await fetch('/api/mcp/batch_enhance_tasks_ollama', {
+      const response = await fetch('/api/mcp-tools/batch_enhance_tasks_ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           project: currentProject === 'all' ? undefined : currentProject,
           limit: tasksToEnhance.length,
@@ -330,20 +381,38 @@ export function TaskEnhancement({
       })
 
       if (response.ok) {
-        setEnhancementProgress(prev => ({ ...prev, stage: 'completing' }))
-        onTasksChange() // Refresh tasks
+        const result = await response.json()
         
-        // Simulate progress completion
+        if (result.content) {
+          // Parse results for stats
+          const successMatch = result.content.match(/✅ Successfully enhanced: (\d+)/)
+          const failedMatch = result.content.match(/❌ Failed to enhance: (\d+)/)
+          const totalMatch = result.content.match(/📊 Total processed: (\d+)/)
+          
+          if (successMatch && failedMatch && totalMatch) {
+            const total = parseInt(totalMatch[1])
+            const successful = parseInt(successMatch[1])
+            const failed = parseInt(failedMatch[1])
+            
+            setEnhancementProgress(prev => ({ 
+              ...prev, 
+              completed: total,
+              stage: 'completed',
+              errors: failed > 0 ? [`${failed} tasks failed to enhance`] : []
+            }))
+          }
+        }
+        
+        // Refresh tasks after enhancement
+        onTasksChange()
+        
+        // Set enhancement as complete
         setTimeout(() => {
-          setEnhancementProgress(prev => ({ 
-            ...prev, 
-            completed: prev.total,
-            stage: 'idle'
-          }))
           setIsEnhancing(false)
-        }, 1000)
+          setEnhancementProgress(prev => ({ ...prev, stage: 'idle' }))
+        }, 2000)
       } else {
-        throw new Error('Enhancement request failed')
+        throw new Error(`Enhancement request failed: ${response.status} ${response.statusText}`)
       }
     } catch (error) {
       console.error('Enhancement failed:', error)

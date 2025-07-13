@@ -2,6 +2,9 @@
 @import './theme-reset.css';
 @import './fix-theme.css'; /* Provides fallback theme values while JS loads */
 @import './theme-improvements.css'; /* Enhanced theme support and visual fixes */
+@import './animate.css'; /* Animation utilities */
+@import './dropdown-fix.css'; /* Dropdown and theme fixes */
+@import './light-theme-fixes.css'; /* Light theme readability improvements */
 
 @tailwind base;
 @tailwind components;

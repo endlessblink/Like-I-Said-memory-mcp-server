@@ -134,7 +134,22 @@
       "mcp__like-i-said-v2__delete_task",
       "Bash(unzip:*)",
       "Bash(tree:*)",
-      "Bash(docker:*)"
+      "Bash(docker:*)",
+      "Bash(gh release create:*)",
+      "Bash(dist-dxt-production/like-i-said-memory-v2.dxt )",
+      "Bash(--title \"🎉 v2.4.0 - Zero-Dependency Installation!\" )",
+      "Bash(--notes-file GITHUB-RELEASE-v2.4.0.md )",
+      "Bash(--latest)",
+      "mcp__like-i-said-v2__check_ollama_status",
+      "Bash(./create-github-release.sh:*)",
+      "Bash(systemctl stop:*)",
+      "Bash(ipconfig.exe:*)",
+      "Bash(--verify-tag)",
+      "Bash(./start-ollama.sh:*)",
+      "Bash(./test-dxt-cross-platform.sh:*)",
+      "Bash(ip route:*)",
+      "Bash(DEBUG_MCP=true node test-ollama-connectivity.js)",
+      "Bash(OLLAMA_HOST=\"http://172.29.96.1:11434\" node test-ollama-simple.js)"
     ],
     "deny": []
   },

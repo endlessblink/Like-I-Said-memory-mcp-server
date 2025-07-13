@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,8 @@ import { TaskTreeView } from './TaskTreeView'
 import { TaskStatusButton, TaskStatusButtonGroup } from './TaskStatusButton'
 import { TemplateSelector } from './TemplateSelector'
 import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
+import { MemoryViewModal } from './MemoryViewModal'
+import { Memory } from '@/types'
 import { Clock, Edit, FileText, Users, Eye } from 'lucide-react'
 
 interface Task {
@@ -86,6 +90,56 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
   const [bulkAction, setBulkAction] = useState<'status' | 'priority' | 'project' | 'delete'>('status')
   const [bulkValue, setBulkValue] = useState('')
   
+  // Archive view state
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    const saved = localStorage.getItem('hideCompletedTasks')
+    return saved ? saved === 'true' : false
+  })
+  
+  // Memory view modal state
+  const [memoryViewModal, setMemoryViewModal] = useState<{
+    isOpen: boolean
+    memory: Memory | null
+  }>({
+    isOpen: false,
+    memory: null
+  })
+  
+  // Handle memory save from view modal
+  const handleSaveMemory = async (updatedMemory: Memory): Promise<void> => {
+    try {
+      const response = await fetch(`/api/memories/${updatedMemory.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: updatedMemory.content,
+          category: updatedMemory.category,
+          priority: updatedMemory.priority,
+          tags: updatedMemory.tags,
+          project: updatedMemory.project
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update memory')
+      }
+      
+      // Update the memory in the modal state to reflect changes
+      setMemoryViewModal(prev => ({
+        ...prev,
+        memory: updatedMemory
+      }))
+      
+      // Optionally refresh task context if needed
+      if (selectedTask) {
+        getTaskContext(selectedTask.id)
+      }
+    } catch (error) {
+      console.error('Failed to save memory:', error)
+      throw error
+    }
+  }
+  
   // Create task form state
   const [newTask, setNewTask] = useState({
     title: '',
@@ -108,6 +162,19 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       return true
     })
   }, [tasks, filter.status, filter.priority])
+  
+  // Filter out completed tasks if hideCompleted is true
+  const visibleTasks = useMemo(() => {
+    if (hideCompleted) {
+      return filteredTasks.filter(task => task.status !== 'done')
+    }
+    return filteredTasks
+  }, [filteredTasks, hideCompleted])
+  
+  // Get only completed tasks for archive view
+  const archivedTasks = useMemo(() => {
+    return filteredTasks.filter(task => task.status === 'done')
+  }, [filteredTasks])
 
   // Template handling
   const handleTaskTemplate = (template: any, variables: Record<string, string>) => {
@@ -526,7 +593,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
 
   // Group tasks by project first, then by status within each project
   const tasksByProject = useMemo(() => {
-    return filteredTasks.reduce((acc, task) => {
+    return visibleTasks.reduce((acc, task) => {
       const project = task.project || 'default'
       if (!acc[project]) {
         acc[project] = {
@@ -541,7 +608,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       acc[project][status].push(task)
       return acc
     }, {} as Record<string, Record<Task['status'], Task[]>>)
-  }, [filteredTasks])
+  }, [visibleTasks])
 
   // Legacy grouping for backward compatibility
   const tasksByStatus = useMemo(() => {
@@ -570,9 +637,30 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
           <Badge variant="outline" className="text-gray-300">
             {tasks.length} tasks
           </Badge>
+          {archivedTasks.length > 0 && hideCompleted && (
+            <Badge variant="secondary" className="bg-green-500/20 text-green-300">
+              {archivedTasks.length} archived
+            </Badge>
+          )}
         </div>
         
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <div className="flex items-center gap-4">
+          {/* Hide Completed Toggle */}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="hide-completed"
+              checked={hideCompleted}
+              onCheckedChange={(checked) => {
+                setHideCompleted(checked)
+                localStorage.setItem('hideCompletedTasks', checked.toString())
+              }}
+            />
+            <Label htmlFor="hide-completed" className="text-sm text-gray-300 cursor-pointer">
+              Hide completed
+            </Label>
+          </div>
+          
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button 
               size="lg" 
@@ -742,6 +830,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -864,6 +953,9 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
           </TabsTrigger>
           <TabsTrigger value="tree" className="text-gray-300 data-[state=active]:text-white">
             🌳 Tree View
+          </TabsTrigger>
+          <TabsTrigger value="archive" className="text-gray-300 data-[state=active]:text-white">
+            📦 Archive ({archivedTasks.length})
           </TabsTrigger>
         </TabsList>
 
@@ -1347,7 +1439,10 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
                                       const response = await fetch(`/api/memories/${conn.memory_id}`);
                                       if (response.ok) {
                                         const memory = await response.json();
-                                        alert(`Memory Content:\n\n${memory.content}`);
+                                        setMemoryViewModal({
+                                          isOpen: true,
+                                          memory: memory
+                                        });
                                       }
                                     } catch (error) {
                                       console.error('Failed to fetch memory:', error);
@@ -1575,6 +1670,14 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
         onOpenChange={setShowTaskTemplateSelector}
         type="task"
         onSelectTemplate={handleTaskTemplate}
+      />
+
+      {/* Memory View Modal */}
+      <MemoryViewModal
+        memory={memoryViewModal.memory}
+        isOpen={memoryViewModal.isOpen}
+        onClose={() => setMemoryViewModal({ isOpen: false, memory: null })}
+        onSave={handleSaveMemory}
       />
     </div>
   )

@@ -22,6 +22,8 @@ interface AIEnhancementProps {
   onApiKeyChange: (key: string) => void
   onSaveSettings: () => void
   websocket?: WebSocket
+  enhancementDisabled?: boolean
+  enhancementFailures?: number
 }
 
 interface EnhancementProgress {
@@ -53,7 +55,9 @@ export function AIEnhancement({
   onProviderChange,
   onApiKeyChange,
   onSaveSettings,
-  websocket
+  websocket,
+  enhancementDisabled = false,
+  enhancementFailures = 0
 }: AIEnhancementProps) {
   const [showSettings, setShowSettings] = useState(false)
   const [selectedInsight, setSelectedInsight] = useState<AIInsight | null>(null)
@@ -338,6 +342,16 @@ export function AIEnhancement({
         </div>
       </div>
 
+      {/* Enhancement Disabled Warning */}
+      {enhancementDisabled && llmProvider === 'ollama' && (
+        <Alert className="bg-yellow-500/10 border-yellow-500/50">
+          <AlertDescription className="text-yellow-300">
+            <strong>Ollama Enhancement Disabled</strong><br />
+            Enhancement has been temporarily disabled after {enhancementFailures} failed attempts. 
+            Please ensure Ollama is running and click "Save Settings" to re-enable enhancement.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* AI Insights */}
       {llmProvider !== 'none' && insights.length > 0 && (

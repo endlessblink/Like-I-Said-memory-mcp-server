@@ -3,6 +3,9 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary'
+import { OfflineDetector } from '@/components/OfflineDetector'
+import { setupGlobalErrorHandlers, errorReporting } from '@/utils/errorReporting'
 import {
   Dialog,
   DialogContent,
@@ -251,6 +254,11 @@ function AppContent() {
   // === TASK STATE ===
   const [tasks, setTasks] = useState<any[]>([])
   const [isLoadingTasks, setIsLoadingTasks] = useState(false)
+  
+  // === ENHANCEMENT ERROR TRACKING ===
+  const [enhancementFailures, setEnhancementFailures] = useState(0)
+  const [enhancementDisabled, setEnhancementDisabled] = useState(false)
+  const MAX_ENHANCEMENT_FAILURES = 3
 
   // === WEBSOCKET STATE ===
   const [wsConnected, setWsConnected] = useState(false)
@@ -511,6 +519,13 @@ function AppContent() {
   const saveSettings = () => {
     localStorage.setItem('llm-provider', llmProvider)
     localStorage.setItem('llm-api-key', llmApiKey)
+    
+    // Reset enhancement failures when settings change
+    if (llmProvider === 'ollama' && enhancementDisabled) {
+      setEnhancementFailures(0)
+      setEnhancementDisabled(false)
+      toast.success('Ollama enhancement re-enabled', 'You can now try enhancing memories again.')
+    }
   }
 
   const clearApiKey = () => {
@@ -1036,6 +1051,12 @@ function AppContent() {
   const enhanceMemoryWithLLM = async (memory: Memory) => {
     if (llmProvider === "none") return
     if (llmProvider !== "ollama" && !llmApiKey) return
+    
+    // Check if enhancement has been disabled due to repeated failures
+    if (enhancementDisabled) {
+      console.log('Enhancement disabled due to repeated failures')
+      return
+    }
 
     setEnhancingMemories(prev => new Set([...prev, memory.id]))
 
@@ -1145,7 +1166,28 @@ Respond with JSON format:
       
     } catch (error) {
       console.error('LLM enhancement error:', error)
-      toast.error('Failed to enhance memory', `${error.message}`)
+      
+      // Track Ollama-specific failures
+      if (llmProvider === "ollama" && error.message.includes('Ollama server is not running')) {
+        const newFailureCount = enhancementFailures + 1
+        setEnhancementFailures(newFailureCount)
+        
+        if (newFailureCount >= MAX_ENHANCEMENT_FAILURES) {
+          setEnhancementDisabled(true)
+          toast.error(
+            'Ollama Enhancement Disabled',
+            `Enhancement has been disabled after ${MAX_ENHANCEMENT_FAILURES} failed attempts. You can re-enable it in settings once Ollama is running.`
+          )
+        } else {
+          toast.error(
+            'Failed to enhance memory',
+            `${error.message} (Attempt ${newFailureCount}/${MAX_ENHANCEMENT_FAILURES})`
+          )
+        }
+      } else {
+        // For other errors, show the error but don't count as failure
+        toast.error('Failed to enhance memory', `${error.message}`)
+      }
     } finally {
       setEnhancingMemories(prev => {
         const newSet = new Set(prev)
@@ -2072,6 +2114,8 @@ Respond with JSON format:
                     onApiKeyChange={setLlmApiKey}
                     onSaveSettings={saveSettings}
                     websocket={wsRef.current || undefined}
+                    enhancementDisabled={enhancementDisabled}
+                    enhancementFailures={enhancementFailures}
                   />
                 ) : (
                   <TaskEnhancement
@@ -2701,11 +2745,55 @@ Respond with JSON format:
 }
 
 export default function App() {
+  // Initialize global error handlers on app start
+  useEffect(() => {
+    setupGlobalErrorHandlers()
+    console.log('🛡️ Global error handlers initialized')
+  }, [])
+
+  const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
+    // Generate comprehensive error report
+    const report = errorReporting.generateErrorReport(
+      error, 
+      errorInfo.componentStack,
+      {
+        source: 'react-error-boundary',
+        timestamp: Date.now()
+      }
+    )
+
+    console.error('🚨 Global Error Boundary Triggered:', report)
+
+    // Could integrate with external error tracking services here
+    // Example: Sentry.captureException(error, { extra: errorInfo })
+  }
+
+  const handleConnectionChange = (isOnline: boolean) => {
+    console.log(`🌐 Connection status changed: ${isOnline ? 'ONLINE' : 'OFFLINE'}`)
+    
+    // Could trigger additional offline/online specific logic here
+    if (isOnline) {
+      // Sync offline changes, refresh data, etc.
+      console.log('🔄 Connection restored - syncing data...')
+    } else {
+      // Switch to offline mode, cache data, etc.
+      console.log('📱 Switching to offline mode...')
+    }
+  }
+
   return (
-    <ToastProvider>
-      <ProgressProvider>
-        <AppContent />
-      </ProgressProvider>
-    </ToastProvider>
+    <GlobalErrorBoundary onError={handleGlobalError}>
+      <OfflineDetector 
+        apiEndpoint="/api/memories" 
+        checkInterval={30000}
+        onConnectionChange={handleConnectionChange}
+      >
+        <ToastProvider>
+          <ProgressProvider>
+            <AppContent />
+          </ProgressProvider>
+        </ToastProvider>
+      </OfflineDetector>
+    </GlobalErrorBoundary>
   )
 }

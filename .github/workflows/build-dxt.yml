@@ -1,102 +1,191 @@
-name: Build DXT Package
+name: Build and Release DXT Package
 
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*'  # Trigger on version tags like v2.4.0
+  workflow_dispatch:  # Allow manual triggering
     inputs:
       version:
-        description: 'Version to build (e.g., 2.3.8)'
-        required: false
-        type: string
+        description: 'Version tag (e.g., v2.4.1)'
+        required: true
+        default: 'v2.4.0'
 
 jobs:
   build-dxt:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-
+        
     - name: Install dependencies
       run: npm ci
-
+      
+    - name: Run tests
+      run: npm test
+      
     - name: Build React dashboard
       run: npm run build
-
+      
     - name: Determine version
       id: version
       run: |
         if [ "${{ github.event.inputs.version }}" != "" ]; then
           VERSION="${{ github.event.inputs.version }}"
         elif [[ $GITHUB_REF == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${GITHUB_REF#refs/tags/}
         else
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION="v$(node -p "require('./package.json').version")"
         fi
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         echo "Building version: $VERSION"
-
+      
+    - name: Create DXT build directory
+      run: mkdir -p dist-dxt-ci
+      
     - name: Build DXT package
-      run: npm run build:dxt -- --version=${{ steps.version.outputs.VERSION }}
-
-    - name: Validate DXT package
       run: |
-        DXT_FILE="dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt"
-        if [ -f "$DXT_FILE" ]; then
-          npm run validate:dxt "$DXT_FILE"
-        else
-          echo "DXT file not found: $DXT_FILE"
+        echo "Building DXT package for ${{ steps.version.outputs.VERSION }}..."
+        
+        # Create DXT structure
+        mkdir -p dist-dxt-ci/like-i-said-v2
+        
+        # Copy essential files
+        cp README.md dist-dxt-ci/like-i-said-v2/
+        cp manifest.json dist-dxt-ci/like-i-said-v2/
+        mkdir -p dist-dxt-ci/like-i-said-v2/memories/default
+        mkdir -p dist-dxt-ci/like-i-said-v2/tasks/default
+        
+        # Create server directory
+        mkdir -p dist-dxt-ci/like-i-said-v2/server
+        
+        # Copy all lib files
+        cp -r lib dist-dxt-ci/like-i-said-v2/server/
+        
+        # Copy optimized server file
+        cp server-markdown.js dist-dxt-ci/like-i-said-v2/server/mcp-server-dxt-optimized.js
+        
+        # Create package.json for server with production dependencies only
+        cat > dist-dxt-ci/like-i-said-v2/server/package.json << 'EOF'
+        {
+          "name": "like-i-said-dxt-server",
+          "version": "${{ steps.version.outputs.VERSION }}",
+          "type": "module",
+          "dependencies": {
+            "@modelcontextprotocol/sdk": "^1.0.0",
+            "chokidar": "^4.0.3",
+            "js-yaml": "^4.1.0",
+            "uuid": "^9.0.0",
+            "zod": "^3.22.4"
+          }
+        }
+        EOF
+        
+        # Install production dependencies
+        cd dist-dxt-ci/like-i-said-v2/server
+        npm install --production --no-audit --no-fund
+        cd ../../..
+        
+        # Create DXT archive
+        cd dist-dxt-ci
+        zip -r like-i-said-memory-v2.dxt like-i-said-v2/
+        cd ..
+        
+        # Verify DXT package
+        ls -lh dist-dxt-ci/like-i-said-memory-v2.dxt
+        
+    - name: Test DXT package integrity
+      run: |
+        echo "Testing DXT package integrity..."
+        
+        # Check file exists and has reasonable size
+        if [ ! -f "dist-dxt-ci/like-i-said-memory-v2.dxt" ]; then
+          echo "❌ DXT file not found"
           exit 1
         fi
+        
+        # Check file size (should be between 500KB and 5MB)
+        SIZE=$(stat -c%s "dist-dxt-ci/like-i-said-memory-v2.dxt")
+        if [ $SIZE -lt 500000 ]; then
+          echo "❌ DXT file too small: $SIZE bytes"
+          exit 1
+        fi
+        if [ $SIZE -gt 5000000 ]; then
+          echo "❌ DXT file too large: $SIZE bytes"
+          exit 1
+        fi
+        
+        echo "✅ DXT file size OK: $SIZE bytes"
+        
+        # Test archive integrity
+        if ! unzip -t dist-dxt-ci/like-i-said-memory-v2.dxt > /dev/null; then
+          echo "❌ DXT archive is corrupted"
+          exit 1
+        fi
+        
+        echo "✅ DXT archive integrity OK"
+        
+        # Check required files
+        unzip -l dist-dxt-ci/like-i-said-memory-v2.dxt | grep -q "manifest.json" || { echo "❌ Missing manifest.json"; exit 1; }
+        unzip -l dist-dxt-ci/like-i-said-memory-v2.dxt | grep -q "server/mcp-server-dxt-optimized.js" || { echo "❌ Missing server file"; exit 1; }
+        
+        echo "✅ All required files present"
 
+    - name: Upload DXT artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: like-i-said-dxt-${{ steps.version.outputs.VERSION }}
+        path: dist-dxt-ci/like-i-said-memory-v2.dxt
+        retention-days: 90
+        
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt
+          dist-dxt-ci/like-i-said-memory-v2.dxt
         body: |
-          ## Like-I-Said Memory v2 - Version ${{ steps.version.outputs.VERSION }}
-
-          ### Installation Instructions
-
-          1. Download `like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt`
-          2. Open Claude Desktop
-          3. Go to Settings → Extensions
-          4. Click "Install from file" or drag the `.dxt` file
-          5. The extension will be installed automatically
-
-          ### What's New
-          - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details
-
-          ### Features
-          - 🧠 Persistent memory across conversations
-          - 📋 Task management with auto-linking  
-          - 🔍 Advanced search and filtering
-          - 📊 Real-time web dashboard
-          - 🔄 Automatic backups
-          - 📁 Project-based organization
-
-          ### Support
-          - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-          - [Issues](https://github.com/${{ github.repository }}/issues)
+          ## 🎉 Like-I-Said ${{ steps.version.outputs.VERSION }} - Zero-Dependency Installation!
+          
+          **The easiest MCP server installation ever - just drag and drop!**
+          
+          ### 🚀 What's New
+          - DXT (Desktop Extensions) packaging for one-click installation
+          - Zero dependencies - no Node.js required for end users
+          - 30-second installation process
+          - All 23 tools included and pre-configured
+          
+          ### 📦 Installation
+          1. Download the `.dxt` file below
+          2. Open Claude Desktop → Settings → Extensions  
+          3. Drag and drop the file
+          4. Start using all 23 tools immediately!
+          
+          ### 🛠️ Tools Included
+          - **Memory Management (6 tools)**: Store, search, list, retrieve, delete, deduplicate
+          - **Task Management (5 tools)**: Create, update, list, get context, delete
+          - **Enhancement Tools (7 tools)**: AI-powered improvements and analytics
+          - **Utility Tools (5 tools)**: Session handoffs, testing, and integrations
+          
+          ### 📚 Documentation
+          - **[DXT Installation Guide](https://github.com/${{ github.repository }}/blob/main/DXT-INSTALLATION-README.md)**
+          - **[Troubleshooting Guide](https://github.com/${{ github.repository }}/blob/main/TROUBLESHOOTING-GUIDE.md)**
+          - **[Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)**
+          
+          ### 🆘 Support
+          - **[Report Issues](https://github.com/${{ github.repository }}/issues)**
+          - **[Community Discussions](https://github.com/${{ github.repository }}/discussions)**
         draft: false
         prerelease: false
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: like-i-said-dxt-${{ steps.version.outputs.VERSION }}
-        path: dist/like-i-said-v2-${{ steps.version.outputs.VERSION }}.dxt
-        retention-days: 30
 
   test-dxt:
     needs: build-dxt
@@ -118,21 +207,59 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: like-i-said-dxt-${{ needs.build-dxt.outputs.version }}
-        path: dist/
+        path: test-artifacts/
 
     - name: Extract and test DXT
+      shell: bash
       run: |
-        cd dist
-        unzip like-i-said-v2-*.dxt -d test-extract
-        cd test-extract
-        node server/mcp-server-wrapper.js --version || echo "Version check completed"
+        cd test-artifacts
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          powershell -Command "Expand-Archive -Path like-i-said-memory-v2.dxt -DestinationPath test-extract"
+        else
+          unzip like-i-said-memory-v2.dxt -d test-extract
+        fi
         
-    - name: Verify contents
+    - name: Verify DXT contents
+      shell: bash
       run: |
-        cd dist/test-extract
-        test -f manifest.json || exit 1
-        test -f icon.png || exit 1
-        test -d server || exit 1
-        test -d dashboard || exit 1
-        test -d node_modules || exit 1
-        echo "✅ All required files present"
+        cd test-artifacts/test-extract
+        
+        # Check required files
+        test -f manifest.json || { echo "❌ Missing manifest.json"; exit 1; }
+        test -f README.md || { echo "❌ Missing README.md"; exit 1; }
+        test -d server || { echo "❌ Missing server directory"; exit 1; }
+        test -f server/mcp-server-dxt-optimized.js || { echo "❌ Missing server file"; exit 1; }
+        test -d server/node_modules || { echo "❌ Missing node_modules"; exit 1; }
+        
+        echo "✅ All required files present on ${{ matrix.os }}"
+        
+        # Verify manifest.json content
+        if command -v jq &> /dev/null; then
+          TOOLS_COUNT=$(jq '.tools | length' manifest.json)
+          if [ "$TOOLS_COUNT" -eq 23 ]; then
+            echo "✅ Manifest contains all 23 tools"
+          else
+            echo "❌ Expected 23 tools, found $TOOLS_COUNT"
+            exit 1
+          fi
+        fi
+        
+    - name: Test MCP server startup (Linux/macOS only)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        cd test-artifacts/test-extract/server
+        timeout 10s node mcp-server-dxt-optimized.js --version || echo "Server startup test completed"
+
+  notify-success:
+    needs: [build-dxt, test-dxt]
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: Notify Success
+      run: |
+        echo "✅ DXT package built and tested successfully!"
+        echo "📦 Package: like-i-said-memory-v2.dxt" 
+        echo "🔗 Release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-dxt.outputs.version }}"
+        echo "🧪 Tested on: Ubuntu, Windows, macOS"

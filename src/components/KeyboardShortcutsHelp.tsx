@@ -51,7 +51,7 @@ export function KeyboardShortcutsHelp({ open, onOpenChange }: KeyboardShortcutsH
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-popover border border-border text-popover-foreground max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>⌨️</span>
@@ -62,16 +62,16 @@ export function KeyboardShortcutsHelp({ open, onOpenChange }: KeyboardShortcutsH
         <div className="space-y-6">
           {categories.map((category, categoryIndex) => (
             <div key={categoryIndex}>
-              <h3 className="text-lg font-semibold text-white mb-3">{category.title}</h3>
+              <h3 className="text-lg font-semibold mb-3">{category.title}</h3>
               <div className="space-y-2">
                 {category.shortcuts.map((shortcut, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-900/50 rounded-lg">
-                    <span className="text-gray-300">{shortcut.description}</span>
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <span className="text-foreground/80">{shortcut.description}</span>
                     <div className="flex items-center gap-1">
                       {shortcut.key.split('+').map((part, partIndex) => (
                         <React.Fragment key={partIndex}>
-                          {partIndex > 0 && <span className="text-gray-500 mx-1">+</span>}
-                          <kbd className="px-2 py-1 text-xs font-mono bg-gray-700 border border-gray-600 rounded">
+                          {partIndex > 0 && <span className="text-muted-foreground mx-1">+</span>}
+                          <kbd className="px-2 py-1 text-xs font-mono bg-muted border border-border rounded text-foreground">
                             {part === 'Ctrl' ? (navigator.platform.includes('Mac') ? '⌘' : 'Ctrl') : part}
                           </kbd>
                         </React.Fragment>
@@ -83,13 +83,13 @@ export function KeyboardShortcutsHelp({ open, onOpenChange }: KeyboardShortcutsH
             </div>
           ))}
           
-          <div className="border-t border-gray-700 pt-4">
-            <div className="text-sm text-gray-400 space-y-2">
+          <div className="border-t border-border pt-4">
+            <div className="text-sm text-muted-foreground space-y-2">
               <p>💡 <strong>Tips:</strong></p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>Shortcuts work when not focused on input fields</li>
-                <li>Press <kbd className="px-1 py-0.5 text-xs bg-gray-700 rounded">Escape</kbd> to dismiss dialogs and clear selections</li>
-                <li>Use <kbd className="px-1 py-0.5 text-xs bg-gray-700 rounded">Ctrl+K</kbd> for quick search access</li>
+                <li>Press <kbd className="px-1 py-0.5 text-xs bg-muted border border-border rounded">Escape</kbd> to dismiss dialogs and clear selections</li>
+                <li>Use <kbd className="px-1 py-0.5 text-xs bg-muted border border-border rounded">Ctrl+K</kbd> for quick search access</li>
                 <li>Bulk operations work on selected items in the current view</li>
               </ul>
             </div>

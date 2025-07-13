@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AdvancedFilters, MemoryCategory, ContentType } from "@/types"
-import { Search, Filter, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Search, Filter, X, ChevronDown, ChevronUp, Plus, Minus } from "lucide-react"
 import { FilterPresets } from "@/components/FilterPresets"
 
 interface AdvancedSearchProps {
@@ -43,13 +43,17 @@ export function AdvancedSearch({
 }: AdvancedSearchProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [tagInput, setTagInput] = useState("")
+  const [showLogicalOperators, setShowLogicalOperators] = useState(false)
 
   const hasActiveFilters = Boolean(
     filters.tags?.length ||
     filters.project ||
     filters.category ||
     filters.contentType ||
-    filters.dateRange
+    filters.dateRange ||
+    filters.AND?.length ||
+    filters.OR?.length ||
+    filters.NOT
   )
 
   const handleAddTag = (tag: string) => {
@@ -80,6 +84,39 @@ export function AdvancedSearch({
         ...filters.dateRange,
         [field]: value
       }
+    })
+  }
+
+  const addLogicalGroup = (operator: 'AND' | 'OR') => {
+    const newGroup: AdvancedFilters = {}
+    onFiltersChange({
+      ...filters,
+      [operator]: [...(filters[operator] || []), newGroup]
+    })
+  }
+
+  const updateLogicalGroup = (operator: 'AND' | 'OR', index: number, groupFilters: AdvancedFilters) => {
+    const groups = [...(filters[operator] || [])]
+    groups[index] = groupFilters
+    onFiltersChange({
+      ...filters,
+      [operator]: groups
+    })
+  }
+
+  const removeLogicalGroup = (operator: 'AND' | 'OR', index: number) => {
+    const groups = [...(filters[operator] || [])]
+    groups.splice(index, 1)
+    onFiltersChange({
+      ...filters,
+      [operator]: groups.length > 0 ? groups : undefined
+    })
+  }
+
+  const setNotFilter = (notFilters?: AdvancedFilters) => {
+    onFiltersChange({
+      ...filters,
+      NOT: notFilters
     })
   }
 
@@ -121,7 +158,10 @@ export function AdvancedSearch({
                 filters.project ? 1 : 0,
                 filters.category ? 1 : 0,
                 filters.contentType ? 1 : 0,
-                filters.dateRange ? 1 : 0
+                filters.dateRange ? 1 : 0,
+                filters.AND?.length || 0,
+                filters.OR?.length || 0,
+                filters.NOT ? 1 : 0
               ].reduce((a, b) => a + b, 0)}
             </Badge>
           )}
@@ -193,6 +233,36 @@ export function AdvancedSearch({
               <X 
                 className="h-3 w-3 cursor-pointer hover:text-red-500" 
                 onClick={() => onFiltersChange({ ...filters, dateRange: undefined })}
+              />
+            </Badge>
+          )}
+
+          {filters.AND?.map((_, index) => (
+            <Badge key={`and-${index}`} variant="outline" className="flex items-center gap-1 bg-green-950 border-green-400 text-green-300">
+              AND Group {index + 1}
+              <X 
+                className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                onClick={() => removeLogicalGroup('AND', index)}
+              />
+            </Badge>
+          ))}
+
+          {filters.OR?.map((_, index) => (
+            <Badge key={`or-${index}`} variant="outline" className="flex items-center gap-1 bg-blue-950 border-blue-400 text-blue-300">
+              OR Group {index + 1}
+              <X 
+                className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                onClick={() => removeLogicalGroup('OR', index)}
+              />
+            </Badge>
+          ))}
+
+          {filters.NOT && (
+            <Badge variant="outline" className="flex items-center gap-1 bg-red-950 border-red-400 text-red-300">
+              NOT Filter
+              <X 
+                className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                onClick={() => setNotFilter(undefined)}
               />
             </Badge>
           )}
@@ -342,8 +412,277 @@ export function AdvancedSearch({
               />
             </div>
           </div>
+
+          {/* Logical Operators Section */}
+          <div className="space-y-4 border-t border-gray-600 pt-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-300">Advanced Logic</label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLogicalOperators(!showLogicalOperators)}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                {showLogicalOperators ? 'Hide' : 'Show'} Logic Operators
+                {showLogicalOperators ? (
+                  <ChevronUp className="h-4 w-4 ml-1" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                )}
+              </Button>
+            </div>
+
+            {showLogicalOperators && (
+              <div className="space-y-4 bg-gray-900 p-4 rounded-lg border border-gray-600">
+                {/* AND Groups */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-green-400">AND Groups (All conditions must match)</label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addLogicalGroup('AND')}
+                      className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add AND Group
+                    </Button>
+                  </div>
+                  {filters.AND?.map((group, index) => (
+                    <div key={index} className="border border-green-400 rounded p-3 bg-green-950 bg-opacity-20">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-green-300">AND Group {index + 1}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLogicalGroup('AND', index)}
+                          className="text-red-400 hover:text-red-300 h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <LogicalGroupEditor
+                        filters={group}
+                        onFiltersChange={(groupFilters) => updateLogicalGroup('AND', index, groupFilters)}
+                        availableTags={availableTags}
+                        availableProjects={availableProjects}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* OR Groups */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-blue-400">OR Groups (Any condition can match)</label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addLogicalGroup('OR')}
+                      className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-black"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add OR Group
+                    </Button>
+                  </div>
+                  {filters.OR?.map((group, index) => (
+                    <div key={index} className="border border-blue-400 rounded p-3 bg-blue-950 bg-opacity-20">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-blue-300">OR Group {index + 1}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLogicalGroup('OR', index)}
+                          className="text-red-400 hover:text-red-300 h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <LogicalGroupEditor
+                        filters={group}
+                        onFiltersChange={(groupFilters) => updateLogicalGroup('OR', index, groupFilters)}
+                        availableTags={availableTags}
+                        availableProjects={availableProjects}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* NOT Filter */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-red-400">NOT Filter (Exclude matching items)</label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNotFilter(filters.NOT ? undefined : {})}
+                      className={`${filters.NOT ? 'text-red-400 border-red-400' : 'text-gray-400'} hover:bg-red-400 hover:text-black`}
+                    >
+                      {filters.NOT ? (
+                        <>
+                          <Minus className="h-3 w-3 mr-1" />
+                          Remove NOT
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add NOT Filter
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {filters.NOT && (
+                    <div className="border border-red-400 rounded p-3 bg-red-950 bg-opacity-20">
+                      <LogicalGroupEditor
+                        filters={filters.NOT}
+                        onFiltersChange={setNotFilter}
+                        availableTags={availableTags}
+                        availableProjects={availableProjects}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Logical Group Editor Component
+interface LogicalGroupEditorProps {
+  filters: AdvancedFilters
+  onFiltersChange: (filters: AdvancedFilters) => void
+  availableTags: string[]
+  availableProjects: string[]
+}
+
+function LogicalGroupEditor({
+  filters,
+  onFiltersChange,
+  availableTags,
+  availableProjects
+}: LogicalGroupEditorProps) {
+  const [tagInput, setTagInput] = useState("")
+
+  const handleAddTag = (tag: string) => {
+    if (!tag.trim() || filters.tags?.includes(tag)) return
+    
+    onFiltersChange({
+      ...filters,
+      tags: [...(filters.tags || []), tag]
+    })
+    setTagInput("")
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    onFiltersChange({
+      ...filters,
+      tags: filters.tags?.filter(tag => tag !== tagToRemove) || []
+    })
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Mini filters for logical groups */}
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {/* Category */}
+        <Select
+          value={filters.category || "any"}
+          onValueChange={(value) => 
+            onFiltersChange({ 
+              ...filters, 
+              category: value === "any" ? undefined : value as MemoryCategory 
+            })
+          }
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any category</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Project */}
+        <Select
+          value={filters.project || "any"}
+          onValueChange={(value) => 
+            onFiltersChange({ 
+              ...filters, 
+              project: value === "any" ? undefined : value 
+            })
+          }
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any project</SelectItem>
+            {availableProjects.filter(p => p && p.trim() !== "").map((project) => (
+              <SelectItem key={project} value={project}>
+                {project}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tags */}
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            placeholder="Add tag..."
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddTag(tagInput)
+              }
+            }}
+            className="flex-1 h-8 text-xs"
+          />
+          <Button 
+            onClick={() => handleAddTag(tagInput)}
+            disabled={!tagInput.trim()}
+            size="sm"
+            className="h-8 px-2 text-xs"
+          >
+            Add
+          </Button>
+        </div>
+        
+        {/* Current Tags */}
+        {filters.tags && filters.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {filters.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-xs h-6">
+                #{tag}
+                <X 
+                  className="h-2 w-2 cursor-pointer hover:text-red-500" 
+                  onClick={() => handleRemoveTag(tag)}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Text Search */}
+      <Input
+        value={filters.text || ""}
+        onChange={(e) => onFiltersChange({ ...filters, text: e.target.value })}
+        placeholder="Search text..."
+        className="h-8 text-xs"
+      />
     </div>
   )
 }

@@ -179,23 +179,61 @@ export default {
       },
       
       // Enhanced Animation
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'dropdown-open': 'dropdown-open 0.15s ease-out',
+        'dropdown-close': 'dropdown-close 0.15s ease-out',
+      },
+      
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+        'dropdown-open': {
+          from: { 
+            opacity: '0',
+            transform: 'scale(0.95) translateY(-2px)',
+          },
+          to: { 
+            opacity: '1',
+            transform: 'scale(1) translateY(0)',
+          },
+        },
+        'dropdown-close': {
+          from: { 
+            opacity: '1',
+            transform: 'scale(1) translateY(0)',
+          },
+          to: { 
+            opacity: '0',
+            transform: 'scale(0.95) translateY(-2px)',
+          },
+        },
+      },
+      
       transitionDuration: {
-        75: 'var(--duration-75)',
-        100: 'var(--duration-100)',
-        150: 'var(--duration-150)',
-        200: 'var(--duration-200)',
-        300: 'var(--duration-300)',
-        500: 'var(--duration-500)',
-        700: 'var(--duration-700)',
-        1000: 'var(--duration-1000)',
+        75: '75ms',
+        100: '100ms',
+        150: '150ms',
+        200: '200ms',
+        300: '300ms',
+        500: '500ms',
+        700: '700ms',
+        1000: '1000ms',
       },
       
       transitionTimingFunction: {
-        DEFAULT: 'var(--timing-in-out)',
-        linear: 'var(--timing-linear)',
-        in: 'var(--timing-in)',
-        out: 'var(--timing-out)',
-        'in-out': 'var(--timing-in-out)',
+        DEFAULT: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        linear: 'linear',
+        in: 'cubic-bezier(0.4, 0, 1, 1)',
+        out: 'cubic-bezier(0, 0, 0.2, 1)',
+        'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       
       // Enhanced Shadow System

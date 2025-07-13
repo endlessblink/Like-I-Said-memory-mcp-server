@@ -1705,9 +1705,12 @@ class DashboardBridge {
   async checkOllamaStatus(req, res) {
     try {
       console.log('🔍 Checking Ollama status...');
-      const { show_models } = req.body;
+      const { show_models, show_diagnostics } = req.body;
       
-      // Use imported OllamaClient
+      // Use imported OllamaClient with debug mode
+      const originalDebug = process.env.DEBUG_MCP;
+      process.env.DEBUG_MCP = 'true'; // Enable debug for this check
+      
       const ollamaClient = new OllamaClient();
       console.log('📍 Using base URL:', ollamaClient.baseUrl);
       
@@ -1716,18 +1719,53 @@ class DashboardBridge {
       const isAvailable = await ollamaClient.isAvailable();
       console.log('✅ Available:', isAvailable);
       
+      // Restore original debug setting
+      process.env.DEBUG_MCP = originalDebug;
+      
       if (!isAvailable) {
-        const response = {
-          content: `❌ Ollama server is not running at http://localhost:11434
+        // Get diagnostics for better error reporting
+        const diagnostics = await ollamaClient.getDiagnostics();
+        
+        let response = `❌ Ollama server is not available
 
-🔧 Setup Instructions:
+🔧 Environment Information:
+   Platform: ${diagnostics.environment.platform}
+   WSL Environment: ${diagnostics.environment.isWSL ? 'Yes' : 'No'}
+   Primary URL: ${diagnostics.connectivity.primary?.url}
+   Primary Error: ${diagnostics.connectivity.primary?.error}
+
+🔧 Setup Instructions:`;
+        
+        if (diagnostics.environment.isWSL) {
+          response += `
+1. On Windows, configure Ollama to bind to all interfaces:
+   Set-Variable -Name "OLLAMA_HOST" -Value "0.0.0.0:11434" -Scope Machine
+2. Allow port 11434 through Windows Firewall:
+   New-NetFirewallRule -DisplayName "Ollama WSL" -Direction Inbound -Protocol TCP -LocalPort 11434 -Action Allow
+3. Start Ollama: ollama serve
+4. Pull model: ollama pull llama3.1:8b
+
+🌐 Alternative URLs tested:`;
+          if (diagnostics.connectivity.alternatives) {
+            diagnostics.connectivity.alternatives.forEach(alt => {
+              response += `\n   ${alt.success ? '✅' : '❌'} ${alt.url} - ${alt.error || 'OK'}`;
+            });
+          }
+        } else {
+          response += `
 1. Install Ollama: curl -fsSL https://ollama.ai/install.sh | sh
 2. Start server: ollama serve
-3. Pull model: ollama pull llama3.1:8b
+3. Pull model: ollama pull llama3.1:8b`;
+        }
+        
+        response += `
 
-📊 Status: Not Available`
-        };
-        return res.json(response);
+📋 Recommendations:
+${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
+
+📊 Status: Not Available`;
+        
+        return res.json({ content: response });
       }
       
       // Get list of models if requested
@@ -1746,7 +1784,7 @@ class DashboardBridge {
       }
       
       const response = {
-        content: `✅ Ollama server is running at http://localhost:11434${modelsText}
+        content: `✅ Ollama server is running at ${ollamaClient.baseUrl}${modelsText}
 
 📊 Status: Available
 🚀 Ready for memory enhancement!`

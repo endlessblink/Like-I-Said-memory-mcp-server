@@ -46,7 +46,7 @@ export function SettingsDropdown({
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`h-10 px-3 transition-all duration-200 ${className}`}
+          className={`h-10 px-3 transition-all duration-200 group ${className}`}
         >
           <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-45" />
           <span className="sr-only">Settings</span>
