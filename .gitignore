@@ -257,7 +257,8 @@ build-dxt*.js
 *dxt*.js
 dist-dxt/
 test-dxt/
-*.dxt
+# Keep production DXT files
+!dist-dxt-production/*.dxt
 
 # Redundant server files
 mcp-server-complete.js
