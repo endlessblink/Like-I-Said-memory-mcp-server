@@ -1,23 +1,44 @@
 # Like-I-Said Memory Server v2.4.0
 
-## Installation Complete! 🎉
+## Quick Start
 
-Your Like-I-Said MCP server is now installed in Claude Desktop.
-
-### Quick Start
-
-Just ask Claude to:
-- "Remember that I prefer TypeScript for all new projects"
-- "Create a task to refactor the authentication system"
-- "What did we discuss about the API design?"
-- "Show me my current tasks"
+This DXT package has been automatically configured in Claude Desktop!
 
 ### Available Tools (23 total)
 
-The server provides 23 powerful tools for memory and task management.
-Type "show MCP tools" in Claude to see the full list.
+**Memory Management:**
+- `add_memory` - Store important information
+- `search_memories` - Find past conversations
+- `list_memories` - View all memories
+- `get_memory` - Retrieve specific memory
+- `delete_memory` - Remove memories
+
+**Task Management:**
+- `create_task` - Create new tasks
+- `update_task` - Update task status
+- `list_tasks` - View all tasks
+- `get_task_context` - Get task details
+- `delete_task` - Remove tasks
+
+**Enhancement Tools:**
+- `enhance_memory_metadata` - Improve memory titles
+- `batch_enhance_memories` - Enhance multiple memories
+- `smart_status_update` - Natural language updates
+- `get_task_status_analytics` - View productivity stats
+
+**And 9 more tools!**
+
+### Configuration
+
+Your memories and tasks are stored in:
+- Memories: `~/Documents/claude-memories/`
+- Tasks: `~/Documents/claude-tasks/`
+
+You can change these locations in Claude Desktop settings.
 
 ### Support
 
-- Documentation: https://github.com/endlessblink/Like-I-Said-memory-mcp-server
+- GitHub: https://github.com/endlessblink/Like-I-Said-memory-mcp-server
 - Issues: https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues
+
+© 2024 EndlessBlink - MIT License

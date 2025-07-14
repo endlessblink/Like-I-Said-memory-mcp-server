@@ -6,7 +6,7 @@
   "description": "Persistent memory and task management for AI assistants with 23 powerful tools",
   "author": {
     "name": "EndlessBlink",
-    "url": "https://github.com/endlessblink"
+    "email": "support@like-i-said.dev"
   },
   "homepage": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server",
   "license": "MIT",
@@ -17,13 +17,16 @@
       "command": "node",
       "args": [
         "${__dirname}/server/mcp-server-dxt-optimized.js"
-      ]
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
     }
   },
   "tools": [
     {
       "name": "add_memory",
-      "description": "Store information with auto-categorization"
+      "description": "Store information with auto-categorization and linking"
     },
     {
       "name": "get_memory",
@@ -31,15 +34,15 @@
     },
     {
       "name": "list_memories",
-      "description": "List memories with filtering"
+      "description": "List memories with filtering and metadata"
     },
     {
       "name": "search_memories",
-      "description": "Full-text search through memories"
+      "description": "Full-text semantic and keyword search"
     },
     {
       "name": "delete_memory",
-      "description": "Remove specific memory"
+      "description": "Remove specific memory permanently"
     },
     {
       "name": "create_task",
@@ -47,23 +50,19 @@
     },
     {
       "name": "update_task",
-      "description": "Update task status and details"
+      "description": "Update task status and relationships"
     },
     {
       "name": "list_tasks",
-      "description": "List tasks with filtering"
+      "description": "List tasks with comprehensive filtering"
     },
     {
       "name": "get_task_context",
-      "description": "Get full task context"
+      "description": "Get full task context with connections"
     },
     {
       "name": "delete_task",
-      "description": "Delete tasks and subtasks"
-    },
-    {
-      "name": "generate_dropoff",
-      "description": "Generate session handoff documents"
+      "description": "Delete tasks and all subtasks"
     },
     {
       "name": "enhance_memory_metadata",
@@ -75,7 +74,7 @@
     },
     {
       "name": "enhance_memory_ollama",
-      "description": "Enhance with local AI"
+      "description": "Enhance with local AI (Ollama)"
     },
     {
       "name": "batch_enhance_memories_ollama",
@@ -87,48 +86,87 @@
     },
     {
       "name": "smart_status_update",
-      "description": "Natural language task updates"
+      "description": "Natural language task status updates"
     },
     {
       "name": "get_task_status_analytics",
-      "description": "Productivity analytics"
+      "description": "Comprehensive productivity analytics"
     },
     {
       "name": "validate_task_workflow",
-      "description": "Workflow validation"
+      "description": "Intelligent workflow validation"
     },
     {
       "name": "get_automation_suggestions",
-      "description": "Automation suggestions"
+      "description": "AI-powered automation suggestions"
+    },
+    {
+      "name": "generate_dropoff",
+      "description": "Generate session handoff documents"
     },
     {
       "name": "deduplicate_memories",
-      "description": "Clean up duplicates"
+      "description": "Clean up duplicate memory files"
     },
     {
       "name": "check_ollama_status",
-      "description": "Check local AI status"
+      "description": "Check local AI server status"
     },
     {
       "name": "test_tool",
-      "description": "Verify MCP connection"
+      "description": "Verify MCP connection is working"
     }
   ],
   "user_config": {
     "memory_directory": {
       "type": "string",
       "default": "~/Documents/claude-memories",
-      "description": "Directory for storing memories"
+      "description": "Directory for storing memory files",
+      "required": false
     },
     "task_directory": {
       "type": "string",
       "default": "~/Documents/claude-tasks",
-      "description": "Directory for storing tasks"
+      "description": "Directory for storing task files",
+      "required": false
     },
     "default_project": {
       "type": "string",
       "default": "my-project",
-      "description": "Default project name"
+      "description": "Default project name for memories and tasks",
+      "required": false
+    },
+    "enable_auto_linking": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically link related memories and tasks",
+      "required": false
+    },
+    "max_search_results": {
+      "type": "number",
+      "default": 25,
+      "description": "Maximum number of search results to return",
+      "required": false
+    },
+    "enable_ollama": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable local AI enhancements with Ollama",
+      "required": false
+    },
+    "ollama_model": {
+      "type": "string",
+      "default": "llama3.1:8b",
+      "description": "Ollama model to use for enhancements",
+      "required": false
     }
+  },
+  "requirements": {
+    "node": ">=18.0.0",
+    "platforms": [
+      "win32",
+      "darwin",
+      "linux"
+    ]
   }
 }

@@ -348,20 +348,52 @@ The previous `DISABLE_AUTH=true` environment variable is still supported for bac
 
 ## Configuration and Installation
 
-### MCP Client Configuration
+### IMPORTANT: Client Type Distinction
 
-**Claude Desktop** (`claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "like-i-said-memory-v2": {
-      "command": "node",
-      "args": ["path/to/server-markdown.js"],
-      "env": {}
-    }
-  }
-}
+**This project supports two different types of Claude clients:**
+
+#### 1. Claude Desktop (Desktop Application)
+- **Installation Method**: DXT (Desktop Extension) - One-click install
+- **File Format**: `.dxt` file
+- **Configuration**: Automatic - no manual JSON editing needed
+- **Use Case**: Users of the Claude Desktop application
+
+#### 2. Claude Code (Web Interface) + IDEs
+- **Installation Method**: Manual MCP server configuration
+- **File Format**: JSON configuration files
+- **Configuration**: Manual setup required in your IDE
+- **Use Case**: Users of claude.ai/code with IDEs like Cursor, Windsurf, VS Code
+
+### Installation Methods by Client Type
+
+#### For Claude Desktop Users (DXT Installation)
+**Easy Installation (Recommended)**:
+1. Download the latest `like-i-said-memory-v2.dxt` file from releases
+2. Double-click the `.dxt` file to install in Claude Desktop
+3. Configure your preferences in the installation dialog
+4. Start using Like-I-Said immediately
+
+**What DXT Provides**:
+- Complete MCP server with all 23 tools
+- Automatic Claude Desktop configuration
+- Self-contained installation (no Node.js required)
+- Secure configuration storage
+
+#### For Claude Code + IDE Users (Manual Setup)
+
+**Step 1: Install the MCP Server**
+```bash
+# NPX Installation (Recommended)
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+
+# Manual Installation
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+npm install
+node cli.js install
 ```
+
+**Step 2: Configure Your IDE**
 
 **Cursor** (`~/.cursor/mcp.json`):
 ```json
@@ -389,20 +421,18 @@ The previous `DISABLE_AUTH=true` environment variable is still supported for bac
 }
 ```
 
-### Installation Methods
+**VS Code with Continue**:
+Manual configuration required per Continue extension documentation.
 
-**NPX Installation (Recommended)**:
-```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
-```
+### Key Differences Summary
 
-**Manual Installation**:
-```bash
-git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
-cd Like-I-Said-memory-mcp-server
-npm install
-node cli.js install
-```
+| Feature | Claude Desktop (DXT) | Claude Code (Manual) |
+|---------|---------------------|---------------------|
+| Installation | One-click DXT file | Manual setup required |
+| Configuration | Automatic | Manual JSON editing |
+| Node.js Required | No | Yes |
+| Updates | Through Claude Desktop | Manual update process |
+| Target Users | Claude Desktop app users | Web Claude + IDE users |
 
 ## Development Workflow
 

@@ -23,7 +23,14 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 ## 🚀 Installation Options
 
-### Option 1: Zero-Dependency DXT Installation (Recommended!) 🎉
+### IMPORTANT: Choose Your Installation Method
+
+**This project supports two different types of Claude clients. Choose the method that matches your setup:**
+
+#### 🖥️ Claude Desktop Users (Recommended)
+**If you use the Claude Desktop application:**
+
+### Option 1: Zero-Dependency DXT Installation 🎉
 
 **NEW! Install in 30 seconds without Node.js or any technical setup!**
 
@@ -32,15 +39,22 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 3. **Drag & Drop** the `.dxt` file
 4. **Done!** Start using all 23 tools immediately
 
-No Node.js, no npm, no command line - just drag, drop, and use!
+**What DXT Provides:**
+- ✅ Complete MCP server with all 23 tools
+- ✅ Automatic Claude Desktop configuration
+- ✅ Self-contained installation (no Node.js required)
+- ✅ Secure configuration storage
 
 [📖 DXT Installation Guide](./DXT-INSTALLATION-README.md)
 
 ---
 
-### Option 2: NPX Installation (Traditional Method)
+#### 🌐 Claude Code + IDE Users
+**If you use claude.ai/code with IDEs like Cursor, Windsurf, or VS Code:**
 
-**If you prefer the traditional installation or need more control:**
+### Option 2: NPX Installation (Manual Setup Required)
+
+**This method requires Node.js and manual configuration:**
 
 #### Step 1: Install Node.js (First Time Only)
 
@@ -85,11 +99,13 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```
 
 **What this magical command does:**
-- 🔍 **Finds your AI apps** automatically (Claude Desktop, Cursor, Windsurf, VS Code)
-- ⚙️ **Configures everything** so your AI can remember things
+- 🔍 **Finds your IDE apps** automatically (Cursor, Windsurf, VS Code)
+- ⚙️ **Configures MCP settings** for your specific IDE
 - 🧪 **Tests everything works** before finishing
 - 🛡️ **Keeps your existing settings** completely safe
 - 📦 **Works on all platforms** (Windows, Mac, Linux)
+
+**Important**: This command configures your IDE to work with claude.ai/code. It does NOT configure Claude Desktop (use DXT for that).
 
 **No coding knowledge required! Just copy, paste, and press Enter.**
 
@@ -117,6 +133,17 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 - 🔍 **Advanced Search** - Find memories by content, tags, or projects  
 - 📈 **Analytics** - Usage statistics and memory insights
 - 🎨 **Memory Cards** - Beautiful card-based layout with categories
+
+---
+
+## 🔍 Which Method Should You Use?
+
+| Your Setup | Installation Method | Why? |
+|------------|-------------------|------|
+| **Claude Desktop app** | DXT Installation | One-click install, automatic configuration |
+| **claude.ai/code + Cursor** | NPX Installation | Manual IDE configuration required |
+| **claude.ai/code + Windsurf** | NPX Installation | Manual IDE configuration required |
+| **claude.ai/code + VS Code** | NPX Installation | Manual IDE configuration required |
 
 ### For Advanced Users: Docker Support
 ```bash

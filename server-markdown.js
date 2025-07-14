@@ -1915,7 +1915,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
 
           // Generate title and summary using the smart generator
-          const title = TitleSummaryGenerator.generateTitle(memory.content, memory);
+          const title = await TitleSummaryGenerator.generateTitle(memory.content, memory);
           const summary = TitleSummaryGenerator.generateSummary(memory.content, memory);
 
           // Remove old title/summary tags if regenerating
@@ -2022,7 +2022,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const hasSummary = existingTags.some(tag => tag.startsWith('summary:'));
 
               // Generate missing metadata
-              const title = hasTitle ? null : TitleSummaryGenerator.generateTitle(memory.content, memory);
+              const title = hasTitle ? null : await TitleSummaryGenerator.generateTitle(memory.content, memory);
               const summary = hasSummary ? null : TitleSummaryGenerator.generateSummary(memory.content, memory);
 
               // Remove old tags if regenerating

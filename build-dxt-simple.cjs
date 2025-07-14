@@ -53,17 +53,20 @@ const manifest = {
         "memory_directory": {
             "type": "string", 
             "default": "~/Documents/claude-memories",
-            "description": "Directory for storing memories"
+            "description": "Directory for storing memories",
+            "required": false
         },
         "task_directory": {
             "type": "string",
             "default": "~/Documents/claude-tasks", 
-            "description": "Directory for storing tasks"
+            "description": "Directory for storing tasks",
+            "required": false
         },
         "default_project": {
             "type": "string",
             "default": "my-project",
-            "description": "Default project name"
+            "description": "Default project name",
+            "required": false
         }
     }
 };
