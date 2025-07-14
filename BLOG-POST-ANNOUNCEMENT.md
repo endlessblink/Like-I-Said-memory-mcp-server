@@ -228,7 +228,7 @@ DXT proves this is possible. Today.
 Ready to experience the future of software installation?
 
 ### 1. Download the DXT Package
-**[⬇️ like-i-said-memory-v2.dxt](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt)** (1.11 MB)
+**[⬇️ like-i-said-memory-v2.dxt](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt)** (1.11 MB)
 
 ### 2. Install in 30 Seconds
 1. Open Claude Desktop
@@ -246,17 +246,17 @@ Watch as it lists all 23 tools, ready to transform how you work with AI.
 ## Community & Support
 
 ### Join the Community
-- **[GitHub Repository](https://github.com/endlessblink/like-i-said-mcp-server-v2)** - Source code and issues
-- **[Discussions](https://github.com/endlessblink/like-i-said-mcp-server-v2/discussions)** - Community Q&A
-- **[Releases](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases)** - Download center
+- **[GitHub Repository](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)** - Source code and issues
+- **[Discussions](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)** - Community Q&A
+- **[Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases)** - Download center
 
 ### Documentation
-- **[DXT Installation Guide](https://github.com/endlessblink/like-i-said-mcp-server-v2/blob/main/DXT-INSTALLATION-README.md)** - Complete setup instructions
-- **[Troubleshooting Guide](https://github.com/endlessblink/like-i-said-mcp-server-v2/blob/main/TROUBLESHOOTING-GUIDE.md)** - Solve any issues
-- **[Full Documentation](https://github.com/endlessblink/like-i-said-mcp-server-v2/blob/main/README.md)** - Everything you need to know
+- **[DXT Installation Guide](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/blob/main/DXT-INSTALLATION-README.md)** - Complete setup instructions
+- **[Troubleshooting Guide](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/blob/main/TROUBLESHOOTING-GUIDE.md)** - Solve any issues
+- **[Full Documentation](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/blob/main/README.md)** - Everything you need to know
 
 ### Getting Help
-- **[Report Issues](https://github.com/endlessblink/like-i-said-mcp-server-v2/issues)** - Bug reports and feature requests
+- **[Report Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)** - Bug reports and feature requests
 - **[Contact Developer](https://github.com/endlessblink)** - Direct communication
 
 ---
@@ -317,12 +317,12 @@ Welcome to the future.
 
 ---
 
-*Download [Like-I-Said Memory Server v2.4.0](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest) and experience the revolution yourself.*
+*Download [Like-I-Said Memory Server v2.4.0](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest) and experience the revolution yourself.*
 
 ---
 
 **About the Author**  
-*EndlessBlink is the creator of Like-I-Said Memory Server and advocate for making powerful AI tools accessible to everyone. Follow the project on [GitHub](https://github.com/endlessblink/like-i-said-mcp-server-v2).*
+*EndlessBlink is the creator of Like-I-Said Memory Server and advocate for making powerful AI tools accessible to everyone. Follow the project on [GitHub](https://github.com/endlessblink/Like-I-Said-memory-mcp-server).*
 
 ---
 

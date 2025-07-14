@@ -166,7 +166,7 @@ ${this.state.error?.stack}
 ${this.state.errorInfo?.componentStack}
 \`\`\``)
 
-    const url = `https://github.com/endlessblink/like-i-said-mcp-server-v2/issues/new?title=${title}&body=${body}&labels=bug,error-boundary`
+    const url = `https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues/new?title=${title}&body=${body}&labels=bug,error-boundary`
     window.open(url, '_blank')
   }
 
@@ -290,7 +290,7 @@ ${this.state.errorInfo?.componentStack}
 
               <div className="text-xs text-gray-500 text-center space-y-1">
                 <div>Retry Count: {this.state.retryCount} | Time: {new Date().toLocaleTimeString()}</div>
-                <div>Like-I-Said MCP Server v2 | Error Boundary v1.0</div>
+                <div>Like-I-Said Memory MCP Server | Error Boundary v1.0</div>
               </div>
             </CardContent>
           </Card>

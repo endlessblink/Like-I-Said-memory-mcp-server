@@ -19,5 +19,5 @@ Type "show MCP tools" in Claude to see the full list.
 
 ### Support
 
-- Documentation: https://github.com/endlessblink/like-i-said-mcp-server-v2
-- Issues: https://github.com/endlessblink/like-i-said-mcp-server-v2/issues
+- Documentation: https://github.com/endlessblink/Like-I-Said-memory-mcp-server
+- Issues: https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues

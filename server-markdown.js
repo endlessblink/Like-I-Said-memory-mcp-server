@@ -1262,16 +1262,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const hasSummary = existingTags.some(tag => tag.startsWith('summary:'));
 
         if (!hasTitle || !hasSummary) {
-          // Generate title and summary using smart content analysis
-          const generatedTitle = hasTitle ? null : TitleSummaryGenerator.generateTitle(memory.content, memory);
-          const generatedSummary = hasSummary ? null : TitleSummaryGenerator.generateSummary(memory.content, memory);
+          try {
+            // Generate title and summary using smart content analysis
+            // Note: generateTitle is async, but generateSummary is sync
+            const generatedTitle = hasTitle ? null : await TitleSummaryGenerator.generateTitle(memory.content, memory);
+            const generatedSummary = hasSummary ? null : TitleSummaryGenerator.generateSummary(memory.content, memory);
 
-          // Add to tags if not already present
-          if (!hasTitle && generatedTitle) {
-            memory.tags.push(`title:${generatedTitle}`);
-          }
-          if (!hasSummary && generatedSummary) {
-            memory.tags.push(`summary:${generatedSummary}`);
+            // Add to tags if not already present
+            if (!hasTitle && generatedTitle) {
+              memory.tags.push(`title:${generatedTitle}`);
+            }
+            if (!hasSummary && generatedSummary) {
+              memory.tags.push(`summary:${generatedSummary}`);
+            }
+          } catch (error) {
+            console.error('Error generating title/summary:', error);
+            // Continue with save even if title/summary generation fails
           }
         }
 

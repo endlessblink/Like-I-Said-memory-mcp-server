@@ -24,12 +24,12 @@ This guide outlines submission processes for major MCP server directories and ma
   "version": "2.4.0",
   "author": "EndlessBlink",
   "license": "MIT",
-  "homepage": "https://github.com/endlessblink/like-i-said-mcp-server-v2",
-  "repository": "https://github.com/endlessblink/like-i-said-mcp-server-v2",
+  "homepage": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server",
+  "repository": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server",
   "installation": {
     "primary": {
       "type": "dxt",
-      "url": "https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt",
+      "url": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt",
       "size": "1.11 MB",
       "time": "30 seconds"
     },
@@ -155,7 +155,7 @@ servers/like-i-said-memory/
 - 🚀 Revolutionary DXT installation (no Node.js needed)
 - 🔧 23 powerful tools included
 - 🔒 Privacy-first design
-- 📦 [Download](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt) | [Source](https://github.com/endlessblink/like-i-said-mcp-server-v2)
+- 📦 [Download](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt) | [Source](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)
 ```
 
 ### 4.2 Reddit Communities
@@ -332,7 +332,7 @@ Professional announcement focusing on:
 
 ### Primary Contact
 - **GitHub**: @endlessblink
-- **Repository**: like-i-said-mcp-server-v2
+- **Repository**: Like-I-Said-memory-mcp-server
 - **Coordination**: Use GitHub Issues for tracking submissions
 
 ### Submission Tracking

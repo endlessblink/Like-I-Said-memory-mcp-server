@@ -21,14 +21,14 @@ We're thrilled to introduce **DXT (Desktop Extensions)** packaging - making Like
 ## 📦 Download
 
 ### Primary Release (Recommended)
-- **[⬇️ like-i-said-memory-v2.dxt](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/download/v2.4.0/like-i-said-memory-v2.dxt)** (1.13 MB)
+- **[⬇️ like-i-said-memory-v2.dxt](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/download/v2.4.0/like-i-said-memory-v2.dxt)** (1.13 MB)
   - Zero-dependency package
   - Works on Windows, macOS, and Linux
   - Includes all 23 tools
 
 ### Alternative Downloads
-- **[📄 Source code (zip)](https://github.com/endlessblink/like-i-said-mcp-server-v2/archive/v2.4.0.zip)**
-- **[📄 Source code (tar.gz)](https://github.com/endlessblink/like-i-said-mcp-server-v2/archive/v2.4.0.tar.gz)**
+- **[📄 Source code (zip)](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/archive/v2.4.0.zip)**
+- **[📄 Source code (tar.gz)](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/archive/v2.4.0.tar.gz)**
 
 ---
 
@@ -73,7 +73,7 @@ We're thrilled to introduce **DXT (Desktop Extensions)** packaging - making Like
 3. Drag and drop the file
 4. Done! All 23 tools are ready to use
 
-[Full DXT Installation Guide](https://github.com/endlessblink/like-i-said-mcp-server-v2/blob/main/DXT-INSTALLATION-README.md)
+[Full DXT Installation Guide](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/blob/main/DXT-INSTALLATION-README.md)
 
 ### Option 2: Traditional Installation
 
@@ -119,10 +119,10 @@ Special thanks to:
 
 ## 📚 Resources
 
-- **[Installation Guide](https://github.com/endlessblink/like-i-said-mcp-server-v2/blob/main/DXT-INSTALLATION-README.md)**
-- **[Full Documentation](https://github.com/endlessblink/like-i-said-mcp-server-v2)**
-- **[Report Issues](https://github.com/endlessblink/like-i-said-mcp-server-v2/issues)**
-- **[Discussions](https://github.com/endlessblink/like-i-said-mcp-server-v2/discussions)**
+- **[Installation Guide](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/blob/main/DXT-INSTALLATION-README.md)**
+- **[Full Documentation](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)**
+- **[Report Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)**
+- **[Discussions](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)**
 
 ---
 

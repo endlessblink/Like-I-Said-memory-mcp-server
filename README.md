@@ -27,7 +27,7 @@ Give your AI assistants persistent memory! Store information, preferences, and c
 
 **NEW! Install in 30 seconds without Node.js or any technical setup!**
 
-1. **Download**: [**⬇️ like-i-said-memory-v2.dxt**](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
+1. **Download**: [**⬇️ like-i-said-memory-v2.dxt**](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
 2. **Open Claude Desktop Settings** → Extensions
 3. **Drag & Drop** the `.dxt` file
 4. **Done!** Start using all 23 tools immediately
@@ -249,8 +249,8 @@ If you want to run from source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/endlessblink/like-i-said-mcp-server.git
-cd like-i-said-mcp-server
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
 
 # Install dependencies
 npm install
@@ -275,8 +275,8 @@ npm run build
 ## 🤝 Contributing
 
 Found a bug or want to contribute?
-- **Issues**: [GitHub Issues](https://github.com/endlessblink/like-i-said-mcp-server/issues)
-- **Repository**: [GitHub](https://github.com/endlessblink/like-i-said-mcp-server)
+- **Issues**: [GitHub Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)
+- **Repository**: [GitHub](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)
 
 ## 📜 License
 

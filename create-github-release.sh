@@ -17,4 +17,4 @@ gh release create v2.4.0 \
   --verify-tag
 
 echo "Release created successfully!"
-echo "Visit: https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/tag/v2.4.0"
+echo "Visit: https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/tag/v2.4.0"

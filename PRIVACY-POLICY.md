@@ -336,8 +336,8 @@ Analytics data may be processed in:
 If you have questions about this privacy policy:
 
 **Primary Contact**
-- **GitHub Issues**: [Report privacy concerns](https://github.com/endlessblink/like-i-said-mcp-server-v2/issues)
-- **GitHub Discussions**: [Community discussion](https://github.com/endlessblink/like-i-said-mcp-server-v2/discussions)
+- **GitHub Issues**: [Report privacy concerns](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)
+- **GitHub Discussions**: [Community discussion](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)
 - **Developer**: [@endlessblink](https://github.com/endlessblink)
 
 ### Response Time
@@ -356,7 +356,7 @@ If you have questions about this privacy policy:
 - **[Configuration Options](./README.md#analytics)** - User controls
 
 ### Community Resources
-- **[Privacy Discussions](https://github.com/endlessblink/like-i-said-mcp-server-v2/discussions)** - Community feedback
+- **[Privacy Discussions](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)** - Community feedback
 - **[Security Documentation](./SECURITY.md)** - Security practices
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - Development standards
 
@@ -374,7 +374,7 @@ Key points:
 - ✅ **Transparent practices** - Clear about what we collect
 - ✅ **Your choice** - Full functionality regardless of analytics
 
-Questions? Use `configure_analytics privacy` or visit our [GitHub repository](https://github.com/endlessblink/like-i-said-mcp-server-v2).
+Questions? Use `configure_analytics privacy` or visit our [GitHub repository](https://github.com/endlessblink/Like-I-Said-memory-mcp-server).
 
 ---
 

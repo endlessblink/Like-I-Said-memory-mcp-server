@@ -213,7 +213,7 @@ Task description and details...
 ## File Structure
 
 ```
-like-i-said-mcp-server-v2/
+Like-I-Said-memory-mcp-server/
 ├── server-markdown.js          # Main MCP server
 ├── dashboard-server-bridge.js  # API server for dashboard
 ├── cli.js                     # NPX installer
@@ -388,8 +388,8 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 
 **Manual Installation**:
 ```bash
-git clone https://github.com/endlessblink/like-i-said-mcp-server-v2.git
-cd like-i-said-mcp-server-v2
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
 npm install
 node cli.js install
 ```

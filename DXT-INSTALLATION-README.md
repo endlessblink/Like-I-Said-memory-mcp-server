@@ -20,7 +20,7 @@ DXT (Desktop Extensions) is the new standard for installing MCP servers in Claud
 
 ### Step 1: Download the DXT Package
 
-[**⬇️ Download like-i-said-memory-v2.dxt**](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
+[**⬇️ Download like-i-said-memory-v2.dxt**](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
 
 ### Step 2: Open Claude Desktop Settings
 
@@ -149,9 +149,9 @@ The extension works out of the box, but you can customize settings:
 
 ### Need Help?
 
-- 📖 [Full Documentation](https://github.com/endlessblink/like-i-said-mcp-server-v2)
-- 🐛 [Report Issues](https://github.com/endlessblink/like-i-said-mcp-server-v2/issues)
-- 💬 [Discussions](https://github.com/endlessblink/like-i-said-mcp-server-v2/discussions)
+- 📖 [Full Documentation](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)
+- 🐛 [Report Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)
+- 💬 [Discussions](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)
 
 ---
 

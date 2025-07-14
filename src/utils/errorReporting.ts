@@ -258,7 +258,7 @@ ${componentStack}
 
 Please provide any additional context about what you were doing when this error occurred.`)
 
-    return `https://github.com/endlessblink/like-i-said-mcp-server-v2/issues/new?title=${title}&body=${body}&labels=bug,error-report`
+    return `https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues/new?title=${title}&body=${body}&labels=bug,error-report`
   }
 
   private getLocalStorageUsage(): number {

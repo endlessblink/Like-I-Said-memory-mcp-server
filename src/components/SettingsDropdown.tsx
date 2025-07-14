@@ -99,7 +99,7 @@ export function SettingsDropdown({
           </DropdownMenuItem>
         )}
         
-        <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://github.com/endlessblink/like-i-said-mcp-server-v2', '_blank')}>
+        <DropdownMenuItem className="cursor-pointer" onClick={() => window.open('https://github.com/endlessblink/Like-I-Said-memory-mcp-server', '_blank')}>
           <Info className="mr-2 h-4 w-4" />
           <span>About</span>
         </DropdownMenuItem>

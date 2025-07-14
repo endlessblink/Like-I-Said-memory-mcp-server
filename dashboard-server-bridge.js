@@ -21,6 +21,7 @@ import { OllamaClient } from './lib/ollama-client.js';
 import { McpSecurity } from './lib/mcp-security.js';
 import { AuthSystem } from './lib/auth-system.js';
 import { settingsManager } from './lib/settings-manager.js';
+import { MemoryDeduplicator } from './lib/memory-deduplicator.js';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import yaml from 'js-yaml';
@@ -185,6 +186,11 @@ class DashboardBridge {
     this.app.put('/api/memories/:id', requireAuth(), this.updateMemory.bind(this));
     this.app.delete('/api/memories/:id', requireAuth(), this.deleteMemory.bind(this));
     this.app.post('/api/memories/suggest-for-task', requireAuth(), this.suggestMemoriesForTask.bind(this));
+    
+    // Memory deduplication endpoints
+    this.app.get('/api/memories/duplicates', requireAuth(), this.getMemoryDuplicates.bind(this));
+    this.app.post('/api/memories/deduplicate', requireAuth(), this.deduplicateMemories.bind(this));
+    
     this.app.get('/api/projects', requireAuth(), this.getProjects.bind(this));
     this.app.get('/api/status', this.getStatus.bind(this)); // Keep status public for health checks
 
@@ -750,8 +756,19 @@ class DashboardBridge {
         await findMemoryFiles(projectPath);
       }
 
+      // Remove duplicates based on memory ID
+      const uniqueMemories = [];
+      const seenIds = new Set();
+      
+      for (const memory of memories) {
+        if (!seenIds.has(memory.id)) {
+          seenIds.add(memory.id);
+          uniqueMemories.push(memory);
+        }
+      }
+      
       // Sort by specified field and order
-      memories.sort((a, b) => {
+      uniqueMemories.sort((a, b) => {
         let aVal, bVal;
         switch (sort) {
           case 'timestamp':
@@ -780,9 +797,9 @@ class DashboardBridge {
       });
 
       // Calculate pagination
-      const total = memories.length;
+      const total = uniqueMemories.length;
       const totalPages = Math.ceil(total / limitNum);
-      const paginatedMemories = memories.slice(offset, offset + limitNum);
+      const paginatedMemories = uniqueMemories.slice(offset, offset + limitNum);
 
       res.json({
         data: paginatedMemories,
@@ -886,7 +903,18 @@ class DashboardBridge {
       await findMemoryFiles(projectPath);
     }
     
-    return memories;
+    // Remove duplicates based on memory ID
+    const uniqueMemories = [];
+    const seenIds = new Set();
+    
+    for (const memory of memories) {
+      if (!seenIds.has(memory.id)) {
+        seenIds.add(memory.id);
+        uniqueMemories.push(memory);
+      }
+    }
+    
+    return uniqueMemories;
   }
 
   async createMemory(req, res) {
@@ -1015,6 +1043,68 @@ class DashboardBridge {
       res.json({ success: true, message: 'Memory deleted successfully' });
     } catch (error) {
       console.error('Error deleting memory:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getMemoryDuplicates(req, res) {
+    try {
+      const deduplicator = new MemoryDeduplicator(this.memoryStorage);
+      const duplicates = await deduplicator.previewDeduplication();
+      
+      // Format the response with duplicate groups
+      const response = {
+        totalDuplicates: duplicates.reduce((sum, group) => sum + group.removeFiles.length, 0),
+        groups: duplicates.map(group => ({
+          id: group.id,
+          originalFile: group.keepFile,
+          duplicates: group.removeFiles,
+          duplicateCount: group.removeFiles.length
+        }))
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Error finding memory duplicates:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deduplicateMemories(req, res) {
+    try {
+      const { previewOnly = false } = req.body;
+      
+      const deduplicator = new MemoryDeduplicator(this.memoryStorage);
+      
+      if (previewOnly) {
+        const duplicates = await deduplicator.previewDeduplication();
+        const totalToRemove = duplicates.reduce((sum, group) => sum + group.removeFiles.length, 0);
+        
+        res.json({
+          preview: true,
+          totalToRemove,
+          groups: duplicates
+        });
+      } else {
+        const result = await deduplicator.deduplicateMemories();
+        
+        // Broadcast update to WebSocket clients
+        this.broadcastUpdate({
+          type: 'deduplication_complete',
+          data: {
+            duplicatesRemoved: result.duplicatesRemoved,
+            message: 'Memory deduplication completed'
+          }
+        });
+        
+        res.json({
+          success: true,
+          duplicatesRemoved: result.duplicatesRemoved,
+          message: `Successfully removed ${result.duplicatesRemoved} duplicate memories`
+        });
+      }
+    } catch (error) {
+      console.error('Error deduplicating memories:', error);
       res.status(500).json({ error: error.message });
     }
   }

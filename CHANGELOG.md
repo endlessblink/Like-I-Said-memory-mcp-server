@@ -137,4 +137,4 @@ Existing users can continue using their current installation. To switch to DXT:
 
 ---
 
-For more details on each release, see the [GitHub Releases](https://github.com/endlessblink/like-i-said-mcp-server-v2/releases) page.
+For more details on each release, see the [GitHub Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases) page.
