@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Repository Information
+
+**This is the ONLY relevant repository for this project:**
+- **Repository Name**: Like-I-Said-memory-mcp-server
+- **GitHub URL**: https://github.com/endlessblink/Like-I-Said-memory-mcp-server
+- **Description**: Like-I-Said v2 - Advanced MCP Memory Management System with AI Enhancement and React Dashboard
+- **Status**: Public, Active Development
+
+**Note**: Any references to `like-i-said-mcp-server-v2` or other repository names are outdated. Always use `Like-I-Said-memory-mcp-server`.
+
 ## Project Overview
 
 **Like-I-Said MCP Server v2** is an enhanced Model Context Protocol (MCP) memory server that provides persistent memory for AI assistants with a modern React dashboard. It allows AI assistants to remember conversations across sessions and provides comprehensive memory management capabilities.

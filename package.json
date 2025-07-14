@@ -22,11 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endlessblink/Like-I-Said-Memory-V2.git"
+    "url": "git+https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git"
   },
-  "homepage": "https://github.com/endlessblink/Like-I-Said-Memory-V2",
+  "homepage": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server",
   "bugs": {
-    "url": "https://github.com/endlessblink/Like-I-Said-Memory-V2/issues"
+    "url": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues"
   },
   "bin": {
     "like-i-said-v2": "./cli.js"
