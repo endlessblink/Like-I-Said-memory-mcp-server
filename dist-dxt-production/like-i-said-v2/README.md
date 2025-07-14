@@ -1,4 +1,4 @@
-# Like-I-Said Memory Server v2.4.0
+# Like-I-Said Memory Server v2.4.2
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 {
   "name": "like-i-said-mcp-server",
-  "version": "2.4.0",
+  "version": "2.4.2",
   "type": "module",
   "main": "mcp-server-dxt-optimized.js",
   "dependencies": {

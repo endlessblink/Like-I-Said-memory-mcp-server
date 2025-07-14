@@ -2,7 +2,7 @@
   "dxt_version": "0.1",
   "name": "like-i-said-memory-v2",
   "display_name": "Like-I-Said Memory Server",
-  "version": "2.4.0",
+  "version": "2.4.2",
   "description": "Persistent memory and task management for AI assistants with 23 powerful tools",
   "author": {
     "name": "EndlessBlink",
