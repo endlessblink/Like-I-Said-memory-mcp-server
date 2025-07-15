@@ -186,7 +186,8 @@
       "Bash(./build-installer.sh:*)",
       "Bash(./build-installer-auto.sh:*)",
       "Bash(./build-installer-logged.sh:*)",
-      "Bash(pkg:*)"
+      "Bash(pkg:*)",
+      "Bash(MCP_MODE=true node server-markdown.js)"
     ],
     "deny": []
   },
