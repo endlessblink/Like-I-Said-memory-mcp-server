@@ -1,0 +1,97 @@
+# Installation Guide
+
+Like-I-Said v2 supports multiple installation methods depending on your use case.
+
+## Quick Install Options
+
+### 1. Claude Desktop Users (DXT Installation) - Recommended
+
+The easiest way to install Like-I-Said for Claude Desktop:
+
+1. Download the latest `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases)
+2. Double-click the `.dxt` file
+3. Claude Desktop will automatically install and configure everything
+4. Start using Like-I-Said immediately!
+
+### 2. NPX Installation (For Claude Code + IDEs)
+
+```bash
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+```
+
+This will:
+- Install the MCP server
+- Configure your IDE (Cursor, Windsurf, VS Code)
+- Set up the necessary paths
+
+### 3. Manual Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+
+# Install dependencies
+npm install
+
+# Run the installer
+node cli.js install
+```
+
+## IDE Configuration
+
+### Cursor
+Configuration file: `~/.cursor/mcp.json`
+```json
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "command": "node",
+      "args": ["/path/to/server-markdown.js"]
+    }
+  }
+}
+```
+
+### Windsurf
+Configuration file: `~/.codeium/windsurf/mcp_config.json`
+```json
+{
+  "mcp": {
+    "servers": {
+      "like-i-said-memory-v2": {
+        "command": "node",
+        "args": ["/path/to/server-markdown.js"]
+      }
+    }
+  }
+}
+```
+
+### VS Code with Continue
+Follow the Continue extension documentation for MCP server configuration.
+
+## Verification
+
+After installation, restart your IDE and check that the MCP tools are available:
+- `add_memory` - Store memories
+- `search_memories` - Search stored memories
+- `create_task` - Create tasks
+- And 20+ more tools
+
+## Troubleshooting
+
+### Tools not appearing
+1. Restart your IDE
+2. Check the MCP configuration file path
+3. Verify Node.js is installed (v18+ required)
+
+### Permission errors
+- Windows: Run installer as Administrator
+- macOS/Linux: You may need to use `sudo` for global installation
+
+### Connection issues
+- Check firewall settings for port 3001 (dashboard)
+- Verify the server path in your configuration
+
+For more help, see our [GitHub Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)

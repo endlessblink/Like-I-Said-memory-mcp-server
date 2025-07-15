@@ -74,3 +74,23 @@ docker-compose.yml
 .prettierrc*
 jsconfig.json
 tsconfig.json
+
+# DXT build artifacts and temp directories
+*.dxt
+temp-dxt/
+temp-dxt-*/
+dist-dxt/
+dist-dxt-*/
+build-dxt*.js
+.dxtignore
+
+# Temporary build directories
+dist-final-working/
+
+# Screenshots and images
+*.png
+assets/images/
+
+# Session dropoff files
+SESSION-DROPOFF-*.md
+session-dropoffs/

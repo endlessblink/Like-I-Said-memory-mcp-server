@@ -187,7 +187,13 @@
       "Bash(./build-installer-auto.sh:*)",
       "Bash(./build-installer-logged.sh:*)",
       "Bash(pkg:*)",
-      "Bash(MCP_MODE=true node server-markdown.js)"
+      "Bash(MCP_MODE=true node server-markdown.js)",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt/like-i-said-memory-v2.dxt )",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-standalone/like-i-said-memory-v2-standalone.dxt )",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-production/*.dxt)",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/docs/screenshots/like-i-said-v2-jsonrpc.dxt)",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-standalone )",
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-production)"
     ],
     "deny": []
   },

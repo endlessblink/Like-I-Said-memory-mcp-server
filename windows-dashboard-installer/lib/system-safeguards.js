@@ -56,7 +56,7 @@ export class SystemSafeguards {
         JSON.stringify(manifest, null, 2)
       );
       
-      console.error(`✅ Backup created: ${backupPath}`);
+      console.log(`✅ Backup created: ${backupPath}`);
       return backupPath;
     } catch (error) {
       console.error('❌ Backup failed:', error);
@@ -263,7 +263,7 @@ export class SystemSafeguards {
       for (const file of orphaned) {
         try {
           fs.unlinkSync(file);
-          console.error(`🗑️ Removed orphaned file: ${file}`);
+          console.log(`🗑️ Removed orphaned file: ${file}`);
         } catch (error) {
           console.error(`❌ Failed to remove ${file}:`, error);
         }
@@ -313,7 +313,7 @@ export class SystemSafeguards {
       }
     }
     
-    console.error(`✅ Recovery completed from backup: ${backupPath}`);
+    console.log(`✅ Recovery completed from backup: ${backupPath}`);
     return manifest;
   }
 }

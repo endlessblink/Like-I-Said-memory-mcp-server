@@ -5,6 +5,19 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.2] - 2025-07-15
+
+### Fixed
+- **Windows Path Handling** - Fixed memory creation issue on Windows when using custom paths
+  - Improved path normalization for Windows path comparisons
+  - Added debug logging to help diagnose path-related issues
+  - Fixed case-sensitive path comparison on Windows
+- **Enhanced Error Logging** - Added detailed error messages for saveMemory failures
+
+### Changed
+- Path traversal security check now properly handles Windows paths with different cases
+- Better error reporting when memory save operations fail
+
 ## [2.4.0] - 2024-07-13
 
 ### 🎉 Major Release: Zero-Dependency Installation!

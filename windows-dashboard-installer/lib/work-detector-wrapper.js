@@ -59,7 +59,7 @@ export class WorkDetectorWrapper {
           this.stats.patternsDetected++;
           
           if (this.debugMode) {
-            console.error('[WorkDetector] Pattern detected:', {
+            console.log('[WorkDetector] Pattern detected:', {
               tool: toolName,
               pattern: memory.metadata?.workType,
               domain: memory.metadata?.domain
@@ -151,7 +151,7 @@ export class WorkDetectorWrapper {
     this.detector = null;
     
     if (this.debugMode) {
-      console.error('[WorkDetector] Enabled');
+      console.log('[WorkDetector] Enabled');
     }
   }
   
@@ -162,7 +162,7 @@ export class WorkDetectorWrapper {
     this.enabled = false;
     
     if (this.debugMode) {
-      console.error('[WorkDetector] Disabled');
+      console.log('[WorkDetector] Disabled');
     }
   }
   

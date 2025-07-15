@@ -109,7 +109,7 @@ export class MemoryStorageWrapper {
   async updateMemory(id, updates) {
     // This is a simplified implementation
     // In production, this would update the actual markdown file
-    console.error(`Memory update requested for ${id}:`, updates);
+    console.log(`Memory update requested for ${id}:`, updates);
     return { id, ...updates };
   }
 }

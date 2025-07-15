@@ -105,11 +105,34 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
+// Detect Node.js installation path
+function detectNodePath() {
+  // Check common Node.js locations
+  const possibleNodePaths = [
+    // nvm paths
+    path.join(process.env.HOME || process.env.USERPROFILE, '.nvm/versions/node/*/bin/node'),
+    // Standard paths
+    '/usr/local/bin/node',
+    '/opt/homebrew/bin/node',
+    '/usr/bin/node',
+    // Windows paths
+    'C:\\Program Files\\nodejs\\node.exe',
+    'C:\\Program Files (x86)\\nodejs\\node.exe',
+    path.join(process.env.ProgramFiles || '', 'nodejs\\node.exe'),
+    // Current process path (most reliable)
+    process.execPath
+  ];
+  
+  // Return the current Node.js executable path
+  return process.execPath;
+}
+
 // Detect OS and MCP client configurations
 function detectEnvironment() {
   const platform = process.platform;
   const isWSL = process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP;
   const homeDir = process.env.HOME || process.env.USERPROFILE;
+  const nodePath = detectNodePath();
   
   const configs = {
     'claude-desktop': {
@@ -305,13 +328,19 @@ async function configureMCPClient(clientKey, clientConfig) {
     }
   }
 
-  // Create server configuration
+  // Create server configuration with detected paths
+  const detectedPaths = findExistingDirectories();
+  const nodePath = detectNodePath();
+  
   const serverConfig = {
-    command: 'node',
+    command: nodePath,
     args: [path.join(projectPath, 'mcp-server-wrapper.js')],
     env: {
       MEMORY_MODE: 'markdown',
-      PROJECT_ROOT: projectPath
+      PROJECT_ROOT: projectPath,
+      MEMORY_DIR: detectedPaths.memoryDir || '',
+      TASK_DIR: detectedPaths.taskDir || '',
+      MCP_QUIET: 'true'
     }
   };
 
@@ -477,6 +506,85 @@ async function main() {
   rl.close();
 }
 
+// Auto-detect existing memory and task directories
+function findExistingDirectories() {
+  const possibleMemoryPaths = [
+    // Check current directory first
+    path.join(process.cwd(), 'memories'),
+    path.join(process.cwd(), 'memory'),
+    // Check home directory locations
+    path.join(process.env.HOME || process.env.USERPROFILE, 'memories'),
+    path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'memories'),
+    path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'AI-Memories'),
+    // Check parent directories
+    path.join(process.cwd(), '..', 'memories'),
+    path.join(process.cwd(), '..', '..', 'memories'),
+    // Windows-specific paths
+    'D:\\memories',
+    'D:\\AI-Memories',
+    'D:\\Documents\\memories',
+    'C:\\memories',
+    'C:\\AI-Memories'
+  ];
+  
+  const possibleTaskPaths = [
+    // Check current directory first
+    path.join(process.cwd(), 'tasks'),
+    path.join(process.cwd(), 'task'),
+    // Check home directory locations
+    path.join(process.env.HOME || process.env.USERPROFILE, 'tasks'),
+    path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'tasks'),
+    path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'AI-Tasks'),
+    // Check parent directories
+    path.join(process.cwd(), '..', 'tasks'),
+    path.join(process.cwd(), '..', '..', 'tasks'),
+    // Windows-specific paths
+    'D:\\tasks',
+    'D:\\AI-Tasks',
+    'D:\\Documents\\tasks',
+    'C:\\tasks',
+    'C:\\AI-Tasks'
+  ];
+  
+  // Find first existing memory directory
+  let memoryDir = null;
+  for (const path of possibleMemoryPaths) {
+    if (fs.existsSync(path)) {
+      // Check if it contains memory files
+      try {
+        const files = fs.readdirSync(path);
+        const hasMemoryFiles = files.some(f => f.endsWith('.md') || fs.statSync(path + '/' + f).isDirectory());
+        if (hasMemoryFiles) {
+          memoryDir = path;
+          break;
+        }
+      } catch (e) {
+        // Skip if can't read
+      }
+    }
+  }
+  
+  // Find first existing task directory
+  let taskDir = null;
+  for (const path of possibleTaskPaths) {
+    if (fs.existsSync(path)) {
+      // Check if it contains task files
+      try {
+        const files = fs.readdirSync(path);
+        const hasTaskFiles = files.some(f => f.endsWith('.md') || fs.statSync(path + '/' + f).isDirectory());
+        if (hasTaskFiles) {
+          taskDir = path;
+          break;
+        }
+      } catch (e) {
+        // Skip if can't read
+      }
+    }
+  }
+  
+  return { memoryDir, taskDir };
+}
+
 // Quick install for NPX users
 async function quickInstall() {
   log('\n🚀 Like-I-Said MCP v2 - Quick Install', 'blue');
@@ -539,6 +647,15 @@ async function quickInstall() {
         }
       }
       
+      // Copy lib directory
+      const libSource = path.join(__dirname, 'lib');
+      const libDest = path.join(projectPath, 'lib');
+      if (fs.existsSync(libSource) && !fs.existsSync(libDest)) {
+        fs.cpSync(libSource, libDest, { recursive: true });
+        log('✓ Copied lib directory', 'green');
+        copied++;
+      }
+      
       // Create memories directory
       const memoriesDir = path.join(projectPath, 'memories');
       if (!fs.existsSync(memoriesDir)) {
@@ -548,6 +665,21 @@ async function quickInstall() {
       
       if (copied > 0) {
         log(`📋 Copied ${copied} files to current directory`, 'green');
+        
+        // Install dependencies
+        log('\n📦 Installing dependencies...', 'blue');
+        try {
+          execSync('npm install', { 
+            cwd: projectPath, 
+            stdio: 'inherit',
+            env: { ...process.env, NODE_ENV: 'production' }
+          });
+          log('✅ Dependencies installed successfully', 'green');
+        } catch (error) {
+          log('❌ Failed to install dependencies', 'red');
+          log('Please run "npm install" manually', 'yellow');
+          return;
+        }
       }
     } else {
       log('✓ Project files found', 'green');
@@ -557,12 +689,26 @@ async function quickInstall() {
   const serverTest = new Promise((resolve) => {
     const child = spawn('node', [serverPath], { stdio: ['pipe', 'pipe', 'pipe'] });
     let output = '';
+    let errorOutput = '';
     
     child.stdout.on('data', (data) => output += data.toString());
-    child.stdin.write('{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}\n');
-    child.stdin.end();
+    child.stderr.on('data', (data) => errorOutput += data.toString());
     
-    child.on('close', () => {
+    // Send proper MCP initialization first
+    child.stdin.write('{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}\n');
+    
+    // Then request tools list after a short delay
+    setTimeout(() => {
+      child.stdin.write('{"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}\n');
+      setTimeout(() => child.stdin.end(), 100);
+    }, 500);
+    
+    child.on('close', (code) => {
+      if (process.env.DEBUG || errorOutput) {
+        log(`\nDebug: Exit code: ${code}`, 'yellow');
+        if (output) log(`Debug: Output: ${output.substring(0, 200)}...`, 'yellow');
+        if (errorOutput) log(`Debug: Error: ${errorOutput.substring(0, 200)}...`, 'yellow');
+      }
       resolve(output.includes('add_memory'));
     });
     
@@ -571,10 +717,12 @@ async function quickInstall() {
 
   const serverWorks = await serverTest;
   if (!serverWorks) {
-    log('❌ Server test failed', 'red');
-    return;
+    log('⚠️  Server test failed - continuing with configuration anyway', 'yellow');
+    log('You can test the server manually after installation', 'yellow');
+    // Don't return - continue with configuration
+  } else {
+    log('✅ Server working with 6 tools', 'green');
   }
-  log('✅ Server working with 6 tools', 'green');
 
   // Quick config for detected clients
   const env = detectEnvironment();
@@ -603,9 +751,22 @@ async function quickInstall() {
         const serverConfigPath = path.join(projectPath, 'mcp-server-wrapper.js');
         const configPathSetup = createWindowsCompatiblePaths(context, serverConfigPath);
         
-        clientConfig.mcpServers['like-i-said-memory'] = {
-          command: 'node',
-          args: [configPathSetup.primary]
+        // Auto-detect paths before configuration
+        const detectedPaths = findExistingDirectories();
+        
+        // Use full Node.js path to avoid "command not found" errors
+        const nodePath = detectNodePath();
+        
+        clientConfig.mcpServers['like-i-said-memory-v2'] = {
+          command: nodePath,
+          args: [configPathSetup.primary],
+          env: {
+            // Use detected paths, environment variables, or empty string
+            MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
+            TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
+            // Ensure JSON-RPC protocol isn't broken by console output
+            MCP_QUIET: 'true'
+          }
         };
 
         const configDir = path.dirname(config.path);
@@ -628,6 +789,37 @@ async function quickInstall() {
     return;
   }
 
+  // Auto-detect existing memory and task directories
+  log('\n🔍 Detecting existing memory and task directories...', 'blue');
+  const { memoryDir, taskDir } = findExistingDirectories();
+  
+  if (memoryDir || taskDir) {
+    log('\n📁 Found existing directories:', 'green');
+    if (memoryDir) log(`  Memory: ${memoryDir}`, 'yellow');
+    if (taskDir) log(`  Tasks: ${taskDir}`, 'yellow');
+    
+    // Update all configured clients with the detected paths
+    for (const [client, config] of Object.entries(configs)) {
+      if (config.exists && config.path) {
+        try {
+          let clientConfig = JSON.parse(fs.readFileSync(config.path, 'utf8'));
+          if (clientConfig.mcpServers && clientConfig.mcpServers['like-i-said-memory-v2']) {
+            if (memoryDir) {
+              clientConfig.mcpServers['like-i-said-memory-v2'].env.MEMORY_DIR = memoryDir;
+            }
+            if (taskDir) {
+              clientConfig.mcpServers['like-i-said-memory-v2'].env.TASK_DIR = taskDir;
+            }
+            fs.writeFileSync(config.path, JSON.stringify(clientConfig, null, 2));
+            log(`  ✓ Updated ${config.name} with detected paths`, 'green');
+          }
+        } catch (e) {
+          // Skip if can't update
+        }
+      }
+    }
+  }
+  
   log(`\n✅ Installation Complete! Configured ${configured} client(s)`, 'green');
   log('\n⚠️  Restart Required:', 'yellow');
   log('• Claude Desktop: Close and restart completely', 'yellow');

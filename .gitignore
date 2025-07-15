@@ -227,6 +227,9 @@ full-*.sh
 *.png
 !assets/images/*.png
 !documentation/Screenshots/*.png
+# Temporary error screenshots
+assets/images/mcp-error-*.png
+assets/images/*fails*.png
 
 # Windows scripts (keep only essential ones)
 RUN-THIS-*.bat
@@ -259,8 +262,11 @@ build-dxt*.js
 *dxt*.js
 dist-dxt/
 test-dxt/
-# Keep production DXT files
-!dist-dxt-production/*.dxt
+temp-dxt/
+temp-dxt-*/
+dist-dxt-*/
+# Keep only the final working DXT
+!like-i-said-memory-v2-FINAL-WORKING.dxt
 
 # Redundant server files
 mcp-server-complete.js

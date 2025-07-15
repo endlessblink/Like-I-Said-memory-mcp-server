@@ -116,7 +116,18 @@ class MarkdownStorage {
     const resolvedProjectDir = path.resolve(projectDir);
     const resolvedBaseDir = path.resolve(this.baseDir);
     
-    if (!resolvedProjectDir.startsWith(resolvedBaseDir)) {
+    // On Windows, normalize paths for comparison
+    const normalizedProjectDir = process.platform === 'win32' 
+      ? resolvedProjectDir.toLowerCase().replace(/\\/g, '/')
+      : resolvedProjectDir;
+    const normalizedBaseDir = process.platform === 'win32'
+      ? resolvedBaseDir.toLowerCase().replace(/\\/g, '/')
+      : resolvedBaseDir;
+    
+    if (!normalizedProjectDir.startsWith(normalizedBaseDir)) {
+      console.error(`[DEBUG] Path traversal check failed:`);
+      console.error(`[DEBUG] Project dir: ${normalizedProjectDir}`);
+      console.error(`[DEBUG] Base dir: ${normalizedBaseDir}`);
       throw new Error('Invalid project path - path traversal attempt detected');
     }
     
@@ -356,24 +367,34 @@ class MarkdownStorage {
   }
 
   async saveMemory(memory) {
-    // Check if this memory already exists
-    const existingMemory = await this.getMemory(memory.id);
-    
-    let filepath;
-    if (existingMemory && existingMemory.filepath) {
-      // Update existing memory file at its current location
-      filepath = existingMemory.filepath;
-    } else {
-      // Create new memory file
-      const projectDir = this.getProjectDir(memory.project);
-      const filename = this.generateFilename(memory);
-      filepath = path.join(projectDir, filename);
+    try {
+      // Check if this memory already exists
+      const existingMemory = await this.getMemory(memory.id);
+      
+      let filepath;
+      if (existingMemory && existingMemory.filepath) {
+        // Update existing memory file at its current location
+        filepath = existingMemory.filepath;
+      } else {
+        // Create new memory file
+        const projectDir = this.getProjectDir(memory.project);
+        console.error(`[DEBUG] Project directory: ${projectDir}`);
+        const filename = this.generateFilename(memory);
+        console.error(`[DEBUG] Generated filename: ${filename}`);
+        filepath = path.join(projectDir, filename);
+        console.error(`[DEBUG] Full filepath: ${filepath}`);
+      }
+      
+      const markdownContent = this.generateMarkdownContent(memory);
+      console.error(`[DEBUG] Markdown content length: ${markdownContent.length}`);
+      fs.writeFileSync(filepath, markdownContent, 'utf8');
+      console.error(`[DEBUG] File written successfully`);
+      
+      return filepath;
+    } catch (error) {
+      console.error(`[ERROR] saveMemory failed:`, error);
+      throw error;
     }
-    
-    const markdownContent = this.generateMarkdownContent(memory);
-    fs.writeFileSync(filepath, markdownContent, 'utf8');
-    
-    return filepath;
   }
 
   async getMemory(id) {
@@ -517,8 +538,29 @@ class MarkdownStorage {
   }
 }
 
-// Initialize storage
-const storage = new MarkdownStorage();
+// Load saved configuration if it exists
+let savedConfig = {};
+const configPath = path.join(process.cwd(), '.like-i-said-config.json');
+if (fs.existsSync(configPath)) {
+  try {
+    savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    // Ignore parse errors
+  }
+}
+
+// Get memory and task directories from saved config, environment variables, or use defaults
+let MEMORY_DIR = savedConfig.memoryDir || process.env.MEMORY_DIR || process.env.LIKE_I_SAID_MEMORY_DIR || 'memories';
+let TASK_DIR = savedConfig.taskDir || process.env.TASK_DIR || process.env.LIKE_I_SAID_TASK_DIR || 'tasks';
+
+// Log the directories being used (only in non-MCP mode)
+if (!isMCPMode) {
+  console.log(`Memory directory: ${path.resolve(MEMORY_DIR)}`);
+  console.log(`Task directory: ${path.resolve(TASK_DIR)}`);
+}
+
+// Initialize storage with custom directory
+let storage = new MarkdownStorage(MEMORY_DIR);
 
 // Initialize vector storage
 const vectorStorage = new VectorStorage();
@@ -551,9 +593,9 @@ const contentClassifier = new ContentClassifier();
 const circuitBreaker = new CircuitBreaker();
 const fuzzyMatcher = new FuzzyMatcher();
 
-// Initialize task storage and linker
-const taskStorage = new TaskStorage('tasks', storage);
-const taskMemoryLinker = new TaskMemoryLinker(storage, taskStorage);
+// Initialize task storage and linker with custom directory
+let taskStorage = new TaskStorage(TASK_DIR, storage);
+let taskMemoryLinker = new TaskMemoryLinker(storage, taskStorage);
 
 // Initialize memory-task automator
 const memoryTaskAutomator = new MemoryTaskAutomator(storage, taskStorage, {
@@ -1219,6 +1261,42 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
           required: ['action'],
         },
       },
+      {
+        name: 'set_memory_path',
+        description: 'Change where memories are stored. Updates the path dynamically without requiring restart.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'New absolute path for memory storage (e.g., D:\\MyDocuments\\AI-Memories)',
+            },
+          },
+          required: ['path'],
+        },
+      },
+      {
+        name: 'set_task_path',
+        description: 'Change where tasks are stored. Updates the path dynamically without requiring restart.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'New absolute path for task storage (e.g., D:\\MyDocuments\\AI-Tasks)',
+            },
+          },
+          required: ['path'],
+        },
+      },
+      {
+        name: 'get_current_paths',
+        description: 'Get the current memory and task storage paths.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
     ],
   };
 });
@@ -1346,7 +1424,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // Protect against data loss during save operation
         if (connectionProtection) connectionProtection.preventDataLoss('save_memory', memory);
 
-        const filepath = await storage.saveMemory(memory);
+        let filepath;
+        try {
+          filepath = await storage.saveMemory(memory);
+          console.error(`[DEBUG] Memory saved successfully to: ${filepath}`);
+        } catch (saveError) {
+          console.error(`[ERROR] Failed to save memory:`, saveError);
+          throw new Error(`Failed to save memory: ${saveError.message}`);
+        }
         
         // Protect file integrity
         if (dataIntegrity) dataIntegrity.protectFile(filepath);
@@ -2958,6 +3043,204 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ],
           };
         }
+      }
+
+      case 'set_memory_path': {
+        const { path: newPath } = args;
+        
+        try {
+          // Validate the new path
+          if (!newPath || typeof newPath !== 'string') {
+            throw new Error('Invalid path provided');
+          }
+          
+          // Resolve to absolute path
+          const absolutePath = path.resolve(newPath);
+          
+          // Create directory if it doesn't exist
+          if (!fs.existsSync(absolutePath)) {
+            fs.mkdirSync(absolutePath, { recursive: true });
+          }
+          
+          // Update the global variable
+          MEMORY_DIR = absolutePath;
+          
+          // Re-initialize storage with new path
+          storage = new MarkdownStorage(absolutePath);
+          
+          // Re-initialize ALL components that depend on storage
+          taskMemoryLinker.storage = storage;
+          memoryTaskAutomator.storage = storage;
+          conversationMonitor.storage = storage;
+          memoryEnrichment.storage = storage;
+          sessionTracker.storage = storage;
+          
+          // Ensure the storage is properly initialized
+          storage.ensureDirectories();
+          
+          // Reload all existing memories from the new location
+          try {
+            const existingMemories = await storage.listMemories();
+            const existingTasks = taskStorage.getAllTasks();
+            
+            // Rebuild vector storage with both memories and tasks
+            if (vectorStorage.initialized) {
+              await vectorStorage.rebuildIndex(existingMemories, existingTasks);
+            }
+            
+            console.log(`✅ Reloaded ${existingMemories.length} memories from new location`);
+          } catch (error) {
+            console.error('Warning: Failed to reload existing memories:', error);
+          }
+          
+          // Save configuration for persistence
+          const configPath = path.join(process.cwd(), '.like-i-said-config.json');
+          let config = {};
+          if (fs.existsSync(configPath)) {
+            try {
+              config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          
+          config.memoryDir = absolutePath;
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+          
+          // Get memory count for success message
+          let memoryCount = 0;
+          try {
+            const memories = await storage.listMemories();
+            memoryCount = memories.length;
+          } catch (error) {
+            // Ignore error, count will remain 0
+          }
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `✅ Memory storage path updated successfully!\n\n📁 New path: ${absolutePath}\n🧠 Loaded ${memoryCount} existing memories\n\n💾 The configuration has been saved and will persist across restarts.`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Failed to update memory path: ${error.message}`,
+              },
+            ],
+          };
+        }
+      }
+
+      case 'set_task_path': {
+        const { path: newPath } = args;
+        
+        try {
+          // Validate the new path
+          if (!newPath || typeof newPath !== 'string') {
+            throw new Error('Invalid path provided');
+          }
+          
+          // Resolve to absolute path
+          const absolutePath = path.resolve(newPath);
+          
+          // Create directory if it doesn't exist
+          if (!fs.existsSync(absolutePath)) {
+            fs.mkdirSync(absolutePath, { recursive: true });
+          }
+          
+          // Update the global variable
+          TASK_DIR = absolutePath;
+          
+          // Re-initialize task storage with new path
+          taskStorage = new TaskStorage(absolutePath, storage);
+          
+          // Re-initialize components that depend on task storage
+          taskMemoryLinker.taskStorage = taskStorage;
+          memoryTaskAutomator.taskStorage = taskStorage;
+          
+          // TaskStorage automatically reloads data via loadTaskIndex() in constructor
+          // Rebuild vector storage with both memories and tasks
+          try {
+            const existingMemories = await storage.listMemories();
+            const existingTasks = taskStorage.getAllTasks();
+            
+            if (vectorStorage.initialized) {
+              await vectorStorage.rebuildIndex(existingMemories, existingTasks);
+            }
+            
+            console.log(`✅ Reloaded ${existingTasks.length} tasks from new location`);
+          } catch (error) {
+            console.error('Warning: Failed to reload existing tasks:', error);
+          }
+          
+          // Save configuration for persistence
+          const configPath = path.join(process.cwd(), '.like-i-said-config.json');
+          let config = {};
+          if (fs.existsSync(configPath)) {
+            try {
+              config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          
+          config.taskDir = absolutePath;
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+          
+          // Get task count for success message  
+          let taskCount = 0;
+          try {
+            const tasks = taskStorage.getAllTasks();
+            taskCount = tasks.length;
+          } catch (error) {
+            // Ignore error, count will remain 0
+          }
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `✅ Task storage path updated successfully!\n\n📁 New path: ${absolutePath}\n📋 Loaded ${taskCount} existing tasks\n\n💾 The configuration has been saved and will persist across restarts.`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Failed to update task path: ${error.message}`,
+              },
+            ],
+          };
+        }
+      }
+
+      case 'get_current_paths': {
+        const configPath = path.join(process.cwd(), '.like-i-said-config.json');
+        let savedConfig = null;
+        
+        if (fs.existsSync(configPath)) {
+          try {
+            savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `📁 Current Storage Paths:\n\n🧠 Memory Directory:\n  Active: ${path.resolve(MEMORY_DIR)}\n  Configured: ${savedConfig?.memoryDir || 'Not saved'}\n  Environment: ${process.env.MEMORY_DIR || 'Not set'}\n\n📋 Task Directory:\n  Active: ${path.resolve(TASK_DIR)}\n  Configured: ${savedConfig?.taskDir || 'Not saved'}\n  Environment: ${process.env.TASK_DIR || 'Not set'}\n\n💡 Tips:\n• Use set_memory_path to change where memories are stored\n• Use set_task_path to change where tasks are stored\n• Changes are applied immediately and saved for future sessions`,
+            },
+          ],
+        };
       }
 
       case 'work_detector_control': {

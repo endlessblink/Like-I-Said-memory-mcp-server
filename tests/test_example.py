@@ -1,1 +1,0 @@
-cursor tests/test_example.py

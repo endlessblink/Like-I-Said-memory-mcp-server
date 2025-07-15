@@ -192,7 +192,7 @@ export class ProjectTaskManager {
    */
   deleteTaskFromProject(project, taskId) {
     // Simple implementation - just return success
-    console.error(`Deleting task ${taskId} from project ${project}`);
+    console.log(`Deleting task ${taskId} from project ${project}`);
     return true;
   }
 }

@@ -30,7 +30,7 @@ export class FileSystemMonitor {
    */
   startMonitoring() {
     if (this.isWatching) {
-      console.error('📡 File system monitor already running');
+      console.log('📡 File system monitor already running');
       return;
     }
 
@@ -65,13 +65,13 @@ export class FileSystemMonitor {
 
     // Directory added
     this.watcher.on('addDir', (dirPath) => {
-      console.error(`📁 Directory added: ${path.basename(dirPath)}`);
+      console.log(`📁 Directory added: ${path.basename(dirPath)}`);
       this.broadcastDirectoryChange('add', dirPath);
     });
 
     // Directory removed
     this.watcher.on('unlinkDir', (dirPath) => {
-      console.error(`📁 Directory removed: ${path.basename(dirPath)}`);
+      console.log(`📁 Directory removed: ${path.basename(dirPath)}`);
       this.broadcastDirectoryChange('remove', dirPath);
     });
 
@@ -81,7 +81,7 @@ export class FileSystemMonitor {
     });
 
     this.isWatching = true;
-    console.error('📡 File system monitor started for tasks directory');
+    console.log('📡 File system monitor started for tasks directory');
   }
 
   /**
@@ -93,7 +93,7 @@ export class FileSystemMonitor {
       this.watcher = null;
     }
     this.isWatching = false;
-    console.error('📡 File system monitor stopped');
+    console.log('📡 File system monitor stopped');
   }
 
   /**
@@ -123,7 +123,7 @@ export class FileSystemMonitor {
     const relativePath = path.relative(this.tasksDir, filePath);
     const fileName = path.basename(filePath);
     
-    console.error(`📄 File ${changeType}: ${fileName}`);
+    console.log(`📄 File ${changeType}: ${fileName}`);
     
     try {
       switch (changeType) {
@@ -155,7 +155,7 @@ export class FileSystemMonitor {
       const newTask = tasks.find(task => task.filepath === filePath);
       
       if (newTask) {
-        console.error(`✅ Task added: ${newTask.title}`);
+        console.log(`✅ Task added: ${newTask.title}`);
         
         // Broadcast to dashboard clients
         this.broadcastTaskChange('taskAdded', newTask);
@@ -178,7 +178,7 @@ export class FileSystemMonitor {
       const updatedTask = tasks.find(task => task.filepath === filePath);
       
       if (updatedTask) {
-        console.error(`✅ Task updated: ${updatedTask.title}`);
+        console.log(`✅ Task updated: ${updatedTask.title}`);
         
         // Broadcast to dashboard clients
         this.broadcastTaskChange('taskUpdated', updatedTask);
@@ -202,7 +202,7 @@ export class FileSystemMonitor {
       const fileName = path.basename(filePath, '.md');
       const taskId = fileName; // Assuming filename is the task ID
       
-      console.error(`✅ Task removed: ${taskId}`);
+      console.log(`✅ Task removed: ${taskId}`);
       
       // Reload task index to remove deleted task
       this.taskStorage.reload();
@@ -259,7 +259,7 @@ export class FileSystemMonitor {
    * Force reload of all tasks
    */
   async forceReload() {
-    console.error('🔄 Force reloading all tasks...');
+    console.log('🔄 Force reloading all tasks...');
     
     try {
       this.taskStorage.reload();
@@ -272,7 +272,7 @@ export class FileSystemMonitor {
         });
       }
       
-      console.error('✅ Tasks reloaded successfully');
+      console.log('✅ Tasks reloaded successfully');
     } catch (error) {
       console.error('❌ Error during force reload:', error);
     }
@@ -351,7 +351,7 @@ export class FileSystemMonitor {
     
     // Check rate limiting
     if (!this.automationConfig.checkRateLimit()) {
-      console.error('⚠️ Automation rate limit reached, skipping automation check');
+      console.log('⚠️ Automation rate limit reached, skipping automation check');
       return;
     }
     
@@ -370,7 +370,7 @@ export class FileSystemMonitor {
     this.automationDebounce.set(debounceKey, Date.now());
     
     try {
-      console.error(`🤖 Checking automation opportunities for task: ${task.title}`);
+      console.log(`🤖 Checking automation opportunities for task: ${task.title}`);
       
       // Get automation suggestions
       const suggestions = await this.taskAutomation.getAutomationSuggestions(task.id);
@@ -405,20 +405,20 @@ export class FileSystemMonitor {
           task.status === 'todo' && 
           suggestedStatus === 'in_progress') {
         
-        console.error(`🤖 Auto-marking task as in_progress due to file change`);
+        console.log(`🤖 Auto-marking task as in_progress due to file change`);
         
         if (!dryRunMode) {
           await this.applyStatusChange(task, suggestedStatus, reason);
         } else {
-          console.error(`🏃 DRY RUN: Would change status from ${task.status} to ${suggestedStatus}`);
+          console.log(`🏃 DRY RUN: Would change status from ${task.status} to ${suggestedStatus}`);
         }
       } else if (!requireHighConfidence || confidence >= 0.85) {
-        console.error(`🤖 Suggesting status change: ${task.status} → ${suggestedStatus} (${Math.round(confidence * 100)}% confidence)`);
+        console.log(`🤖 Suggesting status change: ${task.status} → ${suggestedStatus} (${Math.round(confidence * 100)}% confidence)`);
         
         if (!dryRunMode) {
           await this.applyStatusChange(task, suggestedStatus, reason);
         } else {
-          console.error(`🏃 DRY RUN: Would change status from ${task.status} to ${suggestedStatus}`);
+          console.log(`🏃 DRY RUN: Would change status from ${task.status} to ${suggestedStatus}`);
         }
       }
     }
@@ -427,7 +427,7 @@ export class FileSystemMonitor {
     if (suggestions.opportunities) {
       for (const [type, opportunity] of Object.entries(suggestions.opportunities)) {
         if (opportunity.shouldApply && opportunity.confidence >= confidenceThreshold) {
-          console.error(`🤖 Automation opportunity: ${type} (${Math.round(opportunity.confidence * 100)}% confidence)`);
+          console.log(`🤖 Automation opportunity: ${type} (${Math.round(opportunity.confidence * 100)}% confidence)`);
           
           if (!dryRunMode && this.shouldApplyAutomationType(type)) {
             // Apply specific automation based on type
@@ -462,7 +462,7 @@ export class FileSystemMonitor {
         reason: reason
       });
       
-      console.error(`✅ Task status updated: ${task.status} → ${newStatus}`);
+      console.log(`✅ Task status updated: ${task.status} → ${newStatus}`);
     } catch (error) {
       console.error('❌ Error applying status change:', error);
     }
@@ -488,7 +488,7 @@ export class FileSystemMonitor {
    */
   async applyAutomationType(task, type, opportunity) {
     // Implementation depends on automation type
-    console.error(`🤖 Applying ${type} automation for task ${task.id}`);
+    console.log(`🤖 Applying ${type} automation for task ${task.id}`);
     
     this.automationConfig.recordAutomation(type, task.id, opportunity);
     
