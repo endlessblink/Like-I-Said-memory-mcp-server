@@ -78,6 +78,8 @@ STABLE-*.json
 WINDOWS-*.json
 mcp-config.json
 .mcp.json
+dashboard-config.json
+config/claude_desktop_config.json
 
 # One-off documentation & fixes
 CLAUDE-*.md
@@ -280,3 +282,22 @@ user-experience-*.json
 # Keep lib structure markers
 !lib/.gitkeep
 !src/.gitkeep
+
+# Build artifacts
+*.exe
+*.dxt
+*.pkg
+dist-*/
+python-port/build/
+python-port/dist/
+python-port/*.egg-info/
+
+# Sensitive data
+data/jwt-secret.key
+data/session-history.json
+data/behavior-patterns.json
+*.key
+
+# Null files
+nul
+"nul\r"
