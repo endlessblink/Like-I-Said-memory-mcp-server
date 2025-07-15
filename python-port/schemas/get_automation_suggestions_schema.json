@@ -1,0 +1,14 @@
+{
+  "name": "get_automation_suggestions",
+  "description": "Get intelligent automation suggestions for a task based on context analysis. Use when you want to see what automated actions are possible.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Task ID to analyze for automation opportunities"
+      }
+    },
+    "required": ["task_id"]
+  }
+}

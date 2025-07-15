@@ -1,0 +1,29 @@
+{
+  "name": "validate_task_workflow",
+  "description": "Validate a proposed task status change with intelligent suggestions and workflow analysis. Use when you need to check if a status change makes sense.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Task ID to validate"
+      },
+      "proposed_status": {
+        "type": "string",
+        "enum": ["todo", "in_progress", "done", "blocked"],
+        "description": "Proposed new status"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "force_complete": { "type": "boolean" },
+          "skip_testing": { "type": "boolean" },
+          "skip_review": { "type": "boolean" },
+          "blocking_reason": { "type": "string" }
+        },
+        "description": "Additional context for validation"
+      }
+    },
+    "required": ["task_id", "proposed_status"]
+  }
+}

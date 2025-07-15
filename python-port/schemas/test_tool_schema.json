@@ -1,0 +1,14 @@
+{
+  "name": "test_tool",
+  "description": "Simple test tool to verify MCP is working",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string",
+        "description": "Test message"
+      }
+    },
+    "required": ["message"]
+  }
+}

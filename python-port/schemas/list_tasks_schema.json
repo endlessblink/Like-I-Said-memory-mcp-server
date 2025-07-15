@@ -1,0 +1,36 @@
+{
+  "name": "list_tasks",
+  "description": "List tasks with filtering options. Shows task status distribution and workflow health. Use this to monitor work progress and identify tasks that need status updates.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Filter by project"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["todo", "in_progress", "done", "blocked"],
+        "description": "Filter by status"
+      },
+      "category": {
+        "type": "string",
+        "description": "Filter by category"
+      },
+      "has_memory": {
+        "type": "string",
+        "description": "Filter by memory connection"
+      },
+      "include_subtasks": {
+        "type": "boolean",
+        "default": true,
+        "description": "Include subtasks in results"
+      },
+      "limit": {
+        "type": "number",
+        "default": 20,
+        "description": "Maximum tasks to return"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# Like-I-Said Python MCP Server Dependencies
+# Core Python dependencies for building and running the MCP server
+
+# Build dependencies
+pyinstaller>=6.0.0
+setuptools>=65.0.0
+
+# Core Python libraries (usually included in Python)
+# These are explicit for PyInstaller bundling
+pathlib2>=2.3.7; python_version<"3.4"
+
+# Optional dependencies for AI features
+# Note: These will be optional imports that gracefully degrade if not available
+# requests>=2.31.0  # For Ollama integration
+# aiohttp>=3.8.0    # For async HTTP requests
+
+# Development dependencies (optional)
+# pytest>=7.0.0     # For testing
+# black>=23.0.0     # For code formatting
+# ruff>=0.1.0       # For linting
+
+# Note: This server is designed to work with just Python standard library
+# Optional features will be enabled only if additional packages are available

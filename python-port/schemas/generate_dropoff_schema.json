@@ -1,0 +1,40 @@
+{
+  "name": "generate_dropoff",
+  "description": "Generate conversation dropoff document for session handoff with context from recent memories, git status, and project info",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "session_summary": {
+        "type": "string",
+        "description": "Brief summary of work done in this session",
+        "default": "Session work completed"
+      },
+      "include_recent_memories": {
+        "type": "boolean",
+        "description": "Include recent memories in the dropoff",
+        "default": true
+      },
+      "include_git_status": {
+        "type": "boolean",
+        "description": "Include git status and recent commits",
+        "default": true
+      },
+      "recent_memory_count": {
+        "type": "number",
+        "description": "Number of recent memories to include",
+        "default": 5
+      },
+      "output_format": {
+        "type": "string",
+        "description": "Output format: markdown or json",
+        "enum": ["markdown", "json"],
+        "default": "markdown"
+      },
+      "output_path": {
+        "type": "string",
+        "description": "Custom output directory path. If not provided, auto-detects session-dropoffs/ folder or defaults to current directory",
+        "default": null
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+==================================================
+    CLAUDE CODE (WSL) - SETUP INSTRUCTIONS
+==================================================
+
+This guide helps you add memory tools to Claude Code running in WSL.
+
+STEP 1: INSTALL THE SERVER
+--------------------------
+Open your WSL terminal and run:
+
+cd ~
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+npm install
+
+STEP 2: CREATE CONFIG FILE
+--------------------------
+Still in WSL terminal:
+
+mkdir -p ~/.claude
+nano ~/.claude/claude_desktop_config.json
+
+STEP 3: ADD CONFIGURATION
+-------------------------
+Copy and paste this EXACTLY (replace YOUR_USERNAME with your WSL username):
+
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "command": "node",
+      "args": ["/home/YOUR_USERNAME/Like-I-Said-memory-mcp-server/server-markdown.js"]
+    }
+  }
+}
+
+To find your username, type: whoami
+
+STEP 4: SAVE THE FILE
+--------------------
+1. Press Ctrl+X
+2. Press Y (for yes)
+3. Press Enter
+
+STEP 5: RESTART CLAUDE
+---------------------
+Refresh your Claude Code browser tab.
+
+The memory tools should now appear when you type!
+
+TROUBLESHOOTING:
+---------------
+- Make sure you replaced YOUR_USERNAME
+- Check that the path exists: ls ~/Like-I-Said-memory-mcp-server/
+- Try a hard refresh: Ctrl+Shift+R
+
+==================================================

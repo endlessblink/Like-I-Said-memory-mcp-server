@@ -1,0 +1,41 @@
+{
+  "dxt_version": "0.1",
+  "name": "like-i-said-v2-protocol-compliant",
+  "version": "2.0.0",
+  "description": "Like-I-Said Memory v2 - MCP Protocol Compliant",
+  "author": {
+    "name": "endlessblink"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "server/mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/server/mcp_server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "test_tool",
+      "description": "Test MCP connection"
+    },
+    {
+      "name": "add_memory",
+      "description": "Store information in memory"
+    },
+    {
+      "name": "list_memories",
+      "description": "List stored memories"
+    },
+    {
+      "name": "search_memories",
+      "description": "Search memories by content"
+    }
+  ]
+}

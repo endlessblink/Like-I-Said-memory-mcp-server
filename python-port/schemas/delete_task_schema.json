@@ -1,0 +1,14 @@
+{
+  "name": "delete_task",
+  "description": "Delete a task and its subtasks",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Task ID to delete"
+      }
+    },
+    "required": ["task_id"]
+  }
+}

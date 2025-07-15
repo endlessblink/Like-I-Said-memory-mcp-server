@@ -1,0 +1,30 @@
+{
+  "name": "get_task_status_analytics",
+  "description": "AUTOMATICALLY use when user asks about task progress, status overview, productivity metrics, or wants analytics. Provides comprehensive status insights and recommendations.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Filter analytics by project (optional)"
+      },
+      "time_range": {
+        "type": "string",
+        "enum": ["day", "week", "month", "quarter"],
+        "description": "Time range for analytics (default: week)"
+      },
+      "include_trends": {
+        "type": "boolean",
+        "description": "Include trend analysis (default: true)"
+      },
+      "include_recommendations": {
+        "type": "boolean",
+        "description": "Include actionable recommendations (default: true)"
+      },
+      "include_project_breakdown": {
+        "type": "boolean",
+        "description": "Include project-by-project analysis (default: true)"
+      }
+    }
+  }
+}

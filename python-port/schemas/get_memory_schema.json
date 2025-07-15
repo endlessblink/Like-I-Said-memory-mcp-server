@@ -1,0 +1,14 @@
+{
+  "name": "get_memory",
+  "description": "Retrieve a memory by ID",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "The memory ID to retrieve"
+      }
+    },
+    "required": ["id"]
+  }
+}

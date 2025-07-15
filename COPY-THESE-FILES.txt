@@ -1,0 +1,29 @@
+REQUIRED FILES FOR D:\APPSNospaces\like-i-said-mcp-server-v2\dist-final-working\
+================================================================
+
+Already there:
+✓ dashboard.exe
+✓ dashboard-server-bridge.js
+✓ package.json (just created)
+
+MUST COPY these files:
+1. package-lock.json
+2. manifest.json
+
+MUST COPY these directories completely:
+1. lib/ (entire directory with all .js files)
+2. dist/ (entire directory - this is the built React dashboard)
+
+OPTIONAL but recommended:
+1. data/ (create empty directory)
+2. memories/ (your existing memories directory - already configured)
+3. tasks/ (your existing tasks directory - already configured)
+
+STEPS:
+1. Copy all files/directories listed above to D:\APPSNospaces\like-i-said-mcp-server-v2\dist-final-working\
+2. Open Command Prompt as Administrator
+3. cd D:\APPSNospaces\like-i-said-mcp-server-v2\dist-final-working
+4. Run: npm install --production
+5. Run: dashboard.exe
+
+The npm install will download all the dependencies (express, cors, etc.) that the server needs.

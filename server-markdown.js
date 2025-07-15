@@ -21,9 +21,17 @@ import { OllamaClient } from './lib/ollama-client.js';
 import { MemoryDeduplicator } from './lib/memory-deduplicator.js';
 import { TaskNLPProcessor } from './lib/task-nlp-processor.js';
 import { TaskAutomation } from './lib/task-automation.js';
+import { ConversationMonitor } from './lib/conversation-monitor.js';
 import { TaskStatusValidator } from './lib/task-status-validator.js';
 import { TaskAnalytics } from './lib/task-analytics.js';
 import { MemoryTaskAutomator } from './lib/memory-task-automator.cjs';
+import { QueryIntelligence } from './lib/query-intelligence.js';
+import { BehavioralAnalyzer } from './lib/behavioral-analyzer.js';
+import { MemoryEnrichment } from './lib/memory-enrichment.js';
+import { SessionTracker } from './lib/session-tracker.js';
+import { QueryAnalyzer, RelevanceScorer, ContentClassifier, CircuitBreaker } from './lib/claude-historian-features.js';
+import { FuzzyMatcher } from './lib/fuzzy-matching.js';
+import { WorkDetectorWrapper } from './lib/work-detector-wrapper.js';
 // Removed ConnectionProtection and DataIntegrity imports to prevent any exit calls
 // import { createRequire } from 'module';
 // const require = createRequire(import.meta.url);
@@ -514,6 +522,34 @@ const storage = new MarkdownStorage();
 
 // Initialize vector storage
 const vectorStorage = new VectorStorage();
+
+// Initialize conversation monitor for automatic memory detection
+const conversationMonitor = new ConversationMonitor(storage, vectorStorage);
+
+// Listen for automatic memory creation events
+conversationMonitor.on('memory-created', (event) => {
+  console.error(`🤖 Auto-captured memory: ${event.memory.id} - ${event.reason}`);
+});
+
+// Initialize advanced memory systems
+const queryIntelligence = new QueryIntelligence();
+const behavioralAnalyzer = new BehavioralAnalyzer();
+const memoryEnrichment = new MemoryEnrichment(storage, vectorStorage);
+const sessionTracker = new SessionTracker(storage);
+
+// Initialize Universal Work Detector (disabled by default for safety)
+const workDetector = new WorkDetectorWrapper({ 
+  enabled: false, // Start disabled for safety
+  debugMode: true,
+  safeMode: true 
+});
+
+// Initialize claude-historian inspired features
+const queryAnalyzer = new QueryAnalyzer();
+const relevanceScorer = new RelevanceScorer();
+const contentClassifier = new ContentClassifier();
+const circuitBreaker = new CircuitBreaker();
+const fuzzyMatcher = new FuzzyMatcher();
 
 // Initialize task storage and linker
 const taskStorage = new TaskStorage('tasks', storage);
@@ -1168,6 +1204,21 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
           },
         },
       },
+      {
+        name: 'work_detector_control',
+        description: 'Control the Universal Work Detector for automatic memory creation based on work patterns.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['enable', 'disable', 'status', 'stats'],
+              description: 'Action to perform: enable, disable, status, or stats',
+            },
+          },
+          required: ['action'],
+        },
+      },
     ],
   };
 });
@@ -1196,8 +1247,19 @@ function shouldAutoTrigger(toolName, userContext = '') {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  
+  // Track tool usage for behavioral analysis
+  const toolStartTime = Date.now();
+  let toolResult = null;
+  let toolError = null;
 
   try {
+    // Track activity
+    sessionTracker.trackActivity('tool_use', { tool: name, args });
+    
+    // Universal Work Detector tracking (safe mode enabled)
+    const workDetection = workDetector.trackActivity(name, args, null);
+    
     switch (name) {
       case 'add_memory': {
         const { 
@@ -1291,12 +1353,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const complexity = storage.detectComplexityLevel(memory);
         const contentType = storage.detectContentType(content);
         
+        // Enrich the memory with metadata
+        let enrichedMemory = memory;
+        try {
+          enrichedMemory = await memoryEnrichment.enrichMemory(memory);
+          
+          // Add claude-historian style content classification
+          const classification = contentClassifier.classifyContent(memory.content);
+          enrichedMemory.metadata = {
+            ...enrichedMemory.metadata,
+            ...classification
+          };
+        } catch (error) {
+          console.error('Failed to enrich memory:', error);
+        }
+        
         // Add to vector storage for semantic search
         try {
-          await vectorStorage.addMemory(memory);
+          await vectorStorage.addMemory(enrichedMemory);
         } catch (error) {
           console.error('Failed to add memory to vector storage:', error);
         }
+        
+        // Track activity
+        sessionTracker.trackActivity('memory_created', {
+          memoryId: memory.id,
+          category: memory.category,
+          tags: memory.tags,
+          hasCode: enrichedMemory.metadata?.hasCode,
+          technologies: enrichedMemory.metadata?.technologies
+        });
         
         // Process memory for task automation
         let taskAutomationResult = null;
@@ -1350,6 +1436,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_memory': {
         const { id } = args;
         const memory = await storage.getMemory(id);
+        
+        // Track file access
+        if (memory) {
+          const filepath = path.join('memories', memory.project || 'default', `${memory.created.split('T')[0]}--${memory.id}.md`);
+          await behavioralAnalyzer.trackFileAccess(filepath, 'read');
+        }
         
         if (!memory) {
           return {
@@ -1433,29 +1525,206 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'search_memories': {
         const { query, project } = args;
-        const results = await storage.searchMemories(query, project);
-
-        if (results.length === 0) {
+        
+        // Track search behavior
+        sessionTracker.trackActivity('search', { query, project });
+        
+        // Analyze query with claude-historian style intelligence
+        const queryAnalysis = queryAnalyzer.analyzeQueryIntent(query);
+        const enhancedQuery = queryAnalyzer.expandQueryIntelligently(query, queryAnalysis);
+        
+        // Use new query classification system
+        const classification = queryIntelligence.classify(query);
+        const searchParams = classification.searchParameters;
+        
+        // Expand query using existing intelligence system  
+        const expandedQueries = queryIntelligence.expandQuery(query);
+        const queryIntent = queryIntelligence.analyzeIntent(query);
+        
+        // Add enhanced query to expansion list if different
+        if (enhancedQuery !== query && !expandedQueries.includes(enhancedQuery)) {
+          expandedQueries.unshift(enhancedQuery);
+        }
+        
+        // Perform searches with expanded queries
+        const allResults = new Map(); // Use Map to deduplicate by ID
+        
+        // Original query search
+        const keywordResults = await storage.searchMemories(query, project);
+        keywordResults.forEach(r => allResults.set(r.id, { ...r, matchType: 'exact' }));
+        
+        // Expanded query searches
+        for (const expandedQuery of expandedQueries.slice(0, 5)) { // Limit to top 5 expansions
+          if (expandedQuery !== query.toLowerCase()) {
+            const expandedResults = await storage.searchMemories(expandedQuery, project);
+            expandedResults.forEach(r => {
+              if (!allResults.has(r.id)) {
+                allResults.set(r.id, { ...r, matchType: 'expanded', expandedFrom: expandedQuery });
+              }
+            });
+          }
+        }
+        
+        // Semantic search
+        let semanticResults = [];
+        try {
+          await vectorStorage.initialize();
+          const vectorResults = await vectorStorage.searchSimilar(query, 'memory', searchParams.limit || 15);
+          
+          const memoryIds = vectorResults.map(r => r.id);
+          const allMemories = await storage.listMemories(project);
+          
+          semanticResults = allMemories.filter(memory => {
+            const inVectorResults = memoryIds.includes(memory.id);
+            return inVectorResults && !allResults.has(memory.id);
+          });
+          
+          semanticResults.forEach(r => allResults.set(r.id, { ...r, matchType: 'semantic' }));
+        } catch (error) {
+          console.error('Semantic search failed:', error);
+        }
+        
+        // Fuzzy matching search (if we should use it)
+        const allMemories = await storage.listMemories(project);
+        const currentResults = Array.from(allResults.values());
+        
+        if (fuzzyMatcher.shouldUseFuzzyMatching(query, currentResults.length)) {
+          try {
+            const fuzzyResults = fuzzyMatcher.enhancedFuzzySearch(allMemories, query);
+            
+            // Add fuzzy results that aren't already found
+            fuzzyResults.forEach(fuzzyResult => {
+              if (!allResults.has(fuzzyResult.id)) {
+                allResults.set(fuzzyResult.id, {
+                  ...fuzzyResult,
+                  matchType: 'fuzzy',
+                  fuzzyMode: fuzzyResult.searchMode
+                });
+              }
+            });
+          } catch (error) {
+            console.error('Fuzzy search failed:', error);
+          }
+        }
+        
+        // Convert Map to array and enhance with claude-historian scoring
+        let combinedResults = Array.from(allResults.values());
+        
+        // Apply claude-historian style relevance scoring
+        combinedResults = relevanceScorer.rankMemories(combinedResults, query);
+        
+        // Also apply existing ranking for comparison
+        const traditionalRanking = queryIntelligence.rankResults([...combinedResults], query, expandedQueries);
+        
+        // Combine scores (50% claude-historian, 50% traditional)
+        combinedResults = combinedResults.map((memory, index) => {
+          const traditionalResult = traditionalRanking.find(r => r.id === memory.id);
+          const combinedScore = (memory.relevanceScore + (traditionalResult?.relevanceScore || 0)) / 2;
+          return {
+            ...memory,
+            combinedScore,
+            historianScore: memory.relevanceScore,
+            traditionalScore: traditionalResult?.relevanceScore || 0
+          };
+        }).sort((a, b) => b.combinedScore - a.combinedScore);
+        
+        if (combinedResults.length === 0) {
+          // Track failed search
+          const behaviorAction = await behavioralAnalyzer.trackSearch(query, [], project);
+          
+          // Use conversation monitor to check if this should be saved
+          const suggestion = await conversationMonitor.processSearchResults(query, [], project);
+          
+          if (suggestion.suggestion || behaviorAction?.action === 'create_memory') {
+            // Auto-create the memory if it's important enough
+            const autoMemory = await storage.addMemory({
+              content: `## Search Query: ${query}\n\n*Auto-captured unfound search term*\n\nThis search query returned no results but appears to contain important information that should be remembered.\n\n### Search Intelligence\n- Intent: ${queryIntent.type}\n- Contexts: ${queryIntent.contexts.join(', ') || 'general'}\n- Expanded terms tried: ${expandedQueries.slice(0, 5).join(', ')}`,
+              category: suggestion.proposedMemory?.category || 'research',
+              tags: [...(suggestion.proposedMemory?.tags || []), 'search-capture', 'auto-created', ...queryIntent.contexts],
+              project: suggestion.proposedMemory?.project || project || 'default',
+              priority: behaviorAction?.data?.priority || 'medium'
+            });
+            
+            // Enrich the memory
+            const enrichedMemory = await memoryEnrichment.enrichMemory(autoMemory);
+            
+            // Add to vector storage
+            if (vectorStorage.initialized) {
+              await vectorStorage.addMemory(enrichedMemory);
+            }
+            
+            const suggestions = queryIntelligence.getSuggestions(query);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `🔍 No memories found matching "${query}"${project ? ` in project: ${project}` : ''}\n\n🤖 This appeared to be important information, so I've automatically created a memory for it:\n🆔 ${autoMemory.id}\n\n${suggestions.length > 0 ? `💡 Did you mean: ${suggestions.join(', ')}?\n\n` : ''}You can update this memory with more context using the get_memory and update_memory tools.`,
+                },
+              ],
+            };
+          }
+          
+          const suggestions = queryIntelligence.getSuggestions(query);
+          
           return {
             content: [
               {
                 type: 'text',
-                text: `🔍 No memories found matching "${query}"${project ? ` in project: ${project}` : ''}`,
+                text: `🔍 No memories found matching "${query}"${project ? ` in project: ${project}` : ''}${suggestions.length > 0 ? `\n\n💡 Did you mean: ${suggestions.join(', ')}?` : ''}`,
               },
             ],
           };
         }
 
-        const resultList = results.map(memory => {
+        // Track successful search
+        await behavioralAnalyzer.trackSearch(query, combinedResults, project);
+        
+        const resultList = combinedResults.slice(0, searchParams.limit || 20).map((memory) => {
           const preview = memory.content.length > 80 ? memory.content.substring(0, 80) + '...' : memory.content;
-          return `🆔 ${memory.id} | 📝 ${preview} | 🏷️ ${memory.tags?.join(', ') || 'no tags'} | 📁 ${memory.project || 'default'}`;
+          const matchIcon = memory.matchType === 'exact' ? '🎯' : 
+                           memory.matchType === 'expanded' ? '🔤' : 
+                           memory.matchType === 'semantic' ? '🧠' : 
+                           memory.matchType === 'fuzzy' ? (memory.fuzzyMode === 'exact' ? '🎯' : memory.fuzzyMode === 'typo' ? '🔧' : '🔤') : '📝';
+          
+          // Enhanced scoring display
+          const finalScore = memory.combinedScore || memory.relevanceScore || 0;
+          const timeDecay = memory.timeDecay || 1;
+          const scoreIcon = finalScore > 15 ? '⭐' : finalScore > 10 ? '🌟' : '';
+          const timeIcon = timeDecay === 5 ? '🔥' : timeDecay === 3 ? '📅' : '';
+          
+          // Content indicators
+          const contentIcons = [];
+          if (memory.metadata?.hasCode) contentIcons.push('💻');
+          if (memory.metadata?.hasFiles) contentIcons.push('📄');
+          if (memory.metadata?.hasTools) contentIcons.push('🔧');
+          if (memory.metadata?.hasErrors) contentIcons.push('❌');
+          if (memory.metadata?.hasUrls) contentIcons.push('🔗');
+          
+          let matchInfo = '';
+          if (memory.matchType === 'expanded') {
+            matchInfo = ` (via: ${memory.expandedFrom})`;
+          }
+          
+          const contentIndicator = contentIcons.length > 0 ? ` ${contentIcons.join('')}` : '';
+          const scoreDisplay = finalScore > 0 ? ` (${Math.round(finalScore * 10) / 10})` : '';
+          
+          return `${matchIcon}${scoreIcon}${timeIcon} ${memory.id}${scoreDisplay} | 📝 ${preview}${matchInfo}${contentIndicator} | 🏷️ ${memory.tags?.join(', ') || 'no tags'} | 📁 ${memory.project || 'default'}`;
         }).join('\n');
+        
+        // Count match types
+        const matchCounts = {
+          exact: combinedResults.filter(r => r.matchType === 'exact').length,
+          expanded: combinedResults.filter(r => r.matchType === 'expanded').length,
+          semantic: combinedResults.filter(r => r.matchType === 'semantic').length,
+          fuzzy: combinedResults.filter(r => r.matchType === 'fuzzy').length
+        };
 
         return {
           content: [
             {
               type: 'text',
-              text: `🔍 Found ${results.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n\n${resultList}`,
+              text: `🔍 Found ${combinedResults.length} memories matching "${query}"${project ? ` in project: ${project}` : ''}:\n\n${resultList}${combinedResults.length > searchParams.limit ? `\n\n... and ${combinedResults.length - searchParams.limit} more results` : ''}\n\n📊 Results: ${matchCounts.exact} exact 🎯, ${matchCounts.expanded} expanded 🔤, ${matchCounts.semantic} semantic 🧠${matchCounts.fuzzy > 0 ? `, ${matchCounts.fuzzy} fuzzy 🔧` : ''}\n💡 Query type: ${classification.primary} (${Math.round(classification.confidence * 100)}% confidence)${classification.types.length > 1 ? `\n🎯 Also detected: ${classification.types.slice(1).join(', ')}` : ''}\n🔍 Search strategy: ${classification.suggestions.searchStrategy}${queryAnalysis.intent !== classification.primary ? `\n📊 Alternative analysis: ${queryAnalysis.intent} (${Math.round(queryAnalysis.confidence * 100)}%)` : ''}${enhancedQuery !== query ? `\n🔄 Enhanced: "${enhancedQuery}"` : ''}${expandedQueries.length > 1 ? `\n🔄 Also searched: ${expandedQueries.slice(1, 4).join(', ')}` : ''}`,
             },
           ],
         };
@@ -2691,6 +2960,122 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
 
+      case 'work_detector_control': {
+        const { action } = args;
+        
+        try {
+          switch (action) {
+            case 'enable':
+              workDetector.enable();
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: '✅ Universal Work Detector enabled!\n\n🤖 The system will now automatically detect work patterns and create memories for:\n• Problem-solving sessions\n• Implementation work\n• Configuration changes\n• Research activities\n• Workflow automation\n\n🔧 All detection runs in safe mode with error handling.',
+                  },
+                ],
+              };
+              
+            case 'disable':
+              workDetector.disable();
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: '⏸️ Universal Work Detector disabled.\n\n📊 Automatic work pattern detection is now off. You can still create memories manually using the add_memory tool.',
+                  },
+                ],
+              };
+              
+            case 'status':
+              const health = workDetector.isHealthy();
+              const stats = workDetector.getStats();
+              
+              let statusText = `🤖 Universal Work Detector Status\n\n`;
+              statusText += `🔧 Enabled: ${stats.enabled ? '✅ Yes' : '❌ No'}\n`;
+              statusText += `💚 Health: ${health.healthy ? '✅ Healthy' : '❌ ' + health.reason}\n`;
+              if (health.errorRate) {
+                statusText += `⚠️ Error Rate: ${Math.round(health.errorRate * 100)}%\n`;
+              }
+              statusText += `\n📊 Statistics:\n`;
+              statusText += `• Total activities tracked: ${stats.totalActivities}\n`;
+              statusText += `• Patterns detected: ${stats.patternsDetected}\n`;
+              statusText += `• Memories created: ${stats.memoriesCreated}\n`;
+              statusText += `• Errors encountered: ${stats.errors}\n`;
+              
+              if (stats.recentActivities.length > 0) {
+                statusText += `\n🕐 Recent Activities (last 10):\n`;
+                for (const activity of stats.recentActivities) {
+                  const time = new Date(activity.timestamp).toLocaleTimeString();
+                  statusText += `• ${time}: ${activity.tool} ${activity.success ? '✅' : '❌'}\n`;
+                }
+              }
+              
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: statusText,
+                  },
+                ],
+              };
+              
+            case 'stats':
+              const detailedStats = workDetector.getStats();
+              const activityLog = workDetector.getActivityLog();
+              
+              let statsText = `📊 Universal Work Detector Statistics\n\n`;
+              statsText += `🔧 Status: ${detailedStats.enabled ? 'Enabled' : 'Disabled'}\n`;
+              statsText += `📈 Activities tracked: ${detailedStats.totalActivities}\n`;
+              statsText += `🎯 Patterns detected: ${detailedStats.patternsDetected}\n`;
+              statsText += `💾 Memories created: ${detailedStats.memoriesCreated}\n`;
+              statsText += `❌ Errors: ${detailedStats.errors}\n`;
+              
+              if (detailedStats.memoriesCreated > 0) {
+                const successRate = Math.round((detailedStats.memoriesCreated / detailedStats.patternsDetected) * 100);
+                statsText += `✅ Success rate: ${successRate}%\n`;
+              }
+              
+              if (activityLog.length > 0) {
+                statsText += `\n📋 Activity Log (last ${Math.min(activityLog.length, 20)}):\n`;
+                for (const entry of activityLog.slice(-20)) {
+                  const time = new Date(entry.timestamp).toLocaleTimeString();
+                  statsText += `• ${time}: ${entry.tool} ${entry.success ? '✅' : '❌'}\n`;
+                }
+              }
+              
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: statsText,
+                  },
+                ],
+              };
+              
+            default:
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ Invalid action: ${action}. Use: enable, disable, status, or stats`,
+                  },
+                ],
+              };
+          }
+        } catch (error) {
+          console.error('Error in work_detector_control:', error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Work detector control failed: ${error.message}`,
+              },
+            ],
+          };
+        }
+      }
+
       case 'smart_status_update': {
         const {
           task_id,
@@ -3107,7 +3492,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
+    
+    // Store successful result
+    toolResult = result;
+    
+    // Track tool completion
+    const duration = Date.now() - toolStartTime;
+    await behavioralAnalyzer.trackToolUsage(name, args, { success: true, duration });
+    
+    // Universal Work Detector completion tracking
+    const completionDetection = workDetector.trackActivity(name, args, result);
+    if (completionDetection) {
+      // Auto-create memory based on detected work pattern
+      try {
+        await storage.saveMemory({
+          ...completionDetection,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          timestamp: new Date().toISOString(),
+          project: completionDetection.project || 'auto-detected',
+          access_count: 0,
+          last_accessed: new Date().toISOString()
+        });
+        
+        if (workDetector.debugMode) {
+          console.log(`[WorkDetector] Auto-created memory for ${name} work pattern`);
+        }
+      } catch (error) {
+        console.error('[WorkDetector] Failed to auto-create memory:', error);
+      }
+    }
+    
+    return result;
+    
   } catch (error) {
+    // Track error
+    toolError = error;
+    sessionTracker.trackActivity('error', {
+      tool: name,
+      error: error.message,
+      stack: error.stack,
+      context: { args }
+    });
+    
+    await behavioralAnalyzer.trackError(error, { tool: name, args });
+    await behavioralAnalyzer.trackToolUsage(name, args, { error: error.message });
+    
     return {
       content: [
         {
@@ -3120,6 +3549,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
+// Periodic session and behavior checks
+setInterval(async () => {
+  try {
+    // Check for session summary generation
+    const sessionSummary = await sessionTracker.generateSessionSummary();
+    if (sessionSummary) {
+      console.error(`📊 Session summary generated: ${sessionSummary.narrative}`);
+    }
+    
+    // Get behavioral recommendations
+    const recommendations = behavioralAnalyzer.getRecommendations();
+    if (recommendations.length > 0) {
+      console.error(`💡 Behavioral insights: ${recommendations.length} recommendations available`);
+    }
+  } catch (error) {
+    console.error('Error in periodic checks:', error);
+  }
+}, 300000); // Every 5 minutes
+
 // Start the server
 async function main() {
   const transport = new StdioServerTransport();
@@ -3131,4 +3579,17 @@ async function main() {
 main().catch(error => {
   if (!isMCPMode) console.error('MCP Server error:', error);
   // Never exit in MCP mode - would break connection
+});
+
+// Cleanup on exit
+process.on('SIGINT', () => {
+  sessionTracker.destroy();
+  behavioralAnalyzer.savePatterns();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  sessionTracker.destroy();
+  behavioralAnalyzer.savePatterns();
+  process.exit(0);
 });

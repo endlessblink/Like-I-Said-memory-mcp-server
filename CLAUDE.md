@@ -16,6 +16,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Like-I-Said MCP Server v2** is an enhanced Model Context Protocol (MCP) memory server that provides persistent memory for AI assistants with a modern React dashboard. It allows AI assistants to remember conversations across sessions and provides comprehensive memory management capabilities.
 
+## IMPORTANT: Automatic Memory Creation Guidelines
+
+**PROACTIVELY use the `add_memory` tool when encountering:**
+
+### Technical Discoveries
+- Solutions to problems (e.g., "X works when configured with Y")
+- Debugging insights (e.g., "Error was caused by Z")
+- Working configurations or code snippets
+- Best practices or patterns discovered
+- Important technical details mentioned by the user
+
+### Key Trigger Phrases to Watch For
+- "works", "working", "fixed", "solved", "discovered"
+- "the solution is", "the problem was", "turns out"
+- "important:", "note:", "remember:", "fyi:"
+- "finally got X to work"
+- "for future reference"
+
+### When to ALWAYS Create Memories
+1. **After solving a problem** - Save the solution and context
+2. **When user shares configuration that works** - Save the working config
+3. **Technical discoveries** - Save insights about how systems work
+4. **Error resolutions** - Save what caused the error and how it was fixed
+5. **Important project decisions** - Save architectural or design choices
+6. **Workarounds or hacks** - Save non-obvious solutions
+7. **Creating new files** - Especially build scripts, installers, or configurations
+8. **Implementing features** - When adding new functionality or capabilities
+9. **Multi-file changes** - When modifying 3+ files for a single purpose
+10. **Build/deployment scripts** - Any automation or installation procedures
+
+### Memory Creation Best Practices
+- Include enough context to understand the memory later
+- Use relevant tags for searchability
+- Set appropriate priority levels (high for critical solutions)
+- Link to related tasks when applicable
+- Include code snippets when relevant
+
+**Example**: If a user mentions "jsonrpc working dxt basic simple", immediately create a memory capturing this working configuration with context about what made it work.
+
+## CRITICAL: File Operation Memory Creation
+
+**ALWAYS create a memory when you:**
+- Write a new file with `Write` tool (especially .js, .sh, .bat, .json files)
+- Make significant edits with `Edit` or `MultiEdit` tools
+- Create build scripts, installers, or automation
+- Implement a solution that involves multiple files
+
+**Memory should include:**
+- What problem was being solved
+- Files created/modified
+- Key implementation details
+- Any configuration or setup required
+
+**Use the `add_memory` tool IMMEDIATELY after completing significant work. Do not wait for the user to ask.**
+
 ## Development Commands
 
 ### Essential Commands

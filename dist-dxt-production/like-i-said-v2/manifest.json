@@ -119,43 +119,50 @@
   ],
   "user_config": {
     "memory_directory": {
-      "type": "string",
+      "type": "directory",
+      "title": "Memory Directory",
       "default": "~/Documents/claude-memories",
       "description": "Directory for storing memory files",
       "required": false
     },
     "task_directory": {
-      "type": "string",
+      "type": "directory",
+      "title": "Task Directory",
       "default": "~/Documents/claude-tasks",
       "description": "Directory for storing task files",
       "required": false
     },
     "default_project": {
       "type": "string",
+      "title": "Default Project",
       "default": "my-project",
       "description": "Default project name for memories and tasks",
       "required": false
     },
     "enable_auto_linking": {
       "type": "boolean",
+      "title": "Auto-Link Items",
       "default": true,
       "description": "Automatically link related memories and tasks",
       "required": false
     },
     "max_search_results": {
       "type": "number",
+      "title": "Max Search Results",
       "default": 25,
       "description": "Maximum number of search results to return",
       "required": false
     },
     "enable_ollama": {
       "type": "boolean",
+      "title": "Enable Ollama",
       "default": false,
       "description": "Enable local AI enhancements with Ollama",
       "required": false
     },
     "ollama_model": {
       "type": "string",
+      "title": "Ollama Model",
       "default": "llama3.1:8b",
       "description": "Ollama model to use for enhancements",
       "required": false

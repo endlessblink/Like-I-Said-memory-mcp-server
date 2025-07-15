@@ -36,8 +36,8 @@ class DashboardBridge {
       server: this.server
     });
     this.clients = new Set();
-    this.memoriesDir = 'memories';
-    this.tasksDir = 'tasks';
+    this.memoriesDir = process.env.MEMORY_DIR || 'memories';
+    this.tasksDir = process.env.TASK_DIR || 'tasks';
     this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
     this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
     this.safeguards = new SystemSafeguards();
@@ -2558,7 +2558,7 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
         }
       }
       
-      const { MemoryTaskAnalyzer } = await import('./lib/memory-task-analyzer.cjs');
+      const { MemoryTaskAnalyzer } = await import('./lib/memory-task-analyzer.js');
       const analyzer = new MemoryTaskAnalyzer();
       const analysis = analyzer.analyzeMemoryQuality(memory);
       

@@ -5,310 +5,317 @@
 [![npm version](https://img.shields.io/npm/v/@endlessblink/like-i-said-v2.svg)](https://www.npmjs.com/package/@endlessblink/like-i-said-v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **MCP memory server for AI assistants** - Remember conversations across sessions
+A Model Context Protocol (MCP) server that provides persistent memory and task management for AI assistants. Store information, track tasks, and maintain context across conversations.
 
-Give your AI assistants persistent memory! Store information, preferences, and context that survives conversation restarts.
+## What This Does
 
-## ✨ Features
+Like-I-Said gives AI assistants the ability to remember information between conversations. When you tell your AI something important, it gets stored as a searchable memory that persists even after restarting. This creates a continuous experience where your AI maintains context about your projects, preferences, and ongoing work.
 
-- 🧠 **Persistent Memory** - AI remembers across conversations
-- 🚀 **One-Command Install** - Auto-configures all AI clients
-- 🌍 **Cross-Platform** - Windows, macOS, Linux (including WSL)
-- 📊 **React Dashboard** - Modern web interface with real-time updates
-- 🔧 **23 Powerful Tools** - Memory, task management, analytics, and AI enhancements
-- 📝 **Markdown Storage** - Enhanced frontmatter with categories and relationships
-- 🔍 **Advanced Search** - Full-text search with filters and tags
-- 📈 **Analytics** - Memory usage statistics and insights
-- 🎨 **Modern UI** - Card-based layout with dark theme
+## Key Capabilities
 
-## 🚀 Installation Options
+- **Persistent Memory Storage**: Information saved as markdown files with metadata
+- **Task Management**: Create, track, and link tasks with automatic memory connections
+- **Project Organization**: Memories and tasks organized by project context
+- **Smart Search**: Full-text search with filtering by project, tags, and categories
+- **AI Enhancement**: Optional AI-powered title generation and content analysis
+- **Real-time Dashboard**: Web interface for managing memories and tasks visually
 
-### IMPORTANT: Choose Your Installation Method
+## Installation Guide
 
-**This project supports two different types of Claude clients. Choose the method that matches your setup:**
+### For Claude Desktop Users
 
-#### 🖥️ Claude Desktop Users (Recommended)
-**If you use the Claude Desktop application:**
+**Easy Installation with DXT (Desktop Extension):**
 
-### Option 1: Zero-Dependency DXT Installation 🎉
+1. Download [like-i-said-memory-v2.dxt](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt)
+2. Double-click the .dxt file
+3. Claude Desktop will automatically install and configure everything
+4. Restart Claude Desktop to activate
 
-**NEW! Install in 30 seconds without Node.js or any technical setup!**
+That's it! No technical setup required.
 
-1. **Download**: [**⬇️ like-i-said-memory-v2.dxt**](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases/latest/download/like-i-said-memory-v2.dxt) (1.13 MB)
-2. **Open Claude Desktop Settings** → Extensions
-3. **Drag & Drop** the `.dxt` file
-4. **Done!** Start using all 23 tools immediately
+### For Claude Code Users (Web + IDE)
 
-**What DXT Provides:**
-- ✅ Complete MCP server with all 23 tools
-- ✅ Automatic Claude Desktop configuration
-- ✅ Self-contained installation (no Node.js required)
-- ✅ Secure configuration storage
+**Prerequisites**: Node.js 18+ installed on your system
 
-[📖 DXT Installation Guide](./DXT-INSTALLATION-README.md)
+#### Step 1: Configure Your IDE
 
----
+Each IDE needs manual configuration to work with Claude Code (claude.ai/code).
 
-#### 🌐 Claude Code + IDE Users
-**If you use claude.ai/code with IDEs like Cursor, Windsurf, or VS Code:**
-
-### Option 2: NPX Installation (Manual Setup Required)
-
-**This method requires Node.js and manual configuration:**
-
-#### Step 1: Install Node.js (First Time Only)
-
-**For complete beginners - Node.js is like installing a program that helps run JavaScript apps on your computer.**
-
-#### Windows Users:
-1. **Visit**: [nodejs.org](https://nodejs.org) or [nodejs.org/releases](https://nodejs.org/releases) for older versions
-2. **Download**: Click the green "LTS" button (Long Term Support - most stable)
-3. **Install**: 
-   - Run the downloaded `.msi` file
-   - Click "Next" through all the steps (defaults are fine)
-   - ✅ Check "Automatically install the necessary tools" if asked
-4. **Verify**: 
-   - Press `Windows + R`, type `cmd`, press Enter
-   - Type: `node --version` and press Enter
-   - You should see something like `v20.x.x`
-
-#### Mac Users:
-1. **Visit**: [nodejs.org](https://nodejs.org) or [nodejs.org/releases](https://nodejs.org/releases) for specific versions
-2. **Download**: Click the green "LTS" button 
-3. **Install**: 
-   - Run the downloaded `.pkg` file
-   - Follow the installer (defaults are fine)
-4. **Verify**:
-   - Press `Cmd + Space`, type `terminal`, press Enter
-   - Type: `node --version` and press Enter
-   - You should see something like `v20.x.x`
-
-#### Linux Users:
-```bash
-# Ubuntu/Debian
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Verify
-node --version
+**For Cursor:**
+1. Create or edit `~/.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "like-i-said-v2": {
+      "command": "npx",
+      "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
 ```
 
-### Step 2: One-Command MCP Installation
-```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+**For Windsurf:**
+1. Create or edit `~/.codeium/windsurf/mcp_config.json`:
+```json
+{
+  "mcp": {
+    "servers": {
+      "like-i-said-v2": {
+        "command": "npx",
+        "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"],
+        "env": {
+          "NODE_ENV": "production"
+        }
+      }
+    }
+  }
+}
 ```
 
-**What this magical command does:**
-- 🔍 **Finds your IDE apps** automatically (Cursor, Windsurf, VS Code)
-- ⚙️ **Configures MCP settings** for your specific IDE
-- 🧪 **Tests everything works** before finishing
-- 🛡️ **Keeps your existing settings** completely safe
-- 📦 **Works on all platforms** (Windows, Mac, Linux)
+**For VS Code with Continue:**
+Follow the Continue extension's MCP configuration guide to add the server.
 
-**Important**: This command configures your IDE to work with claude.ai/code. It does NOT configure Claude Desktop (use DXT for that).
+#### Step 2: Install the Package (Optional)
 
-**No coding knowledge required! Just copy, paste, and press Enter.**
-
-### Step 3: Update to Latest Version (When Needed)
+For better performance, install globally:
 ```bash
-# Update to the latest version
-npm update -g @endlessblink/like-i-said-v2
-
-# Or reinstall to get latest version
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
-```
-
-### Step 4: Start the Web Dashboard (Optional)
-```bash
-# Option A: Install globally (recommended for regular use)
 npm install -g @endlessblink/like-i-said-v2
-like-i-said-v2 start
-
-# Option B: Run directly without installing
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
 ```
 
-**Visual Interface**: Visit `http://localhost:3001` in your browser for:
-- 📊 **Memory Dashboard** - See all your AI's memories in a modern interface
-- 🔍 **Advanced Search** - Find memories by content, tags, or projects  
-- 📈 **Analytics** - Usage statistics and memory insights
-- 🎨 **Memory Cards** - Beautiful card-based layout with categories
-
----
-
-## 🔍 Which Method Should You Use?
-
-| Your Setup | Installation Method | Why? |
-|------------|-------------------|------|
-| **Claude Desktop app** | DXT Installation | One-click install, automatic configuration |
-| **claude.ai/code + Cursor** | NPX Installation | Manual IDE configuration required |
-| **claude.ai/code + Windsurf** | NPX Installation | Manual IDE configuration required |
-| **claude.ai/code + VS Code** | NPX Installation | Manual IDE configuration required |
-
-### For Advanced Users: Docker Support
-```bash
-# Install with Docker configuration
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --docker
-
-# Or copy Docker files for custom deployment
-cp docker-configs/Dockerfile.production ./Dockerfile
+Then update your IDE config to use:
+```json
+{
+  "command": "like-i-said-v2",
+  "args": ["start"]
+}
 ```
 
-## 📸 Dashboard Screenshots
+#### Step 3: Verify Installation
 
-### Memory Management
-![Memory Cards View](assets/images/dashboard_1.png)
-*Modern card-based memory interface with search, filtering, and project organization*
+1. Restart your IDE
+2. Open claude.ai/code
+3. Ask: "What MCP tools do you have available?"
+4. You should see 23 tools including add_memory, create_task, etc.
 
-### Relationship Visualization
-![Memory Relationships](assets/images/dashboard_2.png)
-*Interactive graph visualization showing connections between memories*
+## Running the Dashboard
 
-### Analytics Dashboard
-![Analytics Dashboard](assets/images/dashboard_3.png)
-*Comprehensive statistics and insights about your memory usage*
+The dashboard provides a visual interface for managing memories and tasks.
 
-### Enhanced Features
-![Advanced Features](assets/images/dashboard_4.png)
-*AI-powered memory enhancement, clustering, and advanced organization*
+### Starting the Dashboard
 
-## 🎯 Supported AI Clients
-
-| Client | Status | Platform |
-|--------|--------|----------|
-| **Claude Desktop** | ✅ Full Support | Windows, macOS, Linux |
-| **Cursor** | ✅ Full Support | Windows, macOS, Linux |  
-| **Windsurf** | ✅ Full Support | Windows, macOS, Linux |
-| **Claude Code (VS Code)** | ✅ Full Support | Windows, macOS, Linux |
-| **Continue** | ✅ Full Support | Windows, macOS, Linux |
-| **Zed Editor** | ✅ Full Support | Windows, macOS, Linux |
-
-## 🛠️ Available Tools
-
-After installation, your AI assistant will have these tools:
-
-- **`add_memory`** - Store information with tags, categories, and project context
-- **`get_memory`** - Retrieve specific memory by ID
-- **`list_memories`** - Show memories with complexity levels and metadata
-- **`delete_memory`** - Remove specific memory
-- **`search_memories`** - Full-text search with project filtering
-- **`test_tool`** - Verify MCP connection
-
-### Enhanced Memory Features:
-- **Categories**: personal, work, code, research, conversations, preferences
-- **Complexity Levels**: L1 (Simple) → L4 (Advanced)
-- **Projects**: Organize memories by project context
-- **Relationships**: Link related memories together
-
-## 📋 Usage Examples
-
-**Store a preference:**
-> "Remember that I prefer TypeScript over JavaScript for new projects"
-
-**Recall information:**  
-> "What did I tell you about my TypeScript preference?"
-
-**Project context:**
-> "Store that this React app uses Tailwind CSS and shadcn/ui components"
-
-**Search memories:**
-> "Find all memories about React projects"
-
-## 🔧 Advanced Setup
-
-### Custom Installation
+**If installed globally:**
 ```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init
+like-i-said-v2 dashboard
 ```
 
-
-
-### Manual Server Start
+**Using npx (no installation):**
 ```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 dashboard
 ```
 
-## 🔄 After Installation
-
-1. **Restart your AI client:**
-   - **Claude Desktop**: Close completely and restart
-   - **Cursor**: Press `Ctrl+Shift+P` → "Reload Window"
-   - **Windsurf**: Auto-detects changes
-
-2. **Test the installation:**
-   > "What MCP tools do you have available?"
-
-3. **Start using memory:**
-   > "Remember that I'm working on a Next.js project called MyApp"
-
-## 🆘 Troubleshooting
-
-### Tools don't appear?
-- Ensure you fully restarted your AI client
-- Wait 2-3 minutes for detection (Claude Desktop may take up to 5 minutes)
-- Check client-specific logs
-
-### Windows-specific notes:
-- ⚠️ **Always use the full npx command format**: `npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install`
-- The simplified `npx @endlessblink/like-i-said-v2 install` will NOT work on Windows
-- For PowerShell issues, try: `cmd /c "npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install"`
-
-### Config locations:
-- **Claude Desktop**: 
-  - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-  - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-  - Linux: `~/.config/Claude/claude_desktop_config.json`
-- **Cursor**: 
-  - Windows: `%USERPROFILE%\.cursor\mcp.json`
-  - macOS/Linux: `~/.cursor/mcp.json`
-- **Windsurf**: 
-  - Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
-  - macOS/Linux: `~/.codeium/windsurf/mcp_config.json`
-
-### Reset installation:
+**From source code:**
 ```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+npm install
+npm run dev:full  # Starts both API (port 3001) and UI (port 5173)
 ```
 
-## 🔨 Development Setup
+### Accessing the Dashboard
 
-If you want to run from source:
+1. Open your browser to `http://localhost:5173` (development) or `http://localhost:3001` (production)
+2. The dashboard shows all memories and tasks with real-time updates
+3. Features include:
+   - Search and filter memories
+   - View task relationships
+   - Manage projects
+   - Export/import data
+   - Analytics and insights
+
+## Available Tools (23 Total)
+
+### Memory Management (6 tools)
+- `add_memory` - Store information with metadata and categories
+- `get_memory` - Retrieve specific memory by ID
+- `list_memories` - List memories with filtering options
+- `search_memories` - Full-text search across all memories
+- `delete_memory` - Remove a specific memory
+- `test_tool` - Verify MCP connection is working
+
+### Task Management (6 tools)
+- `create_task` - Create tasks with automatic memory linking
+- `update_task` - Update task status and properties
+- `list_tasks` - List tasks with status filtering
+- `get_task_context` - Get task details with related memories
+- `delete_task` - Delete a task and its subtasks
+- `generate_dropoff` - Create session handoff documents
+
+### AI Enhancement (11 tools)
+- `enhance_memory_metadata` - Generate titles and summaries
+- `batch_enhance_memories` - Bulk enhance multiple memories
+- `smart_status_update` - Natural language task updates
+- `get_task_status_analytics` - Productivity analytics
+- `validate_task_workflow` - Check workflow validity
+- `get_automation_suggestions` - Get automation ideas
+- `batch_enhance_memories_ollama` - Local AI enhancement
+- `batch_enhance_tasks_ollama` - Bulk task enhancement
+- `check_ollama_status` - Check local AI server
+- `enhance_memory_ollama` - Enhance with local AI
+- `deduplicate_memories` - Remove duplicate memories
+
+## Storage Structure
+
+Memories and tasks are stored as markdown files:
+
+```
+memories/
+├── default/           # Default project memories
+├── project-name/      # Project-specific memories
+└── [other-projects]/
+
+tasks/
+├── project-name/      # Project-specific tasks
+└── [other-projects]/
+```
+
+Each memory includes metadata like:
+- Unique ID and timestamp
+- Category (work, personal, code, research, etc.)
+- Project assignment
+- Tags and priority
+- Complexity level (L1-L4)
+- Related memories
+
+## Usage Examples
+
+**Storing Information:**
+> "Remember that the API uses PostgreSQL with connection pooling enabled"
+
+**Creating Tasks:**
+> "Create a task to refactor the authentication module"
+
+**Searching:**
+> "Search for all memories about database configuration"
+
+**Task Updates:**
+> "Mark the authentication refactor task as complete"
+
+## Configuration
+
+### Memory Storage Location
+
+Default locations by platform:
+- **Windows**: `%USERPROFILE%\Documents\claude-memories`
+- **macOS**: `~/Documents/claude-memories`
+- **Linux**: `~/Documents/claude-memories`
+
+You can customize these during installation or by setting environment variables:
+```bash
+MEMORY_DIR=/custom/path/memories
+TASK_DIR=/custom/path/tasks
+```
+
+### Dashboard Settings
+
+The dashboard includes settings for:
+- Theme (light/dark mode)
+- Default project selection
+- Memory display options
+- Export/import preferences
+- AI enhancement settings
+
+## Troubleshooting
+
+### MCP Tools Not Appearing
+
+1. **Restart your IDE/Claude Desktop completely**
+2. **Check configuration files** are in the correct location
+3. **Verify Node.js version**: `node --version` (should be 18+)
+4. **Check logs** for error messages
+
+### Dashboard Connection Issues
+
+1. **Ensure API server is running** on port 3001
+2. **Check firewall settings** aren't blocking ports
+3. **Try accessing** `http://localhost:3001/api/status`
+4. **Check browser console** for error messages
+
+### Common Issues
+
+**Windows Path Issues:**
+- Use forward slashes in paths: `C:/Users/name/memories`
+- Or escape backslashes: `C:\\Users\\name\\memories`
+
+**Permission Errors:**
+- Ensure write permissions for memory/task directories
+- Run with appropriate user permissions
+
+**Port Conflicts:**
+- API server uses port 3001
+- Dev UI uses port 5173
+- Change with environment variables if needed
+
+## Development
+
+### Running from Source
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
 cd Like-I-Said-memory-mcp-server
 
 # Install dependencies
 npm install
 
-# Run development servers
-npm run dev:full    # Start both API and React dashboard
-npm run dev         # React dashboard only
-npm run dashboard   # API server only
+# Development mode
+npm run dev:full    # Both API and UI with hot reload
+npm run dev         # UI only
+npm run start:dashboard  # API only
 
-# Build for production
+# Production build
 npm run build
+npm run preview
 ```
 
-## 📊 Memory Storage
+### Testing
 
-- **Format**: Markdown files with enhanced frontmatter
-- **Location**: `memories/` directory organized by project
-- **Structure**: 145+ memories with complexity levels, categories, and relationships
-- **Features**: Real-time file watching, automatic indexing
-- **API**: RESTful API on port 3001 for dashboard integration
+```bash
+npm test           # Run test suite
+npm run test:mcp   # Test MCP server
+npm run test:api   # Test API endpoints
+```
 
-## 🤝 Contributing
+### Architecture
 
-Found a bug or want to contribute?
+- **MCP Server**: Handles tool requests from AI assistants
+- **API Server**: REST API for dashboard (Express.js)
+- **Dashboard**: React + TypeScript with Vite
+- **Storage**: File-based markdown with YAML frontmatter
+- **Real-time**: WebSocket updates for live changes
+
+## Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Support
+
 - **Issues**: [GitHub Issues](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues)
-- **Repository**: [GitHub](https://github.com/endlessblink/Like-I-Said-memory-mcp-server)
-
-## 📜 License
-
-MIT License - see LICENSE file for details.
+- **Discussions**: [GitHub Discussions](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/discussions)
+- **Documentation**: [Full docs](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/wiki)
 
 ---
 
-**Made for AI enthusiasts who want their assistants to remember! 🧠✨**
+Built with ❤️ for the AI-assisted development community

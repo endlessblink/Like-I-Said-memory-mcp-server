@@ -1,0 +1,32 @@
+{
+  "name": "smart_status_update",
+  "description": "AUTOMATICALLY use when user mentions status changes in natural language. Intelligently parses natural language to determine intended status changes with validation and automation.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Task ID to update (optional - can be inferred from natural language)"
+      },
+      "natural_language_input": {
+        "type": "string",
+        "description": "Natural language description of the status change (e.g., \"I finished the auth module\", \"the API work is blocked\")"
+      },
+      "context": {
+        "type": "object",
+        "properties": {
+          "force_complete": { "type": "boolean" },
+          "skip_validation": { "type": "boolean" },
+          "blocking_reason": { "type": "string" },
+          "completion_evidence": { "type": "string" }
+        },
+        "description": "Additional context for intelligent processing"
+      },
+      "apply_automation": {
+        "type": "boolean",
+        "description": "Whether to apply automation suggestions (default: true)"
+      }
+    },
+    "required": ["natural_language_input"]
+  }
+}

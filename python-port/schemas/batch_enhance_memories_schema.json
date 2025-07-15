@@ -1,0 +1,25 @@
+{
+  "name": "batch_enhance_memories",
+  "description": "Batch process multiple memories to add optimized titles and summaries. Useful for enhancing existing memories that lack proper metadata for dashboard display.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "project": {
+        "type": "string",
+        "description": "Filter by project name (optional)"
+      },
+      "category": {
+        "type": "string",
+        "description": "Filter by category (optional)"
+      },
+      "limit": {
+        "type": "number",
+        "description": "Maximum number of memories to process (default: 50)"
+      },
+      "skip_existing": {
+        "type": "boolean",
+        "description": "Skip memories that already have titles/summaries (default: true)"
+      }
+    }
+  }
+}
