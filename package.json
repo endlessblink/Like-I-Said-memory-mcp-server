@@ -86,6 +86,7 @@
     "test:ui-visual": "node tests/test-ui-visual.js",
     "test:full-integration": "node tests/test-full-integration.js",
     "test:pre-release": "npm run test:robust-systems && npm run test:ui-safe-areas && npm run test:full-integration",
+    "test:everything": "node tests/test-everything-works.js",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:standalone": "node mcp-server-standalone.js",
