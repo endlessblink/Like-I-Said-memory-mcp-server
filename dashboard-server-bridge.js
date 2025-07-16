@@ -179,12 +179,13 @@ class DashboardBridge {
     this.app.use(express.json());
     this.app.use(express.static('dist'));
 
-    // Root route for health check validation
-    this.app.get('/', (req, res) => {
+    // Health check endpoint for server validation
+    this.app.get('/api/health', (req, res) => {
       res.status(200).json({ 
         status: 'ok',
         message: 'Like-I-Said MCP Server Dashboard API',
-        version: '2.6.8'
+        version: '2.6.8',
+        timestamp: new Date().toISOString()
       });
     });
 
