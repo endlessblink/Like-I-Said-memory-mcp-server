@@ -193,6 +193,10 @@ class DashboardBridge {
     
     this.app.get('/api/projects', requireAuth(), this.getProjects.bind(this));
     this.app.get('/api/status', this.getStatus.bind(this)); // Keep status public for health checks
+    
+    // Path configuration endpoints - public to allow setup
+    this.app.get('/api/paths', this.getPaths.bind(this));
+    this.app.post('/api/paths', this.updatePaths.bind(this));
 
     // Category Analysis API Routes
     this.app.post('/api/analyze/categories', requireAuth(), this.analyzeCategories.bind(this));
@@ -1173,6 +1177,114 @@ class DashboardBridge {
       console.error('Error getting status:', error);
       res.status(500).json({ error: error.message });
     }
+  }
+
+  async getPaths(req, res) {
+    try {
+      // Return current paths and whether they exist
+      const checkPath = async (dirPath) => {
+        try {
+          await fsPromises.access(dirPath);
+          const stats = await fsPromises.stat(dirPath);
+          return {
+            exists: true,
+            isDirectory: stats.isDirectory(),
+            absolute: path.resolve(dirPath)
+          };
+        } catch {
+          return {
+            exists: false,
+            isDirectory: false,
+            absolute: path.resolve(dirPath)
+          };
+        }
+      };
+
+      const memoryInfo = await checkPath(this.memoriesDir);
+      const taskInfo = await checkPath(this.tasksDir);
+
+      res.json({
+        memories: {
+          path: this.memoriesDir,
+          ...memoryInfo,
+          fromEnv: !!process.env.MEMORY_DIR
+        },
+        tasks: {
+          path: this.tasksDir,
+          ...taskInfo,
+          fromEnv: !!process.env.TASK_DIR
+        },
+        suggestions: this.getSuggestedPaths()
+      });
+    } catch (error) {
+      console.error('Error getting paths:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updatePaths(req, res) {
+    try {
+      const { memoryPath, taskPath } = req.body;
+      
+      // Validate paths
+      if (!memoryPath || !taskPath) {
+        return res.status(400).json({ error: 'Both memory and task paths are required' });
+      }
+
+      // Update paths
+      this.memoriesDir = path.resolve(memoryPath);
+      this.tasksDir = path.resolve(taskPath);
+      
+      // Update storage instances
+      this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
+      this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
+      
+      // Restart file watchers
+      await this.setupFileWatcher();
+      
+      // Save to environment for persistence
+      process.env.MEMORY_DIR = this.memoriesDir;
+      process.env.TASK_DIR = this.tasksDir;
+      
+      res.json({
+        success: true,
+        paths: {
+          memories: this.memoriesDir,
+          tasks: this.tasksDir
+        }
+      });
+    } catch (error) {
+      console.error('Error updating paths:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  getSuggestedPaths() {
+    const suggestions = [];
+    const home = process.env.HOME || process.env.USERPROFILE;
+    
+    if (home) {
+      // Common Claude Desktop paths
+      suggestions.push({
+        name: 'Claude Desktop Default',
+        memories: path.join(home, 'memories'),
+        tasks: path.join(home, 'tasks')
+      });
+      
+      suggestions.push({
+        name: 'Like-I-Said Directory',
+        memories: path.join(home, 'like-i-said-mcp', 'memories'),
+        tasks: path.join(home, 'like-i-said-mcp', 'tasks')
+      });
+      
+      suggestions.push({
+        name: 'Documents Folder',
+        memories: path.join(home, 'Documents', 'like-i-said', 'memories'),
+        tasks: path.join(home, 'Documents', 'like-i-said', 'tasks')
+      });
+    }
+    
+    return suggestions;
   }
 
   async callMcpTool(req, res) {

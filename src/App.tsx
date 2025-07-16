@@ -48,6 +48,7 @@ import { GlobalSearch } from '@/components/GlobalSearch'
 import { CategorySuggestions } from '@/components/CategorySuggestions'
 import { SearchPresets } from '@/components/SearchPresets'
 import { TutorialLauncher, OnboardingTutorial } from '@/components/OnboardingTutorial'
+import { PathConfiguration } from '@/components/PathConfiguration'
 import { ToastProvider, useToast, toastHelpers } from '@/components/ToastNotifications'
 import { ProgressProvider, useOperationProgress } from '@/components/ProgressIndicators'
 import { SettingsDropdown } from '@/components/SettingsDropdown'
@@ -59,7 +60,7 @@ import {
   MemoryTableSkeleton,
   EmptyState 
 } from '@/components/LoadingStates'
-import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X } from 'lucide-react'
+import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings } from 'lucide-react'
 import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
 import { searchMemories, sortMemories } from '@/utils/helpers'
 
@@ -224,7 +225,7 @@ function AppContent() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isEditLoading, setIsEditLoading] = useState(false)
-  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "relationships" | "ai">("memories")
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "relationships" | "ai" | "settings">("memories")
   const [aiMode, setAiMode] = useState<'memories' | 'tasks'>('memories')
   const [useAdvancedEditor, setUseAdvancedEditor] = useState(false)
   const [useAdvancedEditorCreate, setUseAdvancedEditorCreate] = useState(false)
@@ -1560,7 +1561,8 @@ Respond with JSON format:
                   { id: "memories", label: "Memories", icon: Brain },
                   { id: "tasks", label: "Tasks", icon: ListTodo },
                   { id: "relationships", label: "Relationships", shortLabel: "Relations", icon: Link },
-                  { id: "ai", label: "AI Enhancement", shortLabel: "AI", icon: Bot }
+                  { id: "ai", label: "AI Enhancement", shortLabel: "AI", icon: Bot },
+                  { id: "settings", label: "Settings", icon: Settings }
                 ].map((tab) => {
                   const IconComponent = tab.icon;
                   return (
@@ -1824,6 +1826,7 @@ Respond with JSON format:
               <option value="tasks">Tasks</option>
               <option value="relationships">Relationships</option>
               <option value="ai">AI Enhancement</option>
+              <option value="settings">Settings</option>
             </select>
             
             {/* Mobile Stats */}
@@ -2009,6 +2012,7 @@ Respond with JSON format:
                 {currentTab === "tasks" && "Tasks"}
                 {currentTab === "relationships" && "Relationships"}
                 {currentTab === "ai" && "AI Enhancement"}
+                {currentTab === "settings" && "Settings"}
               </h2>
               {currentTab === "memories" && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
@@ -2127,6 +2131,9 @@ Respond with JSON format:
               </div>
             )}
 
+            {currentTab === "settings" && (
+              <PathConfiguration />
+            )}
 
             {currentTab === "memories" && (
               <>
