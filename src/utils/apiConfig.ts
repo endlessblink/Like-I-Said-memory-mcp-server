@@ -8,16 +8,22 @@ export async function getApiPort(): Promise<number> {
     return cachedApiPort;
   }
 
-  try {
-    // Try to get the port from the Vite server endpoint
-    const response = await fetch('/api-port');
-    if (response.ok) {
-      const data = await response.json();
-      cachedApiPort = data.port;
-      return cachedApiPort;
+  // Skip the /api-port check in development mode to avoid console errors
+  // The fallback port detection below works reliably
+  if (import.meta.env.DEV) {
+    // In development, go straight to port detection
+  } else {
+    try {
+      // In production, try to get the port from the server endpoint
+      const response = await fetch('/api-port');
+      if (response.ok) {
+        const data = await response.json();
+        cachedApiPort = data.port;
+        return cachedApiPort;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch API port from server:', error);
     }
-  } catch (error) {
-    console.warn('Failed to fetch API port from server:', error);
   }
 
   // Fallback: try common ports in sequence

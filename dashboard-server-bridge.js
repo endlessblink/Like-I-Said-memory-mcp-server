@@ -177,7 +177,6 @@ class DashboardBridge {
     };
     this.app.use(cors(corsOptions));
     this.app.use(express.json());
-    this.app.use(express.static('dist'));
 
     // Health check endpoint for server validation
     this.app.get('/api/health', (req, res) => {
@@ -186,6 +185,13 @@ class DashboardBridge {
         message: 'Like-I-Said MCP Server Dashboard API',
         version: '2.6.8',
         timestamp: new Date().toISOString()
+      });
+    });
+
+    // API port endpoint for frontend discovery
+    this.app.get('/api-port', (req, res) => {
+      res.status(200).json({ 
+        port: this.port
       });
     });
 
@@ -291,6 +297,9 @@ class DashboardBridge {
     this.app.post('/api/settings/reset', requireAuth({ role: 'admin' }), this.resetSettings.bind(this));
     this.app.post('/api/settings/setup-auth', this.setupAuthentication.bind(this)); // Public - for initial setup
 
+    // Serve static files
+    this.app.use(express.static('dist'));
+    
     // Serve React app for non-API routes
     this.app.get('*', (req, res) => {
       res.sendFile(path.resolve('dist/index.html'));
