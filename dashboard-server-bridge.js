@@ -141,13 +141,36 @@ class DashboardBridge {
     });
     this.app.use('/api/', limiter);
     
-    // Secure CORS configuration
+    // Dynamic CORS configuration to allow all local network access
     const corsOptions = {
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://localhost:3001', 'https://127.0.0.1:3001'] // Production origins
-        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'], // Development origins
+      origin: function (origin, callback) {
+        // Allow requests with no origin (like Postman or direct API calls)
+        if (!origin) return callback(null, true);
+        
+        // In development, allow all origins from local network
+        if (process.env.NODE_ENV !== 'production') {
+          const allowedPatterns = [
+            /^http:\/\/localhost:\d+$/,
+            /^http:\/\/127\.0\.0\.1:\d+$/,
+            /^http:\/\/192\.168\.\d+\.\d+:\d+$/,  // Local network
+            /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,     // Local network
+            /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/ // Docker/VPN
+          ];
+          
+          const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+          if (isAllowed) {
+            callback(null, true);
+          } else {
+            console.warn(`CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+          }
+        } else {
+          // Production: be more restrictive
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
-      optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+      optionsSuccessStatus: 200,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
       exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
@@ -1171,6 +1194,7 @@ class DashboardBridge {
       }
       
       const status = {
+        status: 'ok', // Add this for compatibility
         server: 'Dashboard Bridge',
         version: '2.0.3',
         storage: 'markdown',
