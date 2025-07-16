@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useApiHelpers } from '@/hooks/useApiHelpers'
+import { useWebSocket } from '@/hooks/useWebSocket'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -264,8 +265,6 @@ function AppContent() {
 
   // === WEBSOCKET STATE ===
   const [wsConnected, setWsConnected] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // === API HELPERS ===
   const { apiGet, apiPost, apiPut, apiDelete } = useApiHelpers()
@@ -378,126 +377,40 @@ function AppContent() {
     }
   }
 
-  // === WEBSOCKET SETUP ===
-  const setupWebSocket = useCallback(async () => {
-    // Prevent creating multiple connections
-    if (wsRef.current?.readyState === WebSocket.CONNECTING || 
-        wsRef.current?.readyState === WebSocket.OPEN) {
-      return
-    }
-
-    // Clear any existing reconnect timeout
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-
-    // Close existing connection if it exists
-    if (wsRef.current) {
-      wsRef.current.onclose = null // Prevent triggering reconnect
-      wsRef.current.close()
-      wsRef.current = null
-    }
-
-    // Get WebSocket URL dynamically from discovered port
-    const { getWebSocketUrl } = await import('@/utils/apiConfig')
-    const wsUrl = await getWebSocketUrl()
-    
-    try {
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
-    
-      ws.onopen = () => {
-        console.log('🔌 WebSocket connected - Real-time updates enabled')
-        setWsConnected(true)
-        // Clear any pending reconnect timeout on successful connection
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = null
-        }
-      }
+  // === WEBSOCKET HOOK ===
+  const { isConnected: wsIsConnected } = useWebSocket({
+    onMessage: (message) => {
+      console.log('📡 WebSocket message:', message)
       
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data)
-          console.log('📡 WebSocket message:', message)
-          
-          if (message.type === 'file_change') {
-            console.log(`📄 Memory file ${message.data.action}: ${message.data.file}`)
-            console.log('Current memories count before refresh:', memoriesRef.current.length)
-            // Refresh memories when files change
-            loadMemoriesRef.current?.(true)
-          } else if (message.type === 'task_change') {
-            console.log(`📋 Task file ${message.data.action}: ${message.data.file}`)
-            // Refresh tasks when task files change
-            loadTasks()
-          }
-        } catch (error) {
-          console.warn('Failed to parse WebSocket message:', error)
-        }
+      if (message.type === 'file_change') {
+        console.log(`📄 Memory file ${message.data.action}: ${message.data.file}`)
+        console.log('Current memories count before refresh:', memoriesRef.current.length)
+        // Refresh memories when files change
+        loadMemoriesRef.current?.(true)
+      } else if (message.type === 'task_change') {
+        console.log(`📋 Task file ${message.data.action}: ${message.data.file}`)
+        // Refresh tasks when task files change
+        loadTasks()
       }
-      
-      ws.onclose = (event) => {
-        console.log('🔌 WebSocket disconnected - Will reconnect in 5 seconds...')
-        setWsConnected(false)
-        wsRef.current = null
-        
-        // Only attempt to reconnect if not a normal closure
-        if (event.code !== 1000 && event.code !== 1001) {
-          // Shorter reconnect delay for better user experience
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
-              setupWebSocket()
-            }
-          }, 5000) // 5 seconds instead of 30
-        }
-      }
-      
-      ws.onerror = (error) => {
-        // Only log error if it's not a connection refused error during page load
-        if (ws.readyState !== WebSocket.CLOSED) {
-          console.error('WebSocket error:', error)
-        }
-        setWsConnected(false)
-        // Don't trigger immediate reconnect on error, let onclose handle it
-      }
-      
-      return ws
-    } catch (error) {
-      console.error('Failed to create WebSocket:', error)
+    },
+    onConnect: () => {
+      console.log('🔌 WebSocket connected - Real-time updates enabled')
+      setWsConnected(true)
+    },
+    onDisconnect: () => {
+      console.log('🔌 WebSocket disconnected')
       setWsConnected(false)
-      // Retry connection after longer delay
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
-          setupWebSocket()
-        }
-      }, 30000) // 30 seconds
-      return null
-    }
-  }, [])
+    },
+    reconnectInterval: 5000,
+    maxReconnectAttempts: 20
+  })
 
   // === EFFECTS ===
   useEffect(() => {
     loadMemories()
     loadTasks()
     loadSettings()
-    // Set up WebSocket for real-time updates with slight delay to ensure server is ready
-    const wsTimeout = setTimeout(() => {
-      setupWebSocket()
-    }, 1000)
-    
-    // Cleanup function to close WebSocket on unmount
-    return () => {
-      clearTimeout(wsTimeout)
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
-      if (wsRef.current) {
-        wsRef.current.close()
-        wsRef.current = null
-      }
-    }
+    // WebSocket is handled by the hook, no manual setup needed
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset selected category when switching tabs
@@ -2091,7 +2004,7 @@ Respond with JSON format:
                     onProviderChange={setLlmProvider}
                     onApiKeyChange={setLlmApiKey}
                     onSaveSettings={saveSettings}
-                    websocket={wsRef.current || undefined}
+                    websocket={undefined}
                     enhancementDisabled={enhancementDisabled}
                     enhancementFailures={enhancementFailures}
                   />
