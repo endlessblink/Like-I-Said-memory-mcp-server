@@ -93,6 +93,7 @@
 /* Utility classes for easy application */
 .pb-safe {
   padding-bottom: var(--safe-bottom) !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px) !important;
 }
 
 .mb-safe {
@@ -113,4 +114,13 @@
 
 .fab-bottom {
   bottom: calc(2rem + var(--safe-bottom)) !important;
+}
+
+/* Main content area specific fix */
+#main-content-area {
+  padding-bottom: 48px !important;
+}
+
+#main-content-area .space-section {
+  padding-bottom: 48px !important;
 }

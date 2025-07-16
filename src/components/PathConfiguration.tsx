@@ -195,7 +195,7 @@ export function PathConfiguration() {
                   <Button
                     key={`discovered-${index}`}
                     variant="outline"
-                    className="w-full justify-start text-left border-green-200 hover:border-green-400"
+                    className="w-full justify-start text-left border-green-200 hover:border-green-400 h-auto py-3"
                     onClick={() => applySuggestion(suggestion)}
                   >
                     <div className="w-full">
@@ -224,7 +224,7 @@ export function PathConfiguration() {
               <Button
                 key={`standard-${index}`}
                 variant="outline"
-                className="w-full justify-start text-left"
+                className="w-full justify-start text-left h-auto py-3"
                 onClick={() => applySuggestion(suggestion)}
               >
                 <div>
@@ -241,6 +241,9 @@ export function PathConfiguration() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Spacer to ensure content is not hidden behind Windows taskbar */}
+      <div style={{ height: '80px', minHeight: '80px' }} aria-hidden="true" />
     </div>
   );
 }

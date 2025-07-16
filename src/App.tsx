@@ -1944,7 +1944,7 @@ Respond with JSON format:
             }}
             id="main-content-area"
           >
-            <div className="space-section min-h-full pb-8">
+            <div className="space-section">
             {currentTab === "dashboard" && (
               <StatisticsDashboard memories={memories} />
             )}
@@ -2335,6 +2335,9 @@ Respond with JSON format:
               </>
             )}
             </div>
+            
+            {/* Universal spacer to prevent content being hidden behind Windows taskbar */}
+            <div style={{ height: '80px', flexShrink: 0, minHeight: '80px' }} />
           </div>
         </div>
       </div>
