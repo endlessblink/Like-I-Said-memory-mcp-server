@@ -5,6 +5,15 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.6] - 2025-07-16
+
+### Fixed
+- **Directory Creation in NPX Mode** - Fixed directory creation failures preventing memory saves
+  - Added try-catch around directory creation to handle NPX permission issues
+  - Ensures directory exists before attempting to write memory files
+  - Gracefully handles directory detection issues in NPX environments
+  - Memory creation now works even if initial directory creation fails
+
 ## [2.6.5] - 2025-07-16
 
 ### Fixed

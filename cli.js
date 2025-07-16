@@ -92,6 +92,44 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// Helper function for single keypress menus
+async function getSingleKeypress(prompt, validKeys) {
+  return new Promise((resolve) => {
+    console.log(prompt);
+    
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+    }
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    
+    const onData = (key) => {
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(false);
+      }
+      process.stdin.pause();
+      process.stdin.removeListener('data', onData);
+      
+      // Handle Ctrl+C
+      if (key === '\u0003') {
+        console.log('\nInstallation cancelled');
+        process.exit(0);
+      }
+      
+      const keyStr = key.toString().trim();
+      if (validKeys.includes(keyStr)) {
+        console.log(`\nYou selected: ${keyStr}`);
+        resolve(keyStr);
+      } else {
+        // Invalid key, ask again
+        getSingleKeypress(prompt, validKeys).then(resolve);
+      }
+    };
+    
+    process.stdin.on('data', onData);
+  });
+}
+
 // Colors for terminal output
 const colors = {
   reset: '\x1b[0m',

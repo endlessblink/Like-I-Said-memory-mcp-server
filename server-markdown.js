@@ -72,13 +72,19 @@ class MarkdownStorage {
   }
 
   ensureDirectories() {
-    if (!fs.existsSync(this.baseDir)) {
-      fs.mkdirSync(this.baseDir, { recursive: true });
-    }
-    
-    const defaultProjectDir = path.join(this.baseDir, this.defaultProject);
-    if (!fs.existsSync(defaultProjectDir)) {
-      fs.mkdirSync(defaultProjectDir, { recursive: true });
+    try {
+      if (!fs.existsSync(this.baseDir)) {
+        fs.mkdirSync(this.baseDir, { recursive: true });
+      }
+      
+      const defaultProjectDir = path.join(this.baseDir, this.defaultProject);
+      if (!fs.existsSync(defaultProjectDir)) {
+        fs.mkdirSync(defaultProjectDir, { recursive: true });
+      }
+    } catch (error) {
+      // In NPX mode, directories might need different handling
+      console.error(`Directory creation issue: ${error.message}`);
+      // Continue anyway - the directories might exist but not be detectable
     }
   }
 
@@ -392,6 +398,13 @@ class MarkdownStorage {
       }
       
       const markdownContent = this.generateMarkdownContent(memory);
+      
+      // Ensure directory exists before writing
+      const dir = path.dirname(filepath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
       fs.writeFileSync(filepath, markdownContent, 'utf8');
       
       return filepath;
