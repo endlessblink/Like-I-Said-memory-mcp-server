@@ -1,0 +1,20 @@
+# Run tests after any Python file edit
+[[hooks]]
+event = "PostToolUse"
+[hooks.matcher]
+tool_name = "edit_file"
+file_paths = ["*.py", "src/**/*.py"]
+command = "pytest tests/ -x --tb=short"
+run_in_background = false
+
+# Block task completion if tests do not pass
+[[hooks]]
+event = "Stop"
+command = '''
+echo "Running final test validation..."
+pytest tests/ --tb=short || {
+    echo "❌ TESTS FAILED - Task cannot be completed until all tests pass" >&2
+    exit 2
+}
+echo "✅ All tests passed - Task completion approved"
+'''

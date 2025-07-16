@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Data directories
+memories/
+tasks/
+data/
+vectors/
+data-backups/
+backup-*/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Large installer files
+dist-installer-*/
+*.exe
+*-linux
+*-macos
+
+# Test files
+test-*.js
+test-*.mjs
+__tests__/
+*.test.js
+*.spec.js
+
+# Session management
+session-dropoffs/
+SESSION-DROPOFF-*.md
+DROPOFF-*.md
+
+# Debugging files
+debugging/
+
+# Keep essential files
+!README.md
+!CLAUDE.md
+!LICENSE
+!package.json
+!package-lock.json

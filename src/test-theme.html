@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Theme Test</title>
+  <style>
+    :root {
+      --background: 222 23% 4%;
+      --foreground: 210 40% 98%;
+      --primary-500: #a855f7;
+    }
+    
+    body {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      padding: 20px;
+      font-family: sans-serif;
+    }
+    
+    .card {
+      background: hsl(var(--background) / 0.8);
+      border: 1px solid hsl(var(--foreground) / 0.2);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    
+    .primary {
+      color: var(--primary-500);
+    }
+    
+    button {
+      background: var(--primary-500);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Theme Variable Test</h1>
+  <p>This should have dark background with light text</p>
+  <div class="card">
+    <h2 class="primary">Primary Color Test</h2>
+    <p>This card should have semi-transparent background</p>
+    <button onclick="changeTheme()">Change Theme</button>
+  </div>
+  
+  <script>
+    function changeTheme() {
+      const root = document.documentElement;
+      const currentBg = getComputedStyle(root).getPropertyValue('--background');
+      
+      if (currentBg.includes('222')) {
+        // Switch to light theme
+        root.style.setProperty('--background', '0 0% 100%');
+        root.style.setProperty('--foreground', '222 84% 4.9%');
+        root.style.setProperty('--primary-500', '#3b82f6');
+      } else {
+        // Switch to dark theme
+        root.style.setProperty('--background', '222 23% 4%');
+        root.style.setProperty('--foreground', '210 40% 98%');
+        root.style.setProperty('--primary-500', '#a855f7');
+      }
+    }
+    
+    // Log current values
+    console.log('Background:', getComputedStyle(document.documentElement).getPropertyValue('--background'));
+    console.log('Foreground:', getComputedStyle(document.documentElement).getPropertyValue('--foreground'));
+    console.log('Primary:', getComputedStyle(document.documentElement).getPropertyValue('--primary-500'));
+  </script>
+</body>
+</html>

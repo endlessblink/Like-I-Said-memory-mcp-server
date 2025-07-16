@@ -1,0 +1,86 @@
+Write-Host "`n🛠️ Claude MCP Full Setup Script Starting..." -ForegroundColor Cyan
+
+# -------------------------------
+# 1. Check if 'uv' is installed
+# -------------------------------
+$uvPath = Get-Command uv -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
+
+if (-not $uvPath) {
+    Write-Host "`n📦 'uv' not found. Installing via official script..." -ForegroundColor Yellow
+    try {
+        irm https://astral.sh/uv/install.ps1 | iex
+    } catch {
+        Write-Host "❌ Failed to install uv." -ForegroundColor Red
+        exit 1
+    }
+    Start-Sleep -Seconds 2
+    $uvPath = Get-Command uv -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
+}
+
+if (-not $uvPath) {
+    Write-Host "❌ uv still not found after install." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "`n✅ 'uv' found at: $uvPath" -ForegroundColor Green
+
+# -----------------------------------
+# 2. Ensure PATH includes uv folder
+# -----------------------------------
+$pathsToEnsure = @(
+    "$env:USERPROFILE\.cargo\bin",
+    "$env:USERPROFILE\.local\bin"
+)
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+
+foreach ($p in $pathsToEnsure) {
+    if ($userPath -notlike "*$p*") {
+        Write-Host "➕ Adding '$p' to PATH..." -ForegroundColor Yellow
+        $userPath += ";$p"
+        [Environment]::SetEnvironmentVariable("Path", $userPath, "User")
+    } else {
+        Write-Host "✔️ '$p' is already in PATH." -ForegroundColor Green
+    }
+}
+
+# ------------------------------------------------
+# 3. Locate MCP extension folder and requirements
+# ------------------------------------------------
+$mcpFolder = "$env:APPDATA\Claude\Claude Extensions\ant.dir.cursortouch.windows-mcp"
+$mainPy = Join-Path $mcpFolder "main.py"
+
+if (-not (Test-Path $mainPy)) {
+    Write-Host "❌ MCP folder not found: $mcpFolder" -ForegroundColor Red
+    exit 1
+}
+
+# --------------------------------------------------
+# 4. Use uv to install Python dependencies
+# --------------------------------------------------
+Write-Host "`n📦 Installing required Python packages for Windows-MCP..." -ForegroundColor Cyan
+
+Set-Location $mcpFolder
+
+try {
+    # First try requirements.txt
+    $reqFile = Join-Path $mcpFolder "requirements.txt"
+    if (Test-Path $reqFile) {
+        uv pip install -r requirements.txt
+    } else {
+        # Install common packages explicitly
+        uv pip install pyautogui pyperclip pygetwindow pymsgbox pyscreeze mouseinfo
+    }
+} catch {
+    Write-Host "❌ Failed to install dependencies." -ForegroundColor Red
+    exit 1
+}
+
+# -------------------------------------
+# 5. Final confirmation and version
+# -------------------------------------
+Write-Host "`n✅ Setup Complete!" -ForegroundColor Green
+Write-Host "`n🎯 uv version:" -ForegroundColor Gray
+uv --version
+
+Write-Host "`n🔄 Please now restart Claude Desktop and enable the MCP again." -ForegroundColor Cyan

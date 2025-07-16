@@ -1,0 +1,223 @@
+/* Light Theme Readability Fixes */
+
+/* Ensure proper contrast for light themes */
+.theme-light,
+.theme-neutral-bright {
+  /* Text contrast improvements */
+  --foreground: 222 84% 10%;
+  --muted-foreground: 215 20% 40%;
+  
+  /* Card and background contrast */
+  --card: 0 0% 98%;
+  --card-foreground: 222 84% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 84% 10%;
+  
+  /* Muted colors with better contrast */
+  --muted: 210 40% 94%;
+  --accent: 210 40% 92%;
+  --accent-foreground: 222 84% 10%;
+  
+  /* Border colors */
+  --border: 214 32% 85%;
+  --input: 214 32% 91%;
+  
+  /* Button hover states */
+  --primary: 262 80% 50%;
+  --primary-foreground: 0 0% 100%;
+}
+
+/* Fix dialog overlays in light theme */
+.theme-light [role="dialog"],
+.theme-neutral-bright [role="dialog"] {
+  --ring: 262 80% 50%;
+}
+
+/* Improve readability for specific components in light theme */
+.theme-light .bg-muted\/30,
+.theme-neutral-bright .bg-muted\/30 {
+  background-color: hsl(210 40% 94% / 0.5);
+}
+
+/* Ensure kbd elements are visible */
+.theme-light kbd,
+.theme-neutral-bright kbd {
+  background-color: hsl(0 0% 90%);
+  border-color: hsl(0 0% 80%);
+  color: hsl(222 84% 15%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix badge visibility in light theme */
+.theme-light .bg-gray-700,
+.theme-neutral-bright .bg-gray-700 {
+  background-color: hsl(210 40% 92%);
+  color: hsl(222 84% 15%);
+}
+
+/* Improve button contrast in light theme */
+.theme-light button[data-state="open"],
+.theme-neutral-bright button[data-state="open"] {
+  background-color: hsl(210 40% 92%);
+}
+
+/* Fix dropdown menu items in light theme */
+.theme-light [role="menuitem"]:hover,
+.theme-neutral-bright [role="menuitem"]:hover {
+  background-color: hsl(210 40% 92%);
+  color: hsl(222 84% 10%);
+}
+
+/* Fix input fields in light theme */
+.theme-light input,
+.theme-light textarea,
+.theme-light select,
+.theme-neutral-bright input,
+.theme-neutral-bright textarea,
+.theme-neutral-bright select {
+  background-color: hsl(0 0% 100%);
+  border-color: hsl(214 32% 85%);
+  color: hsl(222 84% 10%);
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder,
+.theme-neutral-bright input::placeholder,
+.theme-neutral-bright textarea::placeholder {
+  color: hsl(215 20% 60%);
+}
+
+/* Fix code blocks and pre elements */
+.theme-light pre,
+.theme-light code,
+.theme-neutral-bright pre,
+.theme-neutral-bright code {
+  background-color: hsl(210 40% 96%);
+  color: hsl(222 84% 15%);
+}
+
+/* Improve tab navigation in light theme */
+.theme-light [role="tablist"],
+.theme-neutral-bright [role="tablist"] {
+  background-color: hsl(210 40% 94%);
+}
+
+.theme-light [role="tab"][data-state="active"],
+.theme-neutral-bright [role="tab"][data-state="active"] {
+  background-color: hsl(0 0% 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Fix tooltip contrast */
+.theme-light [role="tooltip"],
+.theme-neutral-bright [role="tooltip"] {
+  background-color: hsl(222 84% 15%);
+  color: hsl(0 0% 100%);
+}
+
+/* Memory card improvements for light theme */
+.theme-light .hover\:bg-gray-700\/50:hover,
+.theme-neutral-bright .hover\:bg-gray-700\/50:hover {
+  background-color: hsl(210 40% 94% / 0.8);
+}
+
+/* Task card status colors in light theme */
+.theme-light .bg-blue-950,
+.theme-neutral-bright .bg-blue-950 {
+  background-color: hsl(214 100% 94%);
+}
+
+.theme-light .bg-green-950,
+.theme-neutral-bright .bg-green-950 {
+  background-color: hsl(138 76% 94%);
+}
+
+.theme-light .bg-amber-950,
+.theme-neutral-bright .bg-amber-950 {
+  background-color: hsl(45 100% 94%);
+}
+
+.theme-light .border-blue-500,
+.theme-neutral-bright .border-blue-500 {
+  border-color: hsl(217 91% 60%);
+}
+
+.theme-light .border-green-500,
+.theme-neutral-bright .border-green-500 {
+  border-color: hsl(142 76% 45%);
+}
+
+.theme-light .border-amber-500,
+.theme-neutral-bright .border-amber-500 {
+  border-color: hsl(38 92% 50%);
+}
+
+/* Fix skeleton loaders in light theme */
+.theme-light .animate-pulse .bg-gray-700,
+.theme-neutral-bright .animate-pulse .bg-gray-700 {
+  background-color: hsl(210 40% 92%);
+}
+
+/* Improve shadow visibility in light theme */
+.theme-light .shadow-md,
+.theme-neutral-bright .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.theme-light .shadow-lg,
+.theme-neutral-bright .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+}
+
+/* Fix category colors in light theme for better contrast */
+.theme-light .text-blue-300,
+.theme-neutral-bright .text-blue-300 {
+  color: hsl(217 91% 45%);
+}
+
+.theme-light .text-green-300,
+.theme-neutral-bright .text-green-300 {
+  color: hsl(142 76% 36%);
+}
+
+.theme-light .text-amber-300,
+.theme-neutral-bright .text-amber-300 {
+  color: hsl(38 92% 45%);
+}
+
+.theme-light .text-red-300,
+.theme-neutral-bright .text-red-300 {
+  color: hsl(0 84% 50%);
+}
+
+.theme-light .text-purple-300,
+.theme-neutral-bright .text-purple-300 {
+  color: hsl(271 91% 55%);
+}
+
+/* Ensure proper contrast for links */
+.theme-light a,
+.theme-neutral-bright a {
+  color: hsl(217 91% 50%);
+}
+
+.theme-light a:hover,
+.theme-neutral-bright a:hover {
+  color: hsl(217 91% 40%);
+}
+
+/* Fix scrollbar colors in light theme */
+.theme-light ::-webkit-scrollbar-track,
+.theme-neutral-bright ::-webkit-scrollbar-track {
+  background-color: hsl(210 40% 96%);
+}
+
+.theme-light ::-webkit-scrollbar-thumb,
+.theme-neutral-bright ::-webkit-scrollbar-thumb {
+  background-color: hsl(210 20% 80%);
+}
+
+.theme-light ::-webkit-scrollbar-thumb:hover,
+.theme-neutral-bright ::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(210 20% 70%);
+}
