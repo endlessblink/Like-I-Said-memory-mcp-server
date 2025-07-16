@@ -179,6 +179,15 @@ class DashboardBridge {
     this.app.use(express.json());
     this.app.use(express.static('dist'));
 
+    // Root route for health check validation
+    this.app.get('/', (req, res) => {
+      res.status(200).json({ 
+        status: 'ok',
+        message: 'Like-I-Said MCP Server Dashboard API',
+        version: '2.6.8'
+      });
+    });
+
     // Helper function to conditionally apply auth middleware
     const requireAuth = (options = {}) => {
       if (settingsManager.isAuthEnabled()) {

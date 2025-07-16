@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { getApiPort } from '@/utils/apiConfig'
 import { Memory } from '@/types'
 
 // Singleton cache for quality standards to prevent multiple fetches
@@ -55,7 +56,7 @@ export function useQualityStandards() {
     }
 
     // Start new fetch
-    fetchPromise = fetch('/api/quality/standards')
+    fetchPromise = fetch(`http://${window.location.hostname}:${await getApiPort()}/api/quality/standards`)
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch standards')
         return response.json()
