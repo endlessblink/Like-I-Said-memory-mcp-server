@@ -49,28 +49,19 @@ export async function getApiPort(): Promise<number> {
 
 // Get the full API URL
 export async function getApiUrl(path: string): Promise<string> {
-  // When using Vite proxy, just use relative URLs
-  if (import.meta.env.DEV) {
-    return path; // This will use Vite's proxy
-  }
-  
-  // In production, use the same host as the frontend
   const port = await getApiPort();
-  return `${window.location.protocol}//${window.location.hostname}:${port}${path}`;
+  // Use window.location.hostname to support network access
+  const host = window.location.hostname;
+  return `http://${host}:${port}${path}`;
 }
 
 // Get WebSocket URL
 export async function getWebSocketUrl(): Promise<string> {
-  // When using Vite proxy, use relative WebSocket
-  if (import.meta.env.DEV) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws`;
-  }
-  
-  // In production, use the same host as the frontend
   const port = await getApiPort();
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.hostname}:${port}`;
+  // Use window.location.hostname to support network access
+  const host = window.location.hostname;
+  return `${protocol}//${host}:${port}`;
 }
 
 // Reset cached port (useful for retrying connection)
