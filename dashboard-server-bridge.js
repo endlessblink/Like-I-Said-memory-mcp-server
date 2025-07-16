@@ -195,6 +195,11 @@ class DashboardBridge {
       });
     });
 
+    // Simple test endpoint that always works
+    this.app.get('/test', (req, res) => {
+      res.send('OK');
+    });
+
     // Helper function to conditionally apply auth middleware
     const requireAuth = (options = {}) => {
       if (settingsManager.isAuthEnabled()) {
@@ -3066,6 +3071,15 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
   async start() {
     // Initialize async components
     await this.setupFileWatcher();
+    
+    // Debug: Log all registered routes
+    console.log('📋 Registered routes:');
+    this.app._router.stack
+      .filter(layer => layer.route)
+      .forEach(layer => {
+        const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
+        console.log(`   ${methods} ${layer.route.path}`);
+      });
     
     try {
       // Use robust port finder with validation
