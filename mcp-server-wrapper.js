@@ -10,9 +10,17 @@ const __dirname = dirname(__filename);
 
 // Start the actual server
 const serverPath = join(__dirname, 'server-markdown.js');
+
+// Set working directory to where memories/tasks should be stored
+// This fixes NPX permission issues on Windows
+const workingDir = process.env.MEMORY_DIR ? 
+  dirname(process.env.MEMORY_DIR) : 
+  process.cwd();
+
 const child = spawn('node', [serverPath], {
   stdio: 'inherit',
-  env: process.env
+  env: process.env,
+  cwd: workingDir  // Set working directory for file operations
 });
 
 // Forward exit codes

@@ -1444,6 +1444,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         try {
           filepath = await storage.saveMemory(memory);
         } catch (saveError) {
+          console.error(`[MCP ERROR] Memory save failed:`, {
+            error: saveError.message,
+            stack: saveError.stack,
+            memoryDir: MEMORY_DIR,
+            resolvedDir: path.resolve(MEMORY_DIR),
+            project: memory.project || 'default'
+          });
           throw new Error(`Failed to save memory: ${saveError.message}`);
         }
         

@@ -5,6 +5,15 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.7] - 2025-07-16
+
+### Fixed
+- **NPX Working Directory** - Fixed file creation issues by setting correct working directory
+  - MCP server now runs with working directory set to parent of MEMORY_DIR
+  - Solves Windows permission issues when NPX runs from cache directory
+  - File operations now work correctly without elevated permissions
+  - No special directories or workarounds needed
+
 ## [2.6.6] - 2025-07-16
 
 ### Fixed
