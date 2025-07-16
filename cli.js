@@ -796,15 +796,16 @@ async function quickInstall() {
         const nodePath = detectNodePath();
         
         // Configure based on execution context
-        if (context.isNpxInstall && !fs.existsSync(path.join(projectPath, 'mcp-server-wrapper.js'))) {
-          // NPX mode - run directly from npm package
+        if (context.isNpxInstall) {
+          // NPX mode - always use NPX package with clean wrapper
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
             command: 'npx',
-            args: ['-p', '@endlessblink/like-i-said-v2@2.6.8', 'like-i-said-v2', 'start'],
+            args: ['-y', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2-mcp'],
             env: {
               MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
               TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
-              MCP_QUIET: 'true'
+              MCP_QUIET: 'true',
+              NO_COLOR: '1'
             }
           };
         } else {
@@ -1000,7 +1001,7 @@ async function handleCommand() {
         await main();
         break;
       case 'start':
-        await import('./mcp-server-wrapper.js');
+        await import('./npx-clean-wrapper.js');
         break;
       case 'dashboard':
         await startDashboard();
