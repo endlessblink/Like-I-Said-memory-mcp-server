@@ -11,10 +11,10 @@ Turn Claude Desktop into your intelligent project manager. Track tasks, remember
 
 - [What Makes This Different](#-what-makes-this-different)
 - [Quick Start](#-quick-start-30-seconds)
-- [Installation for Claude Code Users](#️-installation-for-claude-code-users)
-  - [For Cursor](#for-cursor)
-  - [For Windsurf](#for-windsurf)
-  - [For VS Code](#for-vs-code-with-continue)
+- [Installation for Other MCP Clients](#️-installation-for-other-mcp-clients)
+  - [Cursor IDE](#for-cursor)
+  - [Windsurf Editor](#for-windsurf)
+  - [VS Code with Continue](#for-vs-code-with-continue)
 - [Running the Dashboard](#-running-the-dashboard)
   - [Starting the Dashboard](#starting-the-dashboard)
   - [Accessing the Dashboard](#accessing-the-dashboard)
@@ -41,7 +41,7 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 ### For Claude Desktop Users
 
 ```bash
-npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 install
 ```
 
 That's it! Restart Claude Desktop and start using it.
@@ -61,7 +61,7 @@ Close Claude completely, then reopen:
 "Show me everything related to authentication"
 ```
 
-## 🖥️ Installation for Claude Code Users
+## 🖥️ Installation for Other MCP Clients
 
 ### Prerequisites
 - Node.js 18+ installed on your system
@@ -113,7 +113,7 @@ The dashboard provides a visual interface for managing memories and tasks.
 
 **Option 1: Using NPX (Recommended)**
 ```bash
-npx @endlessblink/like-i-said-v2 like-i-said-v2 dashboard
+npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 dashboard
 ```
 
 **Option 2: Global Installation**
@@ -243,10 +243,10 @@ Each task tracks:
 ### "Server not connecting"
 ```bash
 # Update to latest version
-npm install -g @endlessblink/like-i-said-v2@latest
+npm install -g @endlessblink/like-i-said-v2@2.6.3
 
 # Reinstall in Claude Desktop
-npx @endlessblink/like-i-said-v2 like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 install
 ```
 
 ### "Can't find memories after path change"
