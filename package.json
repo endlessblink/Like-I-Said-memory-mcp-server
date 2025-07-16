@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.6.3",
+  "version": "2.6.4",
   "description": "Enhanced MCP memory server with modern React dashboard - remember conversations across sessions",
   "main": "mcp-server-wrapper.js",
   "type": "module",

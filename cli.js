@@ -757,17 +757,30 @@ async function quickInstall() {
         // Use full Node.js path to avoid "command not found" errors
         const nodePath = detectNodePath();
         
-        clientConfig.mcpServers['like-i-said-memory-v2'] = {
-          command: nodePath,
-          args: [configPathSetup.primary],
-          env: {
-            // Use detected paths, environment variables, or empty string
-            MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
-            TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
-            // Ensure JSON-RPC protocol isn't broken by console output
-            MCP_QUIET: 'true'
-          }
-        };
+        // Configure based on execution context
+        if (context.isNpxInstall && !fs.existsSync(path.join(projectPath, 'mcp-server-wrapper.js'))) {
+          // NPX mode - run directly from npm package
+          clientConfig.mcpServers['like-i-said-memory-v2'] = {
+            command: 'npx',
+            args: ['-p', '@endlessblink/like-i-said-v2@2.6.4', 'like-i-said-v2', 'start'],
+            env: {
+              MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
+              TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
+              MCP_QUIET: 'true'
+            }
+          };
+        } else {
+          // Local mode - use local files
+          clientConfig.mcpServers['like-i-said-memory-v2'] = {
+            command: nodePath,
+            args: [configPathSetup.primary],
+            env: {
+              MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
+              TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
+              MCP_QUIET: 'true'
+            }
+          };
+        }
 
         const configDir = path.dirname(config.path);
         if (!fs.existsSync(configDir)) {

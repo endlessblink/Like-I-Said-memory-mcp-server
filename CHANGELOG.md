@@ -5,6 +5,14 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.4] - 2025-07-16
+
+### Fixed
+- **Critical NPX Installer Bug** - Fixed installer configuring Claude Desktop with non-existent local paths
+  - Installer now properly detects NPX mode and configures Claude to use `npx` command
+  - This fixes the "empty folder" issue where server files weren't being found
+  - No more manual configuration needed!
+
 ## [2.6.3] - 2025-07-16
 
 ### Fixed

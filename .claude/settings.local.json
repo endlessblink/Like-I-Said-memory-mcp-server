@@ -193,7 +193,8 @@
       "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-production/*.dxt)",
       "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/docs/screenshots/like-i-said-v2-jsonrpc.dxt)",
       "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-standalone )",
-      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-production)"
+      "Bash(/home/endlessblink/projects/like-i-said-mcp-server-v2/dist-dxt-production)",
+      "Bash(git remote add:*)"
     ],
     "deny": []
   },
