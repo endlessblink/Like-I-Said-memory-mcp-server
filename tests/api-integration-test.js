@@ -156,36 +156,59 @@ async function runTests() {
   console.log('🚀 Starting API Integration Tests...');
   console.log('   Make sure the API server is running on port 3001\n');
 
-  // Check if server is running
+  const timeout = setTimeout(() => {
+    console.error('\n❌ Test timeout after 60 seconds');
+    process.exit(1);
+  }, 60000);
+
   try {
-    const response = await fetch('http://localhost:3001/api/status');
-    if (!response.ok) {
-      throw new Error('Server not responding');
+    // Check if server is running
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch('http://localhost:3001/api/status', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error('Server not responding');
+      }
+    } catch (error) {
+      console.error('❌ API server is not running on port 3001');
+      console.error('   Run "npm run start:dashboard" first\n');
+      console.error('   Error:', error.message);
+      clearTimeout(timeout);
+      process.exit(1);
+    }
+
+    // Run all tests
+    await testDataLoading();
+    await testCorsHeaders();
+
+    clearTimeout(timeout);
+
+    // Summary
+    console.log('\n' + '═'.repeat(50));
+    console.log('TEST SUMMARY:');
+    console.log('═'.repeat(50));
+    console.log(`✅ Passed: ${testsPassed}`);
+    console.log(`❌ Failed: ${testsFailed}`);
+    console.log(`📊 Total: ${testsPassed + testsFailed}`);
+    
+    if (testsFailed > 0) {
+      console.log('\n❌ Some tests failed. Fix the issues above.\n');
+      process.exit(1);
+    } else {
+      console.log('\n✅ All API integration tests passed!\n');
+      process.exit(0);
     }
   } catch (error) {
-    console.error('❌ API server is not running on port 3001');
-    console.error('   Run "npm run start:dashboard" first\n');
+    clearTimeout(timeout);
+    console.error('\n❌ Test runner error:', error.message);
     process.exit(1);
-  }
-
-  // Run all tests
-  await testDataLoading();
-  await testCorsHeaders();
-
-  // Summary
-  console.log('\n' + '═'.repeat(50));
-  console.log('TEST SUMMARY:');
-  console.log('═'.repeat(50));
-  console.log(`✅ Passed: ${testsPassed}`);
-  console.log(`❌ Failed: ${testsFailed}`);
-  console.log(`📊 Total: ${testsPassed + testsFailed}`);
-  
-  if (testsFailed > 0) {
-    console.log('\n❌ Some tests failed. Fix the issues above.\n');
-    process.exit(1);
-  } else {
-    console.log('\n✅ All API integration tests passed!\n');
-    process.exit(0);
   }
 }
 

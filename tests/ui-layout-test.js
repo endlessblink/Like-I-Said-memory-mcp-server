@@ -84,10 +84,12 @@ function checkInlineStyles(filePath) {
 
 // Check CSS files
 function checkCSSFile(filePath) {
+  let content;
+  let fileIssues = 0;
+  
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
+    content = fs.readFileSync(filePath, 'utf8');
     const fileName = path.relative(process.cwd(), filePath);
-    let fileIssues = 0;
 
     console.log(`Checking ${fileName}...`);
 
@@ -105,18 +107,23 @@ function checkCSSFile(filePath) {
         console.error(`Error checking pattern in ${fileName}: ${e.message}`);
       }
     });
+
+    try {
+      // Check for mobile-specific issues
+      const mobileNavPattern = /@media.*max-width.*\{[^}]*position:\s*fixed[^}]*\}/gs;
+      if (mobileNavPattern.test(content)) {
+        console.log(`\n⚠️  Mobile navigation with fixed positioning detected`);
+        console.log(`   This can cause issues on mobile devices with notches/home indicators`);
+        issuesFound++;
+        fileIssues++;
+      }
+    } catch (e) {
+      console.error(`Error checking mobile patterns: ${e.message}`);
+    }
+
   } catch (error) {
     console.error(`Error reading file ${filePath}: ${error.message}`);
     return 0;
-  }
-
-  // Check for mobile-specific issues
-  const mobileNavPattern = /@media.*max-width.*\{[^}]*position:\s*fixed[^}]*\}/gs;
-  if (mobileNavPattern.test(content)) {
-    console.log(`\n⚠️  Mobile navigation with fixed positioning detected`);
-    console.log(`   This can cause issues on mobile devices with notches/home indicators`);
-    issuesFound++;
-    fileIssues++;
   }
 
   checksPerformed++;
@@ -154,73 +161,101 @@ function checkResponsiveDesign() {
   checksPerformed++;
 }
 
-// Walk directory and check files
+// Walk directory and check files with error handling
 function walkDir(dir, callback, filePattern) {
-  if (!fs.existsSync(dir)) return;
+  if (!fs.existsSync(dir)) {
+    console.log(`Directory not found: ${dir}`);
+    return;
+  }
   
-  const files = fs.readdirSync(dir);
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    
-    if (stat.isDirectory() && !file.includes('node_modules') && !file.includes('dist')) {
-      walkDir(filePath, callback, filePattern);
-    } else if (filePattern.test(file)) {
-      callback(filePath);
-    }
-  });
+  try {
+    const files = fs.readdirSync(dir);
+    files.forEach(file => {
+      try {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        
+        if (stat.isDirectory() && !file.includes('node_modules') && !file.includes('dist')) {
+          walkDir(filePath, callback, filePattern);
+        } else if (filePattern.test(file)) {
+          callback(filePath);
+        }
+      } catch (error) {
+        console.error(`Error processing file ${file}: ${error.message}`);
+      }
+    });
+  } catch (error) {
+    console.error(`Error reading directory ${dir}: ${error.message}`);
+  }
 }
 
 // Main test runner
-function runTests() {
+async function runTests() {
   console.log('🔍 Scanning for UI layout issues...\n');
 
-  // Check CSS files
-  const cssDir = path.join(__dirname, '..', 'src');
-  console.log('📄 Checking CSS files...');
-  walkDir(cssDir, checkCSSFile, /\.css$/);
+  const timeout = setTimeout(() => {
+    console.error('\n❌ Test timeout after 30 seconds');
+    process.exit(1);
+  }, 30000);
 
-  // Check TSX files for inline styles
-  console.log('\n📄 Checking TSX files for inline styles...');
-  walkDir(cssDir, checkInlineStyles, /\.tsx$/);
+  try {
+    // Check CSS files
+    const cssDir = path.join(__dirname, '..', 'src');
+    console.log('📄 Checking CSS files...');
+    walkDir(cssDir, checkCSSFile, /\.css$/);
 
-  // Check responsive design
-  checkResponsiveDesign();
+    // Check TSX files for inline styles
+    console.log('\n📄 Checking TSX files for inline styles...');
+    walkDir(cssDir, checkInlineStyles, /\.tsx$/);
 
-  // Check for specific component issues
-  console.log('\n🔍 Checking specific components...\n');
-  
-  // Check App.tsx for mobile navigation
-  const appTsxPath = path.join(__dirname, '..', 'src', 'App.tsx');
-  if (fs.existsSync(appTsxPath)) {
-    const appContent = fs.readFileSync(appTsxPath, 'utf8');
+    // Check responsive design
+    checkResponsiveDesign();
+
+    // Check for specific component issues
+    console.log('\n🔍 Checking specific components...\n');
     
-    // Look for mobile navigation patterns
-    if (appContent.includes('md:hidden') || appContent.includes('mobile')) {
-      console.log('📱 Mobile navigation detected in App.tsx');
-      
-      // Check if it has proper safe area handling
-      if (!appContent.includes('safe-area-inset') && !appContent.includes('pb-safe')) {
-        console.log('⚠️  Mobile navigation may not handle safe areas properly');
-        console.log('   Consider adding padding-bottom: env(safe-area-inset-bottom)');
-        issuesFound++;
+    // Check App.tsx for mobile navigation
+    const appTsxPath = path.join(__dirname, '..', 'src', 'App.tsx');
+    if (fs.existsSync(appTsxPath)) {
+      try {
+        const appContent = fs.readFileSync(appTsxPath, 'utf8');
+        
+        // Look for mobile navigation patterns
+        if (appContent.includes('md:hidden') || appContent.includes('mobile')) {
+          console.log('📱 Mobile navigation detected in App.tsx');
+          
+          // Check if it has proper safe area handling
+          if (!appContent.includes('safe-area-inset') && !appContent.includes('pb-safe')) {
+            console.log('⚠️  Mobile navigation may not handle safe areas properly');
+            console.log('   Consider adding padding-bottom: env(safe-area-inset-bottom)');
+            issuesFound++;
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading App.tsx: ${error.message}`);
       }
     }
-  }
 
-  // Summary
-  console.log('\n' + '═'.repeat(50));
-  console.log('UI LAYOUT TEST SUMMARY:');
-  console.log('═'.repeat(50));
-  console.log(`✅ Checks performed: ${checksPerformed}`);
-  console.log(`⚠️  Issues found: ${issuesFound}`);
-  
-  if (issuesFound > 0) {
-    console.log('\n⚠️  UI layout issues detected. Review the suggestions above.\n');
+    clearTimeout(timeout);
+
+    // Summary
+    console.log('\n' + '═'.repeat(50));
+    console.log('UI LAYOUT TEST SUMMARY:');
+    console.log('═'.repeat(50));
+    console.log(`✅ Checks performed: ${checksPerformed}`);
+    console.log(`⚠️  Issues found: ${issuesFound}`);
+    
+    if (issuesFound > 0) {
+      console.log('\n⚠️  UI layout issues detected. Review the suggestions above.\n');
+      process.exit(1);
+    } else {
+      console.log('\n✅ No major UI layout issues detected!\n');
+      process.exit(0);
+    }
+  } catch (error) {
+    clearTimeout(timeout);
+    console.error('\n❌ Test failed:', error.message);
     process.exit(1);
-  } else {
-    console.log('\n✅ No major UI layout issues detected!\n');
-    process.exit(0);
   }
 }
 
