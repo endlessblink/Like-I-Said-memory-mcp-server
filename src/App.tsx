@@ -558,9 +558,7 @@ function AppContent() {
 
     try {
       setIsCreating(true)
-      await apiPost('/api/memories',
-        body: JSON.stringify(memory)
-      })
+      await apiPost('/api/memories', memory)
       
       setNewValue("")
       setNewTags("")
