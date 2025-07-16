@@ -797,10 +797,10 @@ async function quickInstall() {
         
         // Configure based on execution context
         if (context.isNpxInstall) {
-          // NPX mode - always use NPX package with clean wrapper
+          // NPX mode - use the working pattern from v2.6.8
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
             command: 'npx',
-            args: ['-y', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2-mcp'],
+            args: ['-y', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2', 'start'],
             env: {
               MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
               TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
@@ -1001,7 +1001,7 @@ async function handleCommand() {
         await main();
         break;
       case 'start':
-        await import('./npx-clean-wrapper.js');
+        await import('./mcp-server-wrapper.js');
         break;
       case 'dashboard':
         await startDashboard();
