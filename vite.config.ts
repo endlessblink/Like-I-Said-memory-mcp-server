@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { portDiscoveryPlugin } from './vite-port-plugin.js'
-import { dynamicProxyPlugin } from './vite-dynamic-proxy.js'
 
 export default defineConfig({
-  plugins: [react(), portDiscoveryPlugin(), dynamicProxyPlugin()],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -21,18 +19,6 @@ export default defineConfig({
     },
     hmr: {
       overlay: true
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true,
-        secure: false
-      },
-      '/ws': {
-        target: 'ws://localhost:3002',
-        ws: true,
-        changeOrigin: true
-      }
     }
   }
 })

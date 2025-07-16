@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useApiHelpers } from '@/hooks/useApiHelpers'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -265,6 +266,9 @@ function AppContent() {
   const [wsConnected, setWsConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // === API HELPERS ===
+  const { apiGet, apiPost, apiPut, apiDelete } = useApiHelpers()
 
   // === REFS ===
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -293,7 +297,7 @@ function AppContent() {
       let hasMore = true
       
       while (hasMore) {
-        const response = await fetch(`/api/memories?page=${page}&limit=100`)
+        const response = await apiGet(`/api/memories?page=${page}&limit=100`)
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
@@ -345,7 +349,7 @@ function AppContent() {
       let hasMore = true
       
       while (hasMore) {
-        const response = await fetch(`/api/tasks?page=${page}&limit=100`)
+        const response = await apiGet(`/api/tasks?page=${page}&limit=100`)
         if (!response.ok) {
           break
         }
@@ -554,9 +558,7 @@ function AppContent() {
 
     try {
       setIsCreating(true)
-      await fetch('/api/memories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await apiPost('/api/memories',
         body: JSON.stringify(memory)
       })
       
@@ -589,9 +591,7 @@ function AppContent() {
     }
 
     try {
-      await fetch(`/api/memories/${editingMemory.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      await apiPut(`/api/memories/${editingMemory.id}`,
         body: JSON.stringify(updatedMemory)
       })
       
@@ -621,7 +621,7 @@ function AppContent() {
   const performDelete = async (memoryId: string) => {
     try {
       setIsDeleting(prev => new Set([...prev, memoryId]))
-      await fetch(`/api/memories/${memoryId}`, { method: 'DELETE' })
+      await apiDelete(`/api/memories/${memoryId}`)
       loadMemories(true) // Refresh instead of full reload
       toast.success('Memory deleted', 'The memory has been permanently removed')
     } catch (error) {
@@ -651,9 +651,7 @@ function AppContent() {
   const handleSaveMemoryFromModal = async (updatedMemory: Memory) => {
     setIsEditLoading(true)
     try {
-      await fetch(`/api/memories/${updatedMemory.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      await apiPut(`/api/memories/${updatedMemory.id}`,
         body: JSON.stringify({
           content: updatedMemory.content,
           category: updatedMemory.category,
@@ -796,9 +794,7 @@ function AppContent() {
     if (!memory) return
 
     try {
-      await fetch(`/api/memories/${memoryId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      await apiPut(`/api/memories/${memoryId}`,
         body: JSON.stringify({
           ...memory,
           project: projectId === "default" ? undefined : projectId
@@ -839,9 +835,7 @@ function AppContent() {
           description: `Updating "${memory.content.substring(0, 40)}..."`
         })
 
-        await fetch(`/api/memories/${memoryId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+        await apiPut(`/api/memories/${memoryId}`,
           body: JSON.stringify({
             ...memory,
             category
@@ -884,9 +878,7 @@ function AppContent() {
         const currentTags = memory.tags || []
         const newTags = [...new Set([...currentTags, ...tagsToAdd])] // Remove duplicates
 
-        await fetch(`/api/memories/${memoryId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+        await apiPut(`/api/memories/${memoryId}`,
           body: JSON.stringify({
             ...memory,
             tags: newTags
@@ -915,9 +907,7 @@ function AppContent() {
         const currentTags = memory.tags || []
         const newTags = currentTags.filter(tag => !tagsToRemove.includes(tag))
 
-        await fetch(`/api/memories/${memoryId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+        await apiPut(`/api/memories/${memoryId}`,
           body: JSON.stringify({
             ...memory,
             tags: newTags
@@ -1029,11 +1019,7 @@ function AppContent() {
           description: `Importing "${memory.content.substring(0, 50)}..."`
         })
 
-        await fetch('/api/memories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(memory)
-        })
+        await apiPost('/api/memories', memory)
         completed++
         progress.updateOperation(progressId, { completed })
       }
@@ -1215,13 +1201,9 @@ Respond with JSON format:
       `summary:${summary}`
     ]
 
-    await fetch(`/api/memories/${memoryId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        content: memory.content, 
-        tags: newTags
-      })
+    await apiPut(`/api/memories/${memoryId}`, { 
+      content: memory.content, 
+      tags: newTags
     })
   }
 

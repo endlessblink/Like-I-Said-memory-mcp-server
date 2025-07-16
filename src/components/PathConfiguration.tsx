@@ -4,6 +4,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Folder, FolderOpen, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { useApiHelpers } from '@/hooks/useApiHelpers';
 
 interface PathInfo {
   path: string;
@@ -37,6 +38,8 @@ export function PathConfiguration() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  const { apiGet, apiPost } = useApiHelpers();
 
   useEffect(() => {
     fetchCurrentPaths();
@@ -44,7 +47,7 @@ export function PathConfiguration() {
 
   const fetchCurrentPaths = async () => {
     try {
-      const response = await fetch('/api/paths');
+      const response = await apiGet('/api/paths');
       if (!response.ok) throw new Error('Failed to fetch paths');
       const data = await response.json();
       setCurrentPaths(data);
@@ -62,15 +65,9 @@ export function PathConfiguration() {
     setSuccess('');
 
     try {
-      const response = await fetch('/api/paths', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          memoryPath,
-          taskPath,
-        }),
+      const response = await apiPost('/api/paths', {
+        memoryPath,
+        taskPath,
       });
 
       if (!response.ok) {
