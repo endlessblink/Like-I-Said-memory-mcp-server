@@ -29,11 +29,13 @@
     "url": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server/issues"
   },
   "bin": {
-    "like-i-said-v2": "./cli.js"
+    "like-i-said-v2": "./cli.js",
+    "like-i-said-v2-mcp": "./npx-clean-wrapper.js"
   },
   "files": [
     "cli.js",
     "mcp-server-wrapper.js",
+    "npx-clean-wrapper.js",
     "server-markdown.js",
     "dashboard-server-bridge.js",
     "lib",
