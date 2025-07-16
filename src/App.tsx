@@ -589,9 +589,7 @@ function AppContent() {
     }
 
     try {
-      await apiPut(`/api/memories/${editingMemory.id}`,
-        body: JSON.stringify(updatedMemory)
-      })
+      await apiPut(`/api/memories/${editingMemory.id}`, updatedMemory)
       
       setShowEditDialog(false)
       setEditingMemory(null)
@@ -649,15 +647,13 @@ function AppContent() {
   const handleSaveMemoryFromModal = async (updatedMemory: Memory) => {
     setIsEditLoading(true)
     try {
-      await apiPut(`/api/memories/${updatedMemory.id}`,
-        body: JSON.stringify({
+      await apiPut(`/api/memories/${updatedMemory.id}`, {
           content: updatedMemory.content,
           category: updatedMemory.category,
           priority: updatedMemory.priority,
           tags: updatedMemory.tags,
           project: updatedMemory.project
         })
-      })
 
       setShowEditModal(false)
       setEditingMemory(null)
@@ -792,12 +788,10 @@ function AppContent() {
     if (!memory) return
 
     try {
-      await apiPut(`/api/memories/${memoryId}`,
-        body: JSON.stringify({
+      await apiPut(`/api/memories/${memoryId}`, {
           ...memory,
           project: projectId === "default" ? undefined : projectId
         })
-      })
       loadMemories()
       toast.success('Project updated', 'Memory has been moved to the new project')
     } catch (error) {
@@ -833,12 +827,10 @@ function AppContent() {
           description: `Updating "${memory.content.substring(0, 40)}..."`
         })
 
-        await apiPut(`/api/memories/${memoryId}`,
-          body: JSON.stringify({
+        await apiPut(`/api/memories/${memoryId}`, {
             ...memory,
             category
           })
-        })
         completed++
         progress.updateOperation(progressId, { completed })
       }
@@ -876,12 +868,10 @@ function AppContent() {
         const currentTags = memory.tags || []
         const newTags = [...new Set([...currentTags, ...tagsToAdd])] // Remove duplicates
 
-        await apiPut(`/api/memories/${memoryId}`,
-          body: JSON.stringify({
+        await apiPut(`/api/memories/${memoryId}`, {
             ...memory,
             tags: newTags
           })
-        })
         completed++
         progress.updateOperation(progressId, { completed })
       }
@@ -905,12 +895,10 @@ function AppContent() {
         const currentTags = memory.tags || []
         const newTags = currentTags.filter(tag => !tagsToRemove.includes(tag))
 
-        await apiPut(`/api/memories/${memoryId}`,
-          body: JSON.stringify({
+        await apiPut(`/api/memories/${memoryId}`, {
             ...memory,
             tags: newTags
           })
-        })
       }
       loadMemories()
       setSelectedMemories(new Set())
