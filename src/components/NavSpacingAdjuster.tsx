@@ -85,7 +85,7 @@ export function NavSpacingAdjuster() {
     return (
       <button
         onClick={() => setShowAdjuster(true)}
-        className="fixed bottom-4 right-4 z-50 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-purple-700 transition-colors"
+        className="fixed bottom-safe right-4 z-50 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-purple-700 transition-colors mb-4"
       >
         ⚙️ Adjust Nav Spacing
       </button>
@@ -93,7 +93,7 @@ export function NavSpacingAdjuster() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-4 w-96">
+    <div className="fixed bottom-safe right-4 z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-4 w-96 mb-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-semibold">Navigation Position</h3>
         <button

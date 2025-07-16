@@ -157,7 +157,7 @@ export function QuickCapture({
 
   return (
     <>
-      <div className={`quick-capture-container fixed bottom-6 right-6 z-50 ${className}`}>
+      <div className={`quick-capture-container fixed bottom-safe right-6 z-50 pb-6 ${className}`}>
         {!isExpanded ? (
           /* Floating Action Button */
           <Button

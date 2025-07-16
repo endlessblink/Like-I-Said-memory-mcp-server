@@ -35,7 +35,7 @@ export function ThemeDebug() {
     return (
       <button
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 z-50 p-2 bg-card rounded-lg shadow-lg"
+        className="fixed bottom-safe right-4 z-50 p-2 bg-card rounded-lg shadow-lg mb-4"
       >
         🎨
       </button>
@@ -43,7 +43,7 @@ export function ThemeDebug() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 p-4 bg-card border border-border rounded-lg shadow-lg max-w-sm">
+    <div className="fixed bottom-safe right-4 z-50 p-4 bg-card border border-border rounded-lg shadow-lg max-w-sm mb-4">
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-bold">Theme Debug</h3>
         <button onClick={() => setIsVisible(false)} className="text-sm">✕</button>

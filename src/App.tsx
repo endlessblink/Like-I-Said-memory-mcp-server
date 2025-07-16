@@ -1770,9 +1770,9 @@ Respond with JSON format:
         </div>
       </div>
 
-      <div className="flex min-h-[calc(100vh-var(--nav-height-mobile)-2rem)] md:min-h-[calc(100vh-var(--nav-height))] bg-background">
+      <div className="flex min-h-[calc(100vh-var(--nav-height-mobile)-2rem)] md:min-h-[calc(100vh-var(--nav-height))] bg-background content-safe">
         {/* Sidebar */}
-        <div className="hidden lg:flex w-72 xl:w-80 bg-card/50 backdrop-blur-sm border-r border-border/50 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="hidden lg:flex w-72 xl:w-80 bg-card/50 backdrop-blur-sm border-r border-border/50 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto sidebar-safe">
           {/* Search First */}
           <div className="p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">Search</h2>
@@ -1856,7 +1856,7 @@ Respond with JSON format:
           </div>
 
           {/* Stats */}
-          <div className="p-6 border-t border-border mt-auto">
+          <div className="p-6 border-t border-border mt-auto mb-safe stats-panel">
             <h3 className="text-sm font-medium text-muted-foreground mb-3">Statistics</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-muted-foreground">
@@ -2595,7 +2595,7 @@ Respond with JSON format:
               contentArea.scrollTo({ top: 0, behavior: 'smooth' })
             }
           }}
-          className="fixed bottom-8 right-8 w-12 h-12 bg-violet-600 hover:bg-violet-700 text-foreground rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50"
+          className="fixed bottom-8 right-8 w-12 h-12 bg-violet-600 hover:bg-violet-700 text-foreground rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50 fab-bottom"
           aria-label="Scroll to top"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

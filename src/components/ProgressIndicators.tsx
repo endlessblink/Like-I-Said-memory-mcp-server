@@ -174,7 +174,7 @@ function ProgressOverlay() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2 pointer-events-none max-w-sm">
+    <div className="fixed bottom-safe right-4 z-[9998] flex flex-col gap-2 pointer-events-none max-w-sm pb-4">
       {activeOperations.map((operation) => (
         <ProgressCard key={operation.id} operation={operation} />
       ))}
