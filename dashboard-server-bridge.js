@@ -25,10 +25,13 @@ import { MemoryDeduplicator } from './lib/memory-deduplicator.js';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import yaml from 'js-yaml';
+import { findAvailablePort, writePortFile, cleanupPortFile } from './lib/port-finder.js';
+import { PathSettings } from './lib/path-settings.js';
+import { FolderDiscovery } from './lib/folder-discovery.js';
 
 // Enhanced dashboard server with real-time MCP bridge
 class DashboardBridge {
-  constructor(port = 3001) {
+  constructor(port) {
     this.port = port;
     this.app = express();
     this.server = http.createServer(this.app);
@@ -36,8 +39,13 @@ class DashboardBridge {
       server: this.server
     });
     this.clients = new Set();
-    this.memoriesDir = process.env.MEMORY_DIR || 'memories';
-    this.tasksDir = process.env.TASK_DIR || 'tasks';
+    
+    // Load path settings
+    this.pathSettings = new PathSettings();
+    const paths = this.pathSettings.getEffectivePaths();
+    this.memoriesDir = paths.memories;
+    this.tasksDir = paths.tasks;
+    
     this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
     this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
     this.safeguards = new SystemSafeguards();
@@ -1214,7 +1222,7 @@ class DashboardBridge {
           ...taskInfo,
           fromEnv: !!process.env.TASK_DIR
         },
-        suggestions: this.getSuggestedPaths()
+        suggestions: await this.getSuggestedPaths()
       });
     } catch (error) {
       console.error('Error getting paths:', error);
@@ -1231,9 +1239,38 @@ class DashboardBridge {
         return res.status(400).json({ error: 'Both memory and task paths are required' });
       }
 
-      // Update paths
-      this.memoriesDir = path.resolve(memoryPath);
-      this.tasksDir = path.resolve(taskPath);
+      // Resolve and validate paths
+      const newMemoriesDir = path.resolve(memoryPath);
+      const newTasksDir = path.resolve(taskPath);
+      
+      // Ensure directories exist and are writable
+      const memResult = await this.pathSettings.ensureDirectory(newMemoriesDir);
+      if (!memResult.success) {
+        return res.status(400).json({ 
+          error: `Memory directory error: ${memResult.error}` 
+        });
+      }
+      
+      const taskResult = await this.pathSettings.ensureDirectory(newTasksDir);
+      if (!taskResult.success) {
+        return res.status(400).json({ 
+          error: `Task directory error: ${taskResult.error}` 
+        });
+      }
+      
+      // Save settings persistently
+      const saved = this.pathSettings.save({
+        memoriesPath: newMemoriesDir,
+        tasksPath: newTasksDir
+      });
+      
+      if (!saved) {
+        console.warn('Failed to save path settings, but continuing...');
+      }
+      
+      // Update runtime paths
+      this.memoriesDir = newMemoriesDir;
+      this.tasksDir = newTasksDir;
       
       // Update storage instances
       this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
@@ -1242,7 +1279,7 @@ class DashboardBridge {
       // Restart file watchers
       await this.setupFileWatcher();
       
-      // Save to environment for persistence
+      // Update environment variables for backward compatibility
       process.env.MEMORY_DIR = this.memoriesDir;
       process.env.TASK_DIR = this.tasksDir;
       
@@ -1251,7 +1288,8 @@ class DashboardBridge {
         paths: {
           memories: this.memoriesDir,
           tasks: this.tasksDir
-        }
+        },
+        message: 'Paths updated successfully and saved persistently'
       });
     } catch (error) {
       console.error('Error updating paths:', error);
@@ -1259,28 +1297,55 @@ class DashboardBridge {
     }
   }
 
-  getSuggestedPaths() {
+  async getSuggestedPaths() {
     const suggestions = [];
     const home = process.env.HOME || process.env.USERPROFILE;
     
+    // First, add discovered folders
+    try {
+      const discovery = new FolderDiscovery();
+      const discovered = await discovery.discoverFolders();
+      
+      discovered.forEach(folder => {
+        suggestions.push({
+          name: `📁 ${folder.name} (${folder.memoryCount} memories, ${folder.taskCount} tasks)`,
+          memories: folder.memoriesPath,
+          tasks: folder.tasksPath,
+          discovered: true,
+          lastModified: folder.lastModified,
+          stats: {
+            memoryCount: folder.memoryCount,
+            taskCount: folder.taskCount,
+            projectCount: folder.projectCount
+          }
+        });
+      });
+    } catch (error) {
+      console.warn('Failed to discover folders:', error);
+    }
+    
+    // Then add standard suggestions
     if (home) {
       // Common Claude Desktop paths
       suggestions.push({
         name: 'Claude Desktop Default',
         memories: path.join(home, 'memories'),
-        tasks: path.join(home, 'tasks')
+        tasks: path.join(home, 'tasks'),
+        discovered: false
       });
       
       suggestions.push({
         name: 'Like-I-Said Directory',
         memories: path.join(home, 'like-i-said-mcp', 'memories'),
-        tasks: path.join(home, 'like-i-said-mcp', 'tasks')
+        tasks: path.join(home, 'like-i-said-mcp', 'tasks'),
+        discovered: false
       });
       
       suggestions.push({
         name: 'Documents Folder',
         memories: path.join(home, 'Documents', 'like-i-said', 'memories'),
-        tasks: path.join(home, 'Documents', 'like-i-said', 'tasks')
+        tasks: path.join(home, 'Documents', 'like-i-said', 'tasks'),
+        discovered: false
       });
     }
     
@@ -2995,16 +3060,41 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
   }
 }
 
-// Start the bridge server
-const port = process.env.PORT || 3001;
-const bridge = new DashboardBridge(port);
-bridge.start().catch(console.error);
+// Start the bridge server with dynamic port detection
+async function startServer() {
+  const preferredPort = parseInt(process.env.PORT || '3001');
+  try {
+    // Find an available port
+    const port = await findAvailablePort(preferredPort);
+    console.log(`🔍 Found available port: ${port}`);
+    
+    // Write port to file for frontend discovery
+    writePortFile(port);
+    
+    // Start the server
+    const bridge = new DashboardBridge(port);
+    await bridge.start();
+    
+    // Cleanup on shutdown
+    process.on('SIGINT', () => {
+      console.log('\n🛑 Shutting down Dashboard Bridge...');
+      cleanupPortFile();
+      bridge.stop();
+      process.exit(0);
+    });
+    
+    process.on('SIGTERM', () => {
+      cleanupPortFile();
+      bridge.stop();
+      process.exit(0);
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down Dashboard Bridge...');
-  bridge.stop();
-  process.exit(0);
-});
+startServer();
 
 export default DashboardBridge;

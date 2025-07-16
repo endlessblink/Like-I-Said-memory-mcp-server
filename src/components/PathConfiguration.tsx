@@ -17,6 +17,13 @@ interface PathSuggestion {
   name: string;
   memories: string;
   tasks: string;
+  discovered?: boolean;
+  lastModified?: string;
+  stats?: {
+    memoryCount: number;
+    taskCount: number;
+    projectCount: number;
+  };
 }
 
 export function PathConfiguration() {
@@ -172,16 +179,53 @@ export function PathConfiguration() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Suggested Paths</CardTitle>
+          <CardTitle>Path Suggestions</CardTitle>
           <CardDescription>
-            Click on a suggestion to use it. These are common locations where memories might be stored.
+            {currentPaths.suggestions.some(s => s.discovered) ? 
+              '🔍 Auto-discovered existing installations and common paths' : 
+              'Common locations where memories might be stored'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {currentPaths.suggestions.map((suggestion, index) => (
+            {/* Show discovered folders first */}
+            {currentPaths.suggestions.filter(s => s.discovered).length > 0 && (
+              <>
+                <div className="text-sm font-semibold text-green-600 mb-2">
+                  ✨ Discovered Installations
+                </div>
+                {currentPaths.suggestions.filter(s => s.discovered).map((suggestion, index) => (
+                  <Button
+                    key={`discovered-${index}`}
+                    variant="outline"
+                    className="w-full justify-start text-left border-green-200 hover:border-green-400"
+                    onClick={() => applySuggestion(suggestion)}
+                  >
+                    <div className="w-full">
+                      <div className="font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        {suggestion.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Memories: {suggestion.memories}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Tasks: {suggestion.tasks}
+                      </div>
+                    </div>
+                  </Button>
+                ))}
+                <div className="border-t my-3"></div>
+              </>
+            )}
+            
+            {/* Show standard suggestions */}
+            <div className="text-sm font-semibold text-muted-foreground mb-2">
+              📍 Standard Locations
+            </div>
+            {currentPaths.suggestions.filter(s => !s.discovered).map((suggestion, index) => (
               <Button
-                key={index}
+                key={`standard-${index}`}
                 variant="outline"
                 className="w-full justify-start text-left"
                 onClick={() => applySuggestion(suggestion)}

@@ -375,7 +375,7 @@ function AppContent() {
   }
 
   // === WEBSOCKET SETUP ===
-  const setupWebSocket = useCallback(() => {
+  const setupWebSocket = useCallback(async () => {
     // Prevent creating multiple connections
     if (wsRef.current?.readyState === WebSocket.CONNECTING || 
         wsRef.current?.readyState === WebSocket.OPEN) {
@@ -395,9 +395,9 @@ function AppContent() {
       wsRef.current = null
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    // Always connect directly to the API server on port 3001
-    const wsUrl = `${protocol}//${window.location.hostname}:3001`
+    // Get WebSocket URL dynamically from discovered port
+    const { getWebSocketUrl } = await import('@/utils/apiConfig')
+    const wsUrl = await getWebSocketUrl()
     
     try {
       const ws = new WebSocket(wsUrl)

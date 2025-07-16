@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { portDiscoveryPlugin } from './vite-port-plugin.js'
+import { dynamicProxyPlugin } from './vite-dynamic-proxy.js'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), portDiscoveryPlugin(), dynamicProxyPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
