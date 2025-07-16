@@ -1,9 +1,30 @@
+![Like-I-Said MCP v2](assets/images/cover.png)
+
 # Like-I-Said v2: Task Management & Memory for Claude Desktop
 
 [![npm version](https://img.shields.io/npm/v/@endlessblink/like-i-said-v2.svg)](https://www.npmjs.com/package/@endlessblink/like-i-said-v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Turn Claude Desktop into your intelligent project manager. Track tasks, remember context, and maintain continuity across sessions.
+
+## 📚 Table of Contents
+
+- [What Makes This Different](#-what-makes-this-different)
+- [Quick Start](#-quick-start-30-seconds)
+- [Installation for Claude Code Users](#️-installation-for-claude-code-users)
+  - [For Cursor](#for-cursor)
+  - [For Windsurf](#for-windsurf)
+  - [For VS Code](#for-vs-code-with-continue)
+- [Running the Dashboard](#-running-the-dashboard)
+  - [Starting the Dashboard](#starting-the-dashboard)
+  - [Accessing the Dashboard](#accessing-the-dashboard)
+- [Key Features](#-key-features)
+- [Available Tools](#️-available-tools-23-total)
+- [How It Works](#-how-it-works)
+- [Advanced Usage](#-advanced-usage)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## 🎯 What Makes This Different
 
@@ -40,6 +61,90 @@ Close Claude completely, then reopen:
 "Show me everything related to authentication"
 ```
 
+## 🖥️ Installation for Claude Code Users
+
+### Prerequisites
+- Node.js 18+ installed on your system
+- Claude Code access (claude.ai/code)
+
+### For Cursor
+
+1. Create or edit `~/.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "like-i-said-v2": {
+      "command": "npx",
+      "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"]
+    }
+  }
+}
+```
+
+2. Restart Cursor and verify in Claude Code
+
+### For Windsurf
+
+1. Create or edit `~/.codeium/windsurf/mcp_config.json`:
+```json
+{
+  "mcp": {
+    "servers": {
+      "like-i-said-v2": {
+        "command": "npx",
+        "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"]
+      }
+    }
+  }
+}
+```
+
+2. Restart Windsurf and verify in Claude Code
+
+### For VS Code with Continue
+
+Follow the Continue extension's MCP configuration guide to add the server.
+
+## 📊 Running the Dashboard
+
+The dashboard provides a visual interface for managing memories and tasks.
+
+### Starting the Dashboard
+
+**Option 1: Using NPX (Recommended)**
+```bash
+npx @endlessblink/like-i-said-v2 like-i-said-v2 dashboard
+```
+
+**Option 2: Global Installation**
+```bash
+# Install globally
+npm install -g @endlessblink/like-i-said-v2
+
+# Run dashboard
+like-i-said-v2 dashboard
+```
+
+**Option 3: From Source**
+```bash
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+npm install
+npm run dev:full
+```
+
+### Accessing the Dashboard
+
+1. Open your browser to `http://localhost:3001`
+2. The dashboard shows all memories and tasks with real-time updates
+3. Features include:
+   - 📊 Task progress visualization
+   - 🔍 Search and filter memories
+   - 🔗 View task-memory relationships
+   - 📁 Manage projects
+   - 📤 Export/import data
+   - 📈 Analytics and insights
+
 ## 💪 Key Features
 
 ### Task Management That Understands You
@@ -58,7 +163,7 @@ Close Claude completely, then reopen:
 - **Dynamic path configuration** - "Change my task folder to D:\Projects"
 - **Environment variables** - Set MEMORY_DIR and TASK_DIR
 - **Windows optimized** - Full Windows path support
-- **Real-time dashboard** - Visual interface at http://localhost:5173
+- **Real-time dashboard** - Visual interface at http://localhost:3001
 
 ## 🛠️ Available Tools (23 Total)
 
@@ -80,6 +185,13 @@ Close Claude completely, then reopen:
 - `set_memory_path` - Claude can change where memories are stored
 - `set_task_path` - Claude can change where tasks are stored
 - `get_current_paths` - Check current storage locations
+
+### AI Enhancement Tools
+- `enhance_memory_metadata` - Generate titles and summaries
+- `batch_enhance_memories` - Bulk enhance multiple memories
+- `validate_task_workflow` - Check workflow validity
+- `get_automation_suggestions` - Get automation ideas
+- Plus 7 more enhancement tools...
 
 ## 📁 How It Works
 
@@ -148,6 +260,17 @@ Set environment variable before starting Claude:
 set DEBUG_MCP=true  # Windows
 export DEBUG_MCP=true  # Mac/Linux
 ```
+
+### Common Issues
+
+**Windows Path Issues:**
+- Use forward slashes: `C:/Users/name/memories`
+- Or escape backslashes: `C:\\Users\\name\\memories`
+
+**Port Conflicts:**
+- Dashboard API uses port 3001
+- Development UI uses port 5173
+- Change with PORT environment variable if needed
 
 ## 🤝 Contributing
 
