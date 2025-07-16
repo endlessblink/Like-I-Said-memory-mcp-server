@@ -81,6 +81,7 @@
     "test:data-issue": "node tests/debug-data-issue.js",
     "fix:paths": "node tests/fix-path-issue.js",
     "test:port-detection": "node tests/test-port-detection.js",
+    "test:robust-systems": "node tests/test-robust-systems.js",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:standalone": "node mcp-server-standalone.js",

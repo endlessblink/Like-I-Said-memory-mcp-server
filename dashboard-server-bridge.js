@@ -25,7 +25,7 @@ import { MemoryDeduplicator } from './lib/memory-deduplicator.js';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import yaml from 'js-yaml';
-import { findAvailablePort, writePortFile, cleanupPortFile } from './lib/port-finder.js';
+import { startServerWithValidation, cleanupPortFile } from './lib/robust-port-finder.js';
 import { PathSettings } from './lib/path-settings.js';
 import { FolderDiscovery } from './lib/folder-discovery.js';
 
@@ -1241,46 +1241,12 @@ class DashboardBridge {
         return res.status(400).json({ error: 'Both memory and task paths are required' });
       }
 
-      // Resolve and validate paths
-      const newMemoriesDir = path.resolve(memoryPath);
-      const newTasksDir = path.resolve(taskPath);
-      
-      // Check what exists before creating anything
-      console.log('📁 Checking paths:', {
-        memoriesExist: fs.existsSync(newMemoriesDir),
-        tasksExist: fs.existsSync(newTasksDir),
-        currentMemories: this.memoriesDir,
-        currentTasks: this.tasksDir
-      });
-      
-      // Ensure directories exist and are writable
-      const memResult = await this.pathSettings.ensureDirectory(newMemoriesDir);
-      if (!memResult.success) {
-        return res.status(400).json({ 
-          error: `Memory directory error: ${memResult.error}` 
-        });
-      }
-      
-      const taskResult = await this.pathSettings.ensureDirectory(newTasksDir);
-      if (!taskResult.success) {
-        return res.status(400).json({ 
-          error: `Task directory error: ${taskResult.error}` 
-        });
-      }
-      
-      // Save settings persistently
-      const saved = this.pathSettings.save({
-        memoriesPath: newMemoriesDir,
-        tasksPath: newTasksDir
-      });
-      
-      if (!saved) {
-        console.warn('Failed to save path settings, but continuing...');
-      }
+      // Use robust path update with validation
+      const updateResult = await this.pathSettings.safeUpdatePaths(memoryPath, taskPath);
       
       // Update runtime paths
-      this.memoriesDir = newMemoriesDir;
-      this.tasksDir = newTasksDir;
+      this.memoriesDir = updateResult.memories.path;
+      this.tasksDir = updateResult.tasks.path;
       
       // Update storage instances
       this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
@@ -1289,7 +1255,9 @@ class DashboardBridge {
       // Log the storage status
       console.log('📊 Storage reload status:', {
         memoriesCount: this.memoryStorage.getAllMemories().length,
-        tasksCount: this.taskStorage.getAllTasks().length
+        tasksCount: this.taskStorage.getAllTasks().length,
+        memoriesHasData: updateResult.memories.hasData,
+        tasksHasData: updateResult.tasks.hasData
       });
       
       // Restart file watchers
@@ -1302,14 +1270,18 @@ class DashboardBridge {
       res.json({
         success: true,
         paths: {
-          memories: this.memoriesDir,
-          tasks: this.tasksDir
+          memories: updateResult.memories,
+          tasks: updateResult.tasks
         },
-        message: 'Paths updated successfully and saved persistently'
+        backup: updateResult.backup,
+        message: 'Paths updated successfully with validation and backup'
       });
     } catch (error) {
       console.error('Error updating paths:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ 
+        error: error.message,
+        type: 'path_update_error'
+      });
     }
   }
 
@@ -3052,41 +3024,21 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
     // Initialize async components
     await this.setupFileWatcher();
     
-    return new Promise((resolve, reject) => {
-      const attemptListen = async (port) => {
-        // First check if port is available
-        const available = await findAvailablePort(port);
-        if (available !== port) {
-          console.log(`⚠️ Port ${port} is busy, trying ${available}...`);
-          port = available;
-        }
-        
-        // Update instance port before starting server
-        this.port = port;
-        
-        this.server.listen(port, '0.0.0.0', (err) => {
-          if (err) {
-            if (err.code === 'EADDRINUSE') {
-              console.log(`❌ Port ${port} still in use, trying next...`);
-              attemptListen(port + 1);
-            } else {
-              reject(err);
-            }
-          } else {
-            // Write port file only after successful startup
-            writePortFile(port);
-            console.log(`🌉 Dashboard Bridge Server running on port ${port}`);
-            console.log(`📊 Dashboard: http://localhost:${port}`);
-            console.log(`🔌 WebSocket: ws://localhost:${port}`);
-            console.log(`📁 Watching: ${path.resolve(this.memoriesDir)}`);
-            console.log(`🤖 Task automation enabled with file change monitoring`);
-            resolve();
-          }
-        });
-      };
+    try {
+      // Use robust port finder with validation
+      const result = await startServerWithValidation(this.server, this.port);
       
-      attemptListen(this.port);
-    });
+      // Update instance port after successful startup
+      this.port = result.port;
+      
+      console.log(`📁 Watching: ${path.resolve(this.memoriesDir)}`);
+      console.log(`🤖 Task automation enabled with file change monitoring`);
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ Failed to start server: ${error.message}`);
+      throw error;
+    }
   }
 
   stop() {
