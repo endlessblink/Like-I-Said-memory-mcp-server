@@ -64,7 +64,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:mcp": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}' | node server-markdown.js",
-    "test:api": "curl -s http://localhost:3001/api/status",
+    "test:api-curl": "curl -s http://localhost:3001/api/status",
     "test:syntax": "node tests/syntax-validation.js",
     "test:comprehensive": "node tests/comprehensive-mcp-test-suite.js",
     "test:protocol": "node tests/json-rpc-protocol-test.js",

@@ -3061,8 +3061,7 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
           port = available;
         }
         
-        // Update port file immediately
-        writePortFile(port);
+        // Update instance port before starting server
         this.port = port;
         
         this.server.listen(port, '0.0.0.0', (err) => {
@@ -3074,6 +3073,8 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
               reject(err);
             }
           } else {
+            // Write port file only after successful startup
+            writePortFile(port);
             console.log(`🌉 Dashboard Bridge Server running on port ${port}`);
             console.log(`📊 Dashboard: http://localhost:${port}`);
             console.log(`🔌 WebSocket: ws://localhost:${port}`);

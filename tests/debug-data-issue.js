@@ -156,6 +156,28 @@ async function checkStorageObjectsDirectly() {
 async function checkAPIEndpoints() {
   console.log('4️⃣ API Endpoints Check...\\n');
   
+  // Try different ports
+  const ports = [3001, 3002, 3003];
+  let workingPort = null;
+  
+  for (const port of ports) {
+    try {
+      const response = await fetch(`http://localhost:${port}/api/status`);
+      if (response.ok) {
+        workingPort = port;
+        console.log(`✅ Found API server on port ${port}`);
+        break;
+      }
+    } catch (error) {
+      console.log(`❌ Port ${port}: ${error.message}`);
+    }
+  }
+  
+  if (!workingPort) {
+    console.log('❌ No working API server found on ports 3001, 3002, or 3003');
+    return;
+  }
+  
   const endpoints = [
     { path: '/api/memories', name: 'Memories' },
     { path: '/api/tasks', name: 'Tasks' },
@@ -165,7 +187,7 @@ async function checkAPIEndpoints() {
   
   for (const endpoint of endpoints) {
     try {
-      const response = await fetch(`http://localhost:3001${endpoint.path}`);
+      const response = await fetch(`http://localhost:${workingPort}${endpoint.path}`);
       const data = await response.json();
       
       console.log(`📡 ${endpoint.name}:`);
@@ -208,8 +230,29 @@ async function diagnosePathMismatch() {
   // Check if the API server is pointing to empty directories
   // while data exists elsewhere
   
+  // Find working port first
+  const ports = [3001, 3002, 3003];
+  let workingPort = null;
+  
+  for (const port of ports) {
+    try {
+      const response = await fetch(`http://localhost:${port}/api/status`);
+      if (response.ok) {
+        workingPort = port;
+        break;
+      }
+    } catch (error) {
+      // Continue to next port
+    }
+  }
+  
+  if (!workingPort) {
+    console.log('❌ No working API server found for path diagnosis');
+    return;
+  }
+  
   try {
-    const pathsResponse = await fetch('http://localhost:3001/api/paths');
+    const pathsResponse = await fetch(`http://localhost:${workingPort}/api/paths`);
     const pathsData = await pathsResponse.json();
     
     const apiMemoryPath = pathsData.memories?.path;
