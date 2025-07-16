@@ -10,6 +10,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import safe area handling */
+@import './styles/safe-areas.css';
+
 /* Enhanced Loading Animations */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }

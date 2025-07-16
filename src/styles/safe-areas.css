@@ -1,0 +1,50 @@
+/* Safe area handling for mobile and desktop */
+:root {
+  /* Fallback values for browsers that don't support env() */
+  --safe-area-inset-top: 0px;
+  --safe-area-inset-right: 0px;
+  --safe-area-inset-bottom: 0px;
+  --safe-area-inset-left: 0px;
+  
+  /* Use env() values when available */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  
+  /* Account for Windows taskbar (typically 40px) */
+  --taskbar-height: 40px;
+}
+
+/* Apply safe areas to fixed bottom elements */
+.fixed-bottom,
+[class*="bottom-0"] {
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-bottom: max(var(--safe-area-inset-bottom), var(--taskbar-height));
+}
+
+/* Mobile navigation safe areas */
+@media (max-width: 768px) {
+  .mobile-nav,
+  .mobile-bottom-nav {
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-bottom: max(var(--safe-area-inset-bottom), 20px);
+  }
+}
+
+/* Settings panel specific fix */
+.settings-panel {
+  max-height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - var(--taskbar-height));
+  overflow-y: auto;
+}
+
+/* Ensure scrollable content doesn't go under taskbar */
+.main-content {
+  padding-bottom: var(--taskbar-height);
+}
+
+/* Dialog/Modal positioning */
+.dialog-content,
+[role="dialog"] {
+  max-height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - 80px);
+}
