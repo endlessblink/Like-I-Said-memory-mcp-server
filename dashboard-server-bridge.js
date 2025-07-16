@@ -1234,6 +1234,8 @@ class DashboardBridge {
     try {
       const { memoryPath, taskPath } = req.body;
       
+      console.log('📁 Path update request:', { memoryPath, taskPath });
+      
       // Validate paths
       if (!memoryPath || !taskPath) {
         return res.status(400).json({ error: 'Both memory and task paths are required' });
@@ -1242,6 +1244,14 @@ class DashboardBridge {
       // Resolve and validate paths
       const newMemoriesDir = path.resolve(memoryPath);
       const newTasksDir = path.resolve(taskPath);
+      
+      // Check what exists before creating anything
+      console.log('📁 Checking paths:', {
+        memoriesExist: fs.existsSync(newMemoriesDir),
+        tasksExist: fs.existsSync(newTasksDir),
+        currentMemories: this.memoriesDir,
+        currentTasks: this.tasksDir
+      });
       
       // Ensure directories exist and are writable
       const memResult = await this.pathSettings.ensureDirectory(newMemoriesDir);
@@ -1275,6 +1285,12 @@ class DashboardBridge {
       // Update storage instances
       this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
       this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
+      
+      // Log the storage status
+      console.log('📊 Storage reload status:', {
+        memoriesCount: this.memoryStorage.getAllMemories().length,
+        tasksCount: this.taskStorage.getAllTasks().length
+      });
       
       // Restart file watchers
       await this.setupFileWatcher();
