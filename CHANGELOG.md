@@ -5,6 +5,13 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.3] - 2025-07-16
+
+### Fixed
+- **Removed Debug Logging** - Removed console.error debug statements that could interfere with JSON-RPC protocol
+  - Debug messages now only appear when DEBUG_MCP environment variable is set
+  - This should fix issues where the server wouldn't connect after v2.6.2 update
+
 ## [2.6.2] - 2025-07-15
 
 ### Fixed

@@ -125,9 +125,11 @@ class MarkdownStorage {
       : resolvedBaseDir;
     
     if (!normalizedProjectDir.startsWith(normalizedBaseDir)) {
-      console.error(`[DEBUG] Path traversal check failed:`);
-      console.error(`[DEBUG] Project dir: ${normalizedProjectDir}`);
-      console.error(`[DEBUG] Base dir: ${normalizedBaseDir}`);
+      if (process.env.DEBUG_MCP) {
+        console.error(`[DEBUG] Path traversal check failed:`);
+        console.error(`[DEBUG] Project dir: ${normalizedProjectDir}`);
+        console.error(`[DEBUG] Base dir: ${normalizedBaseDir}`);
+      }
       throw new Error('Invalid project path - path traversal attempt detected');
     }
     
@@ -378,21 +380,16 @@ class MarkdownStorage {
       } else {
         // Create new memory file
         const projectDir = this.getProjectDir(memory.project);
-        console.error(`[DEBUG] Project directory: ${projectDir}`);
         const filename = this.generateFilename(memory);
-        console.error(`[DEBUG] Generated filename: ${filename}`);
         filepath = path.join(projectDir, filename);
-        console.error(`[DEBUG] Full filepath: ${filepath}`);
       }
       
       const markdownContent = this.generateMarkdownContent(memory);
-      console.error(`[DEBUG] Markdown content length: ${markdownContent.length}`);
       fs.writeFileSync(filepath, markdownContent, 'utf8');
-      console.error(`[DEBUG] File written successfully`);
       
       return filepath;
     } catch (error) {
-      console.error(`[ERROR] saveMemory failed:`, error);
+      if (process.env.DEBUG_MCP) console.error(`[ERROR] saveMemory failed:`, error);
       throw error;
     }
   }
@@ -1427,9 +1424,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let filepath;
         try {
           filepath = await storage.saveMemory(memory);
-          console.error(`[DEBUG] Memory saved successfully to: ${filepath}`);
         } catch (saveError) {
-          console.error(`[ERROR] Failed to save memory:`, saveError);
           throw new Error(`Failed to save memory: ${saveError.message}`);
         }
         
