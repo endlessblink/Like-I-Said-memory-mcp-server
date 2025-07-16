@@ -10,8 +10,9 @@ Turn Claude Desktop into your intelligent project manager. Track tasks, remember
 ## 📚 Table of Contents
 
 - [What Makes This Different](#-what-makes-this-different)
-- [Quick Start](#-quick-start-30-seconds)
+- [Quick Start (Claude Desktop)](#-quick-start-30-seconds)
 - [Installation for Other MCP Clients](#️-installation-for-other-mcp-clients)
+  - [Claude Code (Web)](#for-claude-code-web-interface)
   - [Cursor IDE](#for-cursor)
   - [Windsurf Editor](#for-windsurf)
   - [VS Code with Continue](#for-vs-code-with-continue)
@@ -38,7 +39,7 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 
 ## 🚀 Quick Start (30 seconds)
 
-### For Claude Desktop Users
+### For Claude Desktop Users (Recommended)
 
 ```bash
 npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 install
@@ -63,9 +64,14 @@ Close Claude completely, then reopen:
 
 ## 🖥️ Installation for Other MCP Clients
 
+### For Claude Code (Web Interface)
+
+Claude Code (claude.ai/code) requires using an IDE with MCP support. Choose one of the following:
+
 ### Prerequisites
 - Node.js 18+ installed on your system
 - Claude Code access (claude.ai/code)
+- One of the supported IDEs below
 
 ### For Cursor
 
