@@ -1,3 +1,10 @@
+# Large installer files
+dist-installer-*/
+*.exe
+*-linux
+*-macos
+windows-dashboard-installer/
+
 # Dependencies
 node_modules/
 pnpm-lock.yaml
