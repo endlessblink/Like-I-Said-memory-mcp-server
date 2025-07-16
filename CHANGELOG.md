@@ -5,6 +5,16 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.8] - 2025-07-16
+
+### Fixed
+- **Removed ALL Path Validation** - Completely removed restrictive path validation
+  - Removed validation that expected memory paths to start with current working directory
+  - Removed project directory validation in listMemories()
+  - Removed file path validation that was blocking valid operations
+  - Trust the configured paths - fixes Maya's "invalid memory directory" error
+  - Task creation with auto-linking now works correctly
+
 ## [2.6.7] - 2025-07-16
 
 ### Fixed

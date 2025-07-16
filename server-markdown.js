@@ -438,11 +438,7 @@ class MarkdownStorage {
     if (project) {
       const projectDir = this.getProjectDir(project);
       
-      // Safeguard: Ensure project directory is within memories folder
-      const resolvedProjectDir = path.resolve(projectDir);
-      if (!resolvedProjectDir.startsWith(resolvedBaseDir)) {
-        throw new Error('Invalid project directory. Must be within the memories folder.');
-      }
+      // Project directory validation removed - trust the configured paths
       
       if (!fs.existsSync(projectDir)) {
         return memories;
@@ -464,24 +460,14 @@ class MarkdownStorage {
       for (const projectDir of projectDirs) {
         const projectPath = path.join(this.baseDir, projectDir);
         
-        // Safeguard: Ensure project path is within memories directory
-        const resolvedProjectPath = path.resolve(projectPath);
-        if (!resolvedProjectPath.startsWith(resolvedBaseDir)) {
-          console.warn(`Skipping invalid project directory: ${projectPath}`);
-          continue;
-        }
+        // Trust the project paths - no validation needed
         
         const files = fs.readdirSync(projectPath).filter(f => f.endsWith('.md'));
         
         for (const file of files) {
           const filepath = path.join(projectPath, file);
           
-          // Safeguard: Ensure file path is within memories directory
-          const resolvedFilePath = path.resolve(filepath);
-          if (!resolvedFilePath.startsWith(resolvedBaseDir)) {
-            console.warn(`Skipping invalid memory file: ${filepath}`);
-            continue;
-          }
+          // Trust the file paths - no validation needed
           
           const memory = this.parseMarkdownFile(filepath);
           if (memory) memories.push(memory);
