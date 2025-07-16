@@ -427,6 +427,10 @@ function AppContent() {
             console.log('Current memories count before refresh:', memoriesRef.current.length)
             // Refresh memories when files change
             loadMemoriesRef.current?.(true)
+          } else if (message.type === 'task_change') {
+            console.log(`📋 Task file ${message.data.action}: ${message.data.file}`)
+            // Refresh tasks when task files change
+            loadTasks()
           }
         } catch (error) {
           console.warn('Failed to parse WebSocket message:', error)
@@ -477,15 +481,14 @@ function AppContent() {
     loadMemories()
     loadTasks()
     loadSettings()
-    // Temporarily disable WebSocket to stop connection flood
     // Set up WebSocket for real-time updates with slight delay to ensure server is ready
-    // const wsTimeout = setTimeout(() => {
-    //   setupWebSocket()
-    // }, 1000)
+    const wsTimeout = setTimeout(() => {
+      setupWebSocket()
+    }, 1000)
     
     // Cleanup function to close WebSocket on unmount
     return () => {
-      // clearTimeout(wsTimeout)
+      clearTimeout(wsTimeout)
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -2046,7 +2049,10 @@ Respond with JSON format:
 
             {currentTab === "tasks" && (
               <TaskManagement
+                tasks={tasks}
+                isLoading={isLoadingTasks}
                 currentProject={currentProject}
+                onTasksChange={loadTasks}
               />
             )}
 

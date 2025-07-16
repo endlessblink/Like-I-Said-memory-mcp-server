@@ -66,10 +66,13 @@ interface TaskContext {
 }
 
 interface TaskManagementProps {
+  tasks: Task[]
+  isLoading: boolean
   currentProject?: string
+  onTasksChange?: () => void
 }
 
-export function TaskManagement({ currentProject }: TaskManagementProps) {
+export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, currentProject, onTasksChange }: TaskManagementProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -317,7 +320,15 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
         })
         setSuggestedMemories([])
         setShowCreateDialog(false)
+        if (onTasksChange) {
+          await onTasksChange()
+        } else {
+          if (onTasksChange) {
+        await onTasksChange()
+      } else {
         await loadTasks()
+      }
+        }
       } else {
         console.warn('Task creation not available yet')
       }
@@ -339,7 +350,15 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       })
 
       if (response.ok) {
+        if (onTasksChange) {
+          await onTasksChange()
+        } else {
+          if (onTasksChange) {
+        await onTasksChange()
+      } else {
         await loadTasks()
+      }
+        }
       }
     } catch (error) {
       console.error('Failed to update task:', error)
@@ -358,7 +377,15 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
       })
 
       if (response.ok) {
+        if (onTasksChange) {
+          await onTasksChange()
+        } else {
+          if (onTasksChange) {
+        await onTasksChange()
+      } else {
         await loadTasks()
+      }
+        }
         if (selectedTask?.id === taskId) {
           setSelectedTask(null)
           setTaskContext(null)
@@ -429,7 +456,11 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
           if (!response.ok) throw new Error('Update failed')
         }
       }
-      await loadTasks()
+      if (onTasksChange) {
+        await onTasksChange()
+      } else {
+        await loadTasks()
+      }
       setSelectedTasks(new Set())
       setShowBulkDialog(false)
       setBulkValue('')
@@ -464,8 +495,17 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
     await getTaskContext(task.id)
   }
 
+  // Sync with prop tasks
   useEffect(() => {
-    loadTasks()
+    setTasks(propTasks || [])
+    setIsLoading(propIsLoading)
+  }, [propTasks, propIsLoading])
+
+  useEffect(() => {
+    // Only load tasks if not using prop tasks
+    if (!propTasks || propTasks.length === 0) {
+      loadTasks()
+    }
   }, [filter, currentProject])
 
   // Auto-preview memory suggestions when task details change
@@ -884,7 +924,7 @@ export function TaskManagement({ currentProject }: TaskManagementProps) {
           {filteredTasks.length} tasks
         </div>
 
-        <Button variant="outline" onClick={loadTasks} className="text-gray-300">
+        <Button variant="outline" onClick={onTasksChange || loadTasks} className="text-gray-300">
           🔄 Refresh
         </Button>
       </div>
