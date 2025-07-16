@@ -762,7 +762,7 @@ async function quickInstall() {
           // NPX mode - run directly from npm package
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
             command: 'npx',
-            args: ['-p', '@endlessblink/like-i-said-v2@2.6.4', 'like-i-said-v2', 'start'],
+            args: ['-p', '@endlessblink/like-i-said-v2@2.6.5', 'like-i-said-v2', 'start'],
             env: {
               MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
               TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',

@@ -42,10 +42,13 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 ### For Claude Desktop Users (Recommended)
 
 ```bash
-npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@2.6.5 like-i-said-v2 install
 ```
 
-That's it! Restart Claude Desktop and start using it.
+This will open an installer menu:
+1. **Choose option 1** - "Auto-setup (Recommended)" 
+2. The installer will automatically configure Claude Desktop
+3. Restart Claude Desktop when installation completes
 
 ### Test It's Working
 
@@ -119,7 +122,7 @@ The dashboard provides a visual interface for managing memories and tasks.
 
 **Option 1: Using NPX (Recommended)**
 ```bash
-npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 dashboard
+npx @endlessblink/like-i-said-v2@2.6.5 like-i-said-v2 dashboard
 ```
 
 **Option 2: Global Installation**
@@ -249,10 +252,11 @@ Each task tracks:
 ### "Server not connecting"
 ```bash
 # Update to latest version
-npm install -g @endlessblink/like-i-said-v2@2.6.3
+npm install -g @endlessblink/like-i-said-v2@2.6.5
 
 # Reinstall in Claude Desktop
-npx @endlessblink/like-i-said-v2@2.6.3 like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@2.6.5 like-i-said-v2 install
+# Choose option 1 when the menu appears
 ```
 
 ### "Can't find memories after path change"

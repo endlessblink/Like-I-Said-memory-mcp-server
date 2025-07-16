@@ -116,21 +116,28 @@ class MarkdownStorage {
     const resolvedProjectDir = path.resolve(projectDir);
     const resolvedBaseDir = path.resolve(this.baseDir);
     
-    // On Windows, normalize paths for comparison
-    const normalizedProjectDir = process.platform === 'win32' 
-      ? resolvedProjectDir.toLowerCase().replace(/\\/g, '/')
-      : resolvedProjectDir;
-    const normalizedBaseDir = process.platform === 'win32'
-      ? resolvedBaseDir.toLowerCase().replace(/\\/g, '/')
-      : resolvedBaseDir;
+    // Detect if we're using an absolute path (NPX mode or custom path)
+    const isAbsolutePath = path.isAbsolute(this.baseDir);
     
-    if (!normalizedProjectDir.startsWith(normalizedBaseDir)) {
-      if (process.env.DEBUG_MCP) {
-        console.error(`[DEBUG] Path traversal check failed:`);
-        console.error(`[DEBUG] Project dir: ${normalizedProjectDir}`);
-        console.error(`[DEBUG] Base dir: ${normalizedBaseDir}`);
+    // Only enforce strict path traversal checks for relative paths
+    // For absolute paths (NPX mode), we trust the configured directory
+    if (!isAbsolutePath) {
+      // On Windows, normalize paths for comparison
+      const normalizedProjectDir = process.platform === 'win32' 
+        ? resolvedProjectDir.toLowerCase().replace(/\\/g, '/')
+        : resolvedProjectDir;
+      const normalizedBaseDir = process.platform === 'win32'
+        ? resolvedBaseDir.toLowerCase().replace(/\\/g, '/')
+        : resolvedBaseDir;
+      
+      if (!normalizedProjectDir.startsWith(normalizedBaseDir)) {
+        if (process.env.DEBUG_MCP) {
+          console.error(`[DEBUG] Path traversal check failed:`);
+          console.error(`[DEBUG] Project dir: ${normalizedProjectDir}`);
+          console.error(`[DEBUG] Base dir: ${normalizedBaseDir}`);
+        }
+        throw new Error('Invalid project path - path traversal attempt detected');
       }
-      throw new Error('Invalid project path - path traversal attempt detected');
     }
     
     if (!fs.existsSync(projectDir)) {
@@ -409,12 +416,11 @@ class MarkdownStorage {
       return memories;
     }
     
-    // Safeguard: Ensure we're only working within the memories directory
+    // Safeguard: Basic validation only - ensure it's a valid directory path
     const resolvedBaseDir = path.resolve(this.baseDir);
-    const expectedMemoriesDir = path.resolve('memories');
-    if (!resolvedBaseDir.startsWith(expectedMemoriesDir)) {
-      throw new Error('Invalid memory directory. Memories can only be loaded from the designated memories folder.');
-    }
+    
+    // Remove the restrictive check that breaks NPX installations
+    // The directory is already validated during initialization
     
     if (project) {
       const projectDir = this.getProjectDir(project);

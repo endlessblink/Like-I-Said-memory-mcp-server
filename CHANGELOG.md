@@ -5,6 +5,15 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.5] - 2025-07-16
+
+### Fixed
+- **Removed Hardcoded Path Check** - Fixed restrictive memory directory validation breaking NPX installations
+  - The system was checking if memory paths started with a relative 'memories' directory
+  - This check always failed in NPX mode where paths are absolute (e.g., C:\Users\User\like-i-said-mcp\memories)
+  - Removed the restrictive validation that prevented memory and task creation
+  - Now works correctly with both relative and absolute paths
+
 ## [2.6.4] - 2025-07-16
 
 ### Fixed
