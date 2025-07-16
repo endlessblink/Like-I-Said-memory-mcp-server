@@ -3036,12 +3036,39 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
     // Initialize async components
     await this.setupFileWatcher();
     
-    this.server.listen(this.port, () => {
-      console.log(`🌉 Dashboard Bridge Server running on port ${this.port}`);
-      console.log(`📊 Dashboard: http://localhost:${this.port}`);
-      console.log(`🔌 WebSocket: ws://localhost:${this.port}`);
-      console.log(`📁 Watching: ${path.resolve(this.memoriesDir)}`);
-      console.log(`🤖 Task automation enabled with file change monitoring`);
+    return new Promise((resolve, reject) => {
+      const attemptListen = async (port) => {
+        // First check if port is available
+        const available = await findAvailablePort(port);
+        if (available !== port) {
+          console.log(`⚠️ Port ${port} is busy, trying ${available}...`);
+          port = available;
+        }
+        
+        // Update port file immediately
+        writePortFile(port);
+        this.port = port;
+        
+        this.server.listen(port, '0.0.0.0', (err) => {
+          if (err) {
+            if (err.code === 'EADDRINUSE') {
+              console.log(`❌ Port ${port} still in use, trying next...`);
+              attemptListen(port + 1);
+            } else {
+              reject(err);
+            }
+          } else {
+            console.log(`🌉 Dashboard Bridge Server running on port ${port}`);
+            console.log(`📊 Dashboard: http://localhost:${port}`);
+            console.log(`🔌 WebSocket: ws://localhost:${port}`);
+            console.log(`📁 Watching: ${path.resolve(this.memoriesDir)}`);
+            console.log(`🤖 Task automation enabled with file change monitoring`);
+            resolve();
+          }
+        });
+      };
+      
+      attemptListen(this.port);
     });
   }
 
@@ -3064,15 +3091,8 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
 async function startServer() {
   const preferredPort = parseInt(process.env.PORT || '3001');
   try {
-    // Find an available port
-    const port = await findAvailablePort(preferredPort);
-    console.log(`🔍 Found available port: ${port}`);
-    
-    // Write port to file for frontend discovery
-    writePortFile(port);
-    
-    // Start the server
-    const bridge = new DashboardBridge(port);
+    // Start the server - it will find its own port if needed
+    const bridge = new DashboardBridge(preferredPort);
     await bridge.start();
     
     // Cleanup on shutdown
