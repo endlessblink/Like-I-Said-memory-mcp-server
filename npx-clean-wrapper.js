@@ -41,7 +41,15 @@ process.env.NO_COLOR = '1';
 process.env.FORCE_COLOR = '0';
 
 // Import and run the actual server
-import('./server-markdown.js').catch(err => {
+// Use dynamic path resolution to find the server file
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const serverPath = join(__dirname, 'server-markdown.js');
+
+import(serverPath).catch(err => {
   // Silent error - don't output anything that could corrupt JSON-RPC
   process.exit(1);
 });
