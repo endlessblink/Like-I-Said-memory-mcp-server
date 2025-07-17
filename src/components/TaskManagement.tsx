@@ -23,6 +23,7 @@ import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
 import { MemoryViewModal } from './MemoryViewModal'
 import { Memory } from '@/types'
 import { Clock, Edit, FileText, Users, Eye } from 'lucide-react'
+import { formatDistanceToNow } from '@/utils/helpers'
 
 interface Task {
   id: string
@@ -1027,7 +1028,7 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                   </div>
 
                   {/* Status columns for this project */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {Object.entries(projectTasks).map(([status, statusTasks]) => (
                       <div key={`${projectName}-${status}`} className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -1040,158 +1041,142 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                           </Badge>
                         </div>
                         
-                        <div className="space-y-4 md:space-y-6">
+                        <div className="space-y-3">
                           {statusTasks.map((task) => (
                             <div
                               key={task.id}
-                              className={`card-glass ${getPriorityClass(task.priority)} group cursor-pointer overflow-hidden w-full min-h-[200px] sm:min-h-[220px] h-auto flex ${selectedTasks.has(task.id) ? 'ring-2 ring-blue-500 border-blue-400' : ''}`}
+                              className={`
+                                card-glass ${getPriorityClass(task.priority)} group cursor-pointer overflow-hidden
+                                ${selectedTasks.has(task.id) ? 'ring-2 ring-blue-500 border-blue-400' : ''}
+                                w-full h-[260px] flex flex-col
+                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900
+                              `}
                               onClick={() => handleTaskClick(task)}
+                              tabIndex={0}
+                              role="article"
+                              aria-label={`Task: ${task.title} - ${task.status}`}
                             >
-                              {/* Selection Checkbox */}
-                              <div className="flex-shrink-0 p-4 flex items-start">
+                              {/* Selection Checkbox - Top Row */}
+                              <div className="absolute top-3 left-3 z-10">
                                 <input
                                   type="checkbox"
                                   checked={selectedTasks.has(task.id)}
                                   onChange={() => handleTaskSelect(task.id)}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="w-4 h-4 mt-0.5 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 focus:ring-2 backdrop-blur-sm cursor-pointer"
+                                  className="w-5 h-5 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 backdrop-blur-sm cursor-pointer touch-manipulation"
+                                  aria-label={`Select task: ${task.title}`}
                                 />
                               </div>
 
-                              <div className="flex-1 flex flex-col h-full pr-4 py-4">
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-3 flex-shrink-0">
-                                  <div className="flex flex-wrap items-center gap-2 flex-1">
-                                    {/* Category Badge */}
-                                    {task.category && (
-                                      <span className={getCategoryClass(task.category)}>
-                                        {task.category}
-                                      </span>
-                                    )}
-                                    
-                                    {/* Project Tag */}
-                                    {task.project && task.project !== 'default' && (
-                                      <span className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full flex items-center gap-1" title={`Project: ${task.project}`}>
-                                        <span>📁</span>
-                                        <span className="max-w-[80px] truncate">{task.project}</span>
-                                      </span>
-                                    )}
-                                    
+                              {/* Card Content */}
+                              <div className="flex flex-col h-full p-4 relative">
+                                {/* Header with badges */}
+                                <div className="flex items-start justify-between mb-3 flex-shrink-0 ml-6 -mt-1">
+                                  <div className="flex items-start flex-wrap gap-1.5 flex-1 min-w-0">
                                     {/* Status Badge */}
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${getStatusColor(task.status)}`}>
-                                      <StatusIcon status={task.status} showTooltip={true} size="sm" className="inline" /> {task.status.replace('_', ' ')}
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-2xs font-semibold rounded-md ${getStatusColor(task.status)}`}>
+                                      <StatusIcon status={task.status} showTooltip={false} size="sm" />
+                                      {task.status.replace('_', ' ').toUpperCase()}
                                     </span>
                                     
                                     {/* Priority Badge */}
-                                    <span className={getPriorityBadge(task.priority)}>
-                                      {task.priority.toUpperCase()}
+                                    <span className={`inline-flex items-center px-2 py-1 text-2xs font-semibold rounded-md ${
+                                      task.priority === 'urgent' ? 'bg-red-700/50 text-red-300' :
+                                      task.priority === 'high' ? 'bg-orange-700/50 text-orange-300' :
+                                      task.priority === 'medium' ? 'bg-yellow-700/50 text-yellow-300' :
+                                      'bg-gray-700/50 text-gray-300'
+                                    }`}>
+                                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                                     </span>
                                   </div>
 
-                                  {/* Action Buttons and Serial */}
-                                  <div className="flex items-center gap-2">
-                                    {/* Action buttons - always visible on mobile, hover-visible on desktop */}
-                                    <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          handleTaskClick(task)
-                                        }}
-                                        className="p-1.5 hover:bg-blue-500/20 hover:text-blue-300 rounded transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                                        title="Edit task"
-                                        aria-label={`Edit task: ${task.title}`}
-                                      >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          if (confirm(`Delete task "${task.title}"?`)) {
-                                            deleteTask(task.id)
-                                          }
-                                        }}
-                                        className="p-1.5 hover:bg-red-500/20 hover:text-red-300 rounded transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                                        title="Delete task"
-                                        aria-label={`Delete task: ${task.title}`}
-                                      >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    
-                                    {/* Serial number */}
-                                    <span className="text-xs text-gray-500 font-mono flex-shrink-0">
-                                      {task.serial}
-                                    </span>
+                                  {/* Action Buttons */}
+                                  <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleTaskClick(task)
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                                      aria-label={`Edit task: ${task.title}`}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </button>
                                   </div>
                                 </div>
 
-                                {/* Title and Description */}
-                                <div className="flex-1 min-h-0 mb-3">
-                                  <h3 className="text-card-title mb-2 leading-tight line-clamp-2">
-                                    {task.title}
+                                {/* Title */}
+                                <div className="flex-shrink-0 mb-2">
+                                  <h3 className="text-base font-semibold leading-tight text-white">
+                                    <div className="line-clamp-2 break-words">
+                                      {task.title}
+                                    </div>
                                   </h3>
-                                  
-                                  {task.description && (
-                                    <div className="text-card-description leading-relaxed line-clamp-2">
-                                      {task.description}
-                                    </div>
-                                  )}
                                 </div>
-                                {/* Tags */}
+
+                                {/* Description - Fixed height container */}
+                                <div className="flex-1 mb-4 min-h-0 relative z-10">
+                                  <div className="text-sm text-gray-300 leading-relaxed overflow-hidden" style={{ maxHeight: '4.5rem' }}>
+                                    <div className="line-clamp-3 break-words">
+                                      {task.description || 'No description provided'}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Tags - Fixed position */}
                                 {task.tags && task.tags.length > 0 && (
-                                  <div className="mt-auto mb-3 flex-shrink-0">
-                                    <div className="flex flex-wrap gap-1">
-                                      {(() => {
-                                        const maxVisibleTags = 4
-                                        const displayTags = task.tags.slice(0, maxVisibleTags)
-                                        const remainingCount = Math.max(0, task.tags.length - maxVisibleTags)
-                                        
-                                        return (
-                                          <>
-                                            {displayTags.map((tag, i) => (
-                                              <span key={i} className="inline-flex items-center text-2xs bg-white/5 text-gray-300 border border-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap" title={tag}>
-                                                #{tag}
-                                              </span>
-                                            ))}
-                                            {remainingCount > 0 && (
-                                              <span className="inline-flex items-center text-2xs bg-white/10 text-gray-400 border border-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap" title={`${remainingCount} more tags: ${task.tags.slice(maxVisibleTags).join(', ')}`}>
-                                                +{remainingCount}
-                                              </span>
-                                            )}
-                                          </>
-                                        )
-                                      })()}
+                                  <div className="flex-shrink-0 mb-3 h-6 overflow-hidden relative z-20">
+                                    <div className="flex items-center gap-1 h-full">
+                                      {task.tags.slice(0, 3).map((tag, index) => (
+                                        <span 
+                                          key={`${tag}-${index}`} 
+                                          className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[80px] truncate z-20" 
+                                          title={`#${tag}`}
+                                        >
+                                          #{tag.length > 10 ? tag.substring(0, 10) + '...' : tag}
+                                        </span>
+                                      ))}
+                                      {task.tags.length > 3 && (
+                                        <span 
+                                          className="inline-flex items-center text-2xs bg-gray-600/90 text-gray-300 px-1.5 py-0.5 rounded-sm font-medium whitespace-nowrap z-20" 
+                                          title={`${task.tags.length - 3} more tags: ${task.tags.slice(3).join(', ')}`}
+                                        >
+                                          +{task.tags.length - 3}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 )}
 
                                 {/* Footer */}
-                                <div className="flex items-center justify-between text-card-meta mt-auto pt-2 border-t border-white/10 flex-shrink-0">
-                                  <div className="flex items-center gap-3">
-                                    {/* Memory connections */}
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-600/30 flex-shrink-0 h-8">
+                                  <div className="flex items-center gap-2 text-2xs text-gray-500 min-w-0 flex-1">
+                                    {/* Last Modified */}
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <Clock className="h-3 w-3" />
+                                      <span className="whitespace-nowrap">{formatDistanceToNow(new Date(task.updated))}</span>
+                                    </div>
+                                    
+                                    {/* Memory Connections */}
                                     {task.memory_connections && task.memory_connections.length > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-purple-400 text-xs">🧠</span>
-                                        <span className="text-2xs">{task.memory_connections.length}</span>
+                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                        <FileText className="h-3 w-3 text-purple-400" />
+                                        <span>{task.memory_connections.length}</span>
                                       </div>
                                     )}
                                     
                                     {/* Subtasks */}
                                     {task.subtasks && task.subtasks.length > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-blue-400 text-xs">📋</span>
-                                        <span className="text-2xs">{task.subtasks.length}</span>
+                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                        <Users className="h-3 w-3 text-blue-400" />
+                                        <span>{task.subtasks.length}</span>
                                       </div>
                                     )}
                                   </div>
 
-                                  {/* Time */}
-                                  <div className="text-2xs text-gray-500">
-                                    {formatRelativeTime(task.updated)}
+                                  {/* Serial Number */}
+                                  <div className="text-2xs text-gray-500 font-mono flex-shrink-0">
+                                    {task.serial}
                                   </div>
                                 </div>
                               </div>
@@ -1286,7 +1271,7 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                 {archivedTasks.map((task) => (
                   <div
                     key={task.id}
-                    className={`card-glass ${getPriorityClass(task.priority)} group cursor-pointer overflow-hidden w-full min-h-[200px] h-auto flex ${selectedTasks.has(task.id) ? 'ring-2 ring-green-500 border-green-400' : ''}`}
+                    className={`card-glass ${getPriorityClass(task.priority)} group cursor-pointer overflow-hidden w-full min-h-[240px] h-auto flex ${selectedTasks.has(task.id) ? 'ring-2 ring-green-500 border-green-400' : ''}`}
                     onClick={() => handleTaskClick(task)}
                   >
                     {/* Selection Checkbox */}
@@ -1300,9 +1285,9 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                       />
                     </div>
 
-                    <div className="flex-1 flex flex-col h-full pr-4 py-4">
+                    <div className="flex-1 flex flex-col h-full pr-4 py-4 gap-3" style={{ minHeight: 0, maxHeight: '100%' }}>
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-3 flex-shrink-0">
+                      <div className="flex items-start justify-between mb-2 flex-shrink-0">
                         <div className="flex flex-wrap items-center gap-2 flex-1">
                           {/* Category Badge */}
                           {task.category && (
@@ -1332,13 +1317,13 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                       </div>
 
                       {/* Title */}
-                      <h4 className="font-medium text-white mb-2 line-clamp-2 group-hover:text-blue-200 transition-colors duration-200">
+                      <h4 className="font-medium text-white task-card-title mb-2 line-clamp-3 group-hover:text-blue-200 transition-colors duration-200">
                         {task.title}
                       </h4>
 
                       {/* Description */}
                       {task.description && (
-                        <p className="text-gray-400 text-sm line-clamp-3 mb-3 flex-1">
+                        <p className="text-gray-400 text-sm task-card-description line-clamp-3 mb-2 flex-1">
                           {task.description}
                         </p>
                       )}
@@ -1370,70 +1355,57 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
         </TabsContent>
       </Tabs>
 
-      {/* Task Detail Modal */}
+      {/* Task Detail Modal - Clean Recreation */}
       {selectedTask && (
         <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader className="pb-4 border-b border-gray-700">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <DialogTitle className="flex items-center gap-3 text-xl font-bold mb-2">
-                    <StatusIcon status={selectedTask.status} showTooltip={true} size="lg" />
-                    <span className="truncate">{selectedTask.title}</span>
-                  </DialogTitle>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Badge variant="outline" className="text-xs font-mono">
-                      {selectedTask.serial}
-                    </Badge>
-                    <span className="text-gray-400">•</span>
-                    <div className="flex items-center gap-1 text-gray-400">
-                      <Clock className="w-3 h-3" />
-                      <span>Created {formatRelativeTime(selectedTask.created)}</span>
-                    </div>
-                    {selectedTask.updated !== selectedTask.created && (
-                      <>
-                        <span className="text-gray-400">•</span>
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <Edit className="w-3 h-3" />
-                          <span>Updated {formatRelativeTime(selectedTask.updated)}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 ml-4">
+          <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogHeader className="pb-4 border-b border-gray-700 flex-shrink-0">
+              <DialogTitle className="sr-only">Task Details: {selectedTask.title}</DialogTitle>
+              
+              {/* Title and Status Row */}
+              <div className="flex items-center gap-3 mb-3">
+                <StatusIcon status={selectedTask.status} showTooltip={false} size="lg" />
+                <h2 className="text-lg font-semibold text-white flex-1 truncate">
+                  {selectedTask.title}
+                </h2>
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <Badge className={getPriorityBadge(selectedTask.priority)}>
                     {selectedTask.priority.toUpperCase()}
                   </Badge>
-                  <Badge className={getCategoryClass(selectedTask.category || 'personal')}>
-                    {selectedTask.category || 'None'}
-                  </Badge>
+                  {selectedTask.category && (
+                    <Badge className={getCategoryClass(selectedTask.category)}>
+                      {selectedTask.category.toUpperCase()}
+                    </Badge>
+                  )}
                 </div>
               </div>
               
-              <div className="mt-3 text-base">
-                <div className="flex items-center gap-4 text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>📁 {selectedTask.project || 'No project'}</span>
-                  </div>
-                  {selectedTask.memory_connections && selectedTask.memory_connections.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      <span>🧠 {selectedTask.memory_connections.length} linked memor{selectedTask.memory_connections.length === 1 ? 'y' : 'ies'}</span>
-                    </div>
-                  )}
-                  {selectedTask.tags && selectedTask.tags.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span>🏷️ {selectedTask.tags.length} tag{selectedTask.tags.length === 1 ? '' : 's'}</span>
-                    </div>
-                  )}
-                </div>
+              {/* Meta Information Row */}
+              <div className="flex items-center gap-3 text-sm text-gray-300">
+                <Badge variant="outline" className="text-xs font-mono">
+                  {selectedTask.serial}
+                </Badge>
+                <span className="text-gray-400">•</span>
+                <span>{formatRelativeTime(selectedTask.created)} ago</span>
+                {selectedTask.memory_connections && selectedTask.memory_connections.length > 0 && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span>🧠 {selectedTask.memory_connections.length} memories</span>
+                  </>
+                )}
+                {selectedTask.tags && selectedTask.tags.length > 0 && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span>🏷️ {selectedTask.tags.length} tags</span>
+                  </>
+                )}
+                <span className="text-gray-400">•</span>
+                <span>📁 {selectedTask.project || 'default'}</span>
               </div>
             </DialogHeader>
             
-            <div className="space-y-6">
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto space-y-6 py-4">
               {/* Quick Actions and Status */}
               {selectedTask.status !== 'done' && (
                 <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">

@@ -319,10 +319,10 @@ export function MemoryCard({
       )}
 
       {/* Card Content */}
-      <div className="flex-1 flex flex-col h-full p-4 relative">
+      <div className="flex flex-col h-full p-4 relative">
         {/* Header with badges */}
-        <div className={`flex items-start justify-between mb-4 flex-shrink-0 ${onSelect ? 'ml-6' : ''}`}>
-          <div className="flex items-center flex-wrap gap-1.5 flex-1 min-w-0">
+        <div className={`flex items-start justify-between mb-3 flex-shrink-0 ${onSelect ? 'ml-6' : ''} -mt-1`}>
+          <div className="flex items-start flex-wrap gap-1.5 flex-1 min-w-0">
             {/* Category Badge */}
             {memory.category && (
               <span className={`${getCategoryClass(memory.category)} text-2xs px-2 py-1 rounded-md font-medium`}>
@@ -408,24 +408,25 @@ export function MemoryCard({
           </div>
         </div>
 
-        {/* Title and Summary */}
-        <div className="flex-1 min-h-0 mb-3">
-          {/* Title */}
-          <h3 className="text-base font-semibold mb-2 leading-tight text-white overflow-hidden">
+        {/* Title */}
+        <div className="flex-shrink-0 mb-2">
+          <h3 className="text-base font-semibold leading-tight text-white">
             <div className="line-clamp-2 break-words">
               {extractTitle(memory.content, memory)}
             </div>
           </h3>
-          
-          {/* Summary */}
-          <div className="text-sm text-gray-300 leading-relaxed overflow-hidden">
+        </div>
+
+        {/* Summary - Fixed height container */}
+        <div className="flex-1 mb-4 min-h-0 relative z-10">
+          <div className="text-sm text-gray-300 leading-relaxed overflow-hidden" style={{ maxHeight: '4.5rem' }}>
             <div className="line-clamp-3 break-words">
               {generateSummary(memory.content, memory)}
             </div>
           </div>
         </div>
 
-        {/* Tags */}
+        {/* Tags - Fixed position */}
         {(() => {
           const visibleTags = extractVisibleTags(memory)
           const maxVisibleTags = 3
@@ -433,12 +434,12 @@ export function MemoryCard({
           const remainingCount = Math.max(0, visibleTags.length - maxVisibleTags)
           
           return visibleTags.length > 0 && (
-            <div className="mb-3 flex-shrink-0 h-8 overflow-hidden">
-              <div className="flex items-start gap-1 h-full">
+            <div className="flex-shrink-0 mb-3 h-6 overflow-hidden relative z-20">
+              <div className="flex items-center gap-1 h-full">
                 {displayTags.map((tag, index) => (
                   <span 
                     key={`${tag}-${index}`} 
-                    className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[80px] truncate" 
+                    className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[80px] truncate z-20" 
                     title={`#${tag}`}
                   >
                     #{tag.length > 10 ? tag.substring(0, 10) + '...' : tag}
@@ -446,7 +447,7 @@ export function MemoryCard({
                 ))}
                 {remainingCount > 0 && (
                   <span 
-                    className="inline-flex items-center text-2xs bg-gray-600/90 text-gray-300 px-1.5 py-0.5 rounded-sm font-medium whitespace-nowrap" 
+                    className="inline-flex items-center text-2xs bg-gray-600/90 text-gray-300 px-1.5 py-0.5 rounded-sm font-medium whitespace-nowrap z-20" 
                     title={`${remainingCount} more tags: ${visibleTags.slice(maxVisibleTags).join(', ')}`}
                   >
                     +{remainingCount}
@@ -458,7 +459,7 @@ export function MemoryCard({
         })()}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-600/30 flex-shrink-0 h-8">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-600/30 flex-shrink-0 h-8">
           <div className="flex items-center gap-2 text-2xs text-gray-500 min-w-0 flex-1">
             {/* Last Modified */}
             <div className="flex items-center gap-1 flex-shrink-0">

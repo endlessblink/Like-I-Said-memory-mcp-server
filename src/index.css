@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Cache bust: 2025-01-17-20:10-task-card-recreation */
 @import './styles/themes/theme-reset.css';
 @import './styles/themes/fix-theme.css'; /* Provides fallback theme values while JS loads */
 @import './styles/themes/theme-improvements.css'; /* Enhanced theme support and visual fixes */
@@ -384,14 +385,12 @@ body {
   .text-card-title {
     font-size: var(--text-lg);
     font-weight: 600;
-    line-height: 1.3;
     color: hsl(var(--foreground));
   }
   
   .text-card-description {
     font-size: var(--text-sm);
     font-weight: 400;
-    line-height: 1.5;
     color: hsl(var(--foreground) / 0.8);
   }
   
@@ -431,6 +430,66 @@ body {
   
   .padding-card-lg {
     padding: var(--space-6);
+  }
+  
+  /* Unified Card Layout - Based on Research Solutions */
+  
+  /* Card container - Fixed height flex column */
+  .card-glass {
+    /* Force flex column layout */
+    display: flex !important;
+    flex-direction: column !important;
+    
+    /* Base styling */
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  
+  /* Critical: Allow flex children to shrink properly */
+  .card-glass > * {
+    min-height: 0 !important;
+  }
+  
+  /* Ensure proper flex structure for content */
+  .card-glass .flex-shrink-0 {
+    flex-shrink: 0 !important;
+  }
+  
+  /* The flex-1 containers should grow/shrink properly */
+  .card-glass .flex-1 {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+  
+  /* Elements with margin-top auto */
+  .card-glass .mt-auto {
+    margin-top: auto !important;
+  }
+  
+  /* Ensure parent containers have proper height */
+  .card-glass .h-full {
+    height: 100% !important;
+  }
+  
+  /* Images in cards */
+  .card-glass img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+  }
+  
+  /* Grid container adjustments */
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 1rem !important;
+  }
+  
+  /* Ensure consistent card behavior in grid */
+  .grid .card-glass {
+    width: 100% !important;
   }
 }
 
@@ -566,34 +625,7 @@ body {
   }
 }
 
-/* Enhanced line clamp utilities */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-4 {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* Enhanced line clamp utilities - Let Tailwind handle these */
 
 /* Focus styles */
 .focus-ring {
