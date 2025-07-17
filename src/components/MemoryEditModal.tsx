@@ -313,34 +313,23 @@ export function MemoryEditModal({
           </div>
         </div>
 
-        <DialogFooter className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {hasChanges && (
-              <div className="flex items-center gap-1 text-sm text-orange-400">
-                <AlertCircle className="w-4 h-4" />
-                Unsaved changes
-              </div>
+        <div className="flex items-center justify-start gap-2 pt-6">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges || isLoading}
+            className="flex items-center gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
             )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={!hasChanges || isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Save Changes
-            </Button>
-          </div>
-        </DialogFooter>
+            Save Changes
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
