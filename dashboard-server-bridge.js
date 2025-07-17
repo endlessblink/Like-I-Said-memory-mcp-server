@@ -346,7 +346,12 @@ class DashboardBridge {
       const origin = req.headers.origin;
       const allowedOrigins = process.env.NODE_ENV === 'production' 
         ? ['https://localhost:3001', 'https://127.0.0.1:3001']
-        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'];
+        : [
+            'http://localhost:5173', 'http://127.0.0.1:5173',
+            'http://localhost:5183', 'http://127.0.0.1:5183',
+            'http://localhost:3001', 'http://127.0.0.1:3001',
+            'http://localhost:3008', 'http://127.0.0.1:3008'
+          ];
       
       if (origin && !allowedOrigins.includes(origin)) {
         console.warn(`🚫 WebSocket connection rejected from unauthorized origin: ${origin}`);
@@ -1301,8 +1306,9 @@ class DashboardBridge {
       this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
       
       // Log the storage status
+      const memories = await this.memoryStorage.listMemories();
       console.log('📊 Storage reload status:', {
-        memoriesCount: this.memoryStorage.getAllMemories().length,
+        memoriesCount: memories.length,
         tasksCount: this.taskStorage.getAllTasks().length,
         memoriesHasData: updateResult.memories.hasData,
         tasksHasData: updateResult.tasks.hasData

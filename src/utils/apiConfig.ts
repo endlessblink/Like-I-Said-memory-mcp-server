@@ -27,7 +27,8 @@ export async function getApiPort(): Promise<number> {
   }
 
   // Fallback: try common ports in sequence
-  const commonPorts = [3002, 3001, 3003, 3004, 3005];
+  // Updated priority based on Desktop Commander findings
+  const commonPorts = [3008, 3007, 3006, 3005, 3004, 3002, 3001, 3003];
   
   for (const port of commonPorts) {
     try {

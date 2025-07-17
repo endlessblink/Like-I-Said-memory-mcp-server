@@ -1001,7 +1001,7 @@ async function handleCommand() {
         await main();
         break;
       case 'start':
-        await import('./mcp-server-wrapper.js');
+        await import('./mcp-quiet-wrapper.js');
         break;
       case 'dashboard':
         await startDashboard();

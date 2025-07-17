@@ -15,7 +15,7 @@ import {
 import { DropoffGenerator } from './lib/dropoff-generator.js';
 import { TaskStorage } from './lib/task-storage.js';
 import { TaskMemoryLinker } from './lib/task-memory-linker.js';
-import { VectorStorage } from './lib/vector-storage.js';
+// import { VectorStorage } from './lib/vector-storage.js'; // Removed to prevent @xenova dependency
 import { TitleSummaryGenerator } from './lib/title-summary-generator.js';
 import { OllamaClient } from './lib/ollama-client.js';
 import { MemoryDeduplicator } from './lib/memory-deduplicator.js';
@@ -564,8 +564,15 @@ if (!isMCPMode) {
 // Initialize storage with custom directory
 let storage = new MarkdownStorage(MEMORY_DIR);
 
-// Initialize vector storage
-const vectorStorage = new VectorStorage();
+// Initialize vector storage - stub to remove @xenova dependency
+const vectorStorage = {
+  initialized: false,
+  initialize: async () => {},
+  addMemory: async () => {},
+  addTask: async () => {},
+  searchSimilar: async () => [],
+  rebuildIndex: async () => {}
+};
 
 // Initialize conversation monitor for automatic memory detection
 const conversationMonitor = new ConversationMonitor(storage, vectorStorage);
@@ -1531,7 +1538,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
         // Track file access
         if (memory) {
-          const filepath = path.join('memories', memory.project || 'default', `${memory.created.split('T')[0]}--${memory.id}.md`);
+          const datePrefix = memory.timestamp ? memory.timestamp.split('T')[0] : new Date().toISOString().split('T')[0];
+          const filepath = path.join('memories', memory.project || 'default', `${datePrefix}--${memory.id}.md`);
           await behavioralAnalyzer.trackFileAccess(filepath, 'read');
         }
         
