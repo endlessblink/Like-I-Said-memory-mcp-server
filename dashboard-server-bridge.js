@@ -324,6 +324,13 @@ class DashboardBridge {
     this.app.put('/api/settings', requireAuth({ role: 'admin' }), this.updateSettings.bind(this));
     this.app.post('/api/settings/reset', requireAuth({ role: 'admin' }), this.resetSettings.bind(this));
     this.app.post('/api/settings/setup-auth', this.setupAuthentication.bind(this)); // Public - for initial setup
+    
+    // Backup management endpoints
+    this.app.get('/api/backups', requireAuth(), this.listBackups.bind(this));
+    this.app.post('/api/backups', requireAuth({ role: 'admin' }), this.createBackup.bind(this));
+    this.app.post('/api/backups/:name/restore', requireAuth({ role: 'admin' }), this.restoreBackup.bind(this));
+    this.app.delete('/api/backups/:name', requireAuth({ role: 'admin' }), this.deleteBackup.bind(this));
+    this.app.get('/api/system/health', requireAuth(), this.getSystemHealth.bind(this));
 
     // Serve static files
     this.app.use(express.static('dist'));
@@ -1951,6 +1958,9 @@ class DashboardBridge {
       console.error('❌ Failed to create startup backup:', error);
     });
     
+    // Start automatic backup timer if enabled
+    this.safeguards.startAutoBackup();
+    
     // Periodic health checks
     setInterval(async () => {
       try {
@@ -3177,8 +3187,101 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
     if (this.fileSystemMonitor) {
       this.fileSystemMonitor.stopMonitoring();
     }
+    // Stop automatic backups
+    if (this.safeguards) {
+      this.safeguards.stopAutoBackup();
+    }
     this.wss.close();
     this.server.close();
+  }
+
+  // Backup management methods
+  async listBackups(req, res) {
+    try {
+      const backups = await this.safeguards.listBackups();
+      res.json(backups);
+    } catch (error) {
+      console.error('Error listing backups:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createBackup(req, res) {
+    try {
+      const { operation = 'manual' } = req.body || {};
+      const backupPath = await this.safeguards.createBackup(operation);
+      
+      // Get backup details
+      const backups = await this.safeguards.listBackups();
+      const backup = backups.find(b => b.path === backupPath);
+      
+      res.json({
+        success: true,
+        backup,
+        message: `Backup created successfully at ${backupPath}`
+      });
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async restoreBackup(req, res) {
+    try {
+      const { name } = req.params;
+      const backupPath = path.join(this.safeguards.backupDir, name);
+      
+      const manifest = await this.safeguards.recoverFromBackup(backupPath);
+      
+      // Broadcast restore event to all clients
+      this.broadcastToClients({
+        type: 'system_restore',
+        data: {
+          backup: name,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      res.json({
+        success: true,
+        manifest,
+        message: `System restored from backup ${name}`
+      });
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteBackup(req, res) {
+    try {
+      const { name } = req.params;
+      const backupPath = path.join(this.safeguards.backupDir, name);
+      
+      if (!fs.existsSync(backupPath)) {
+        return res.status(404).json({ error: 'Backup not found' });
+      }
+      
+      fs.rmSync(backupPath, { recursive: true });
+      
+      res.json({
+        success: true,
+        message: `Backup ${name} deleted successfully`
+      });
+    } catch (error) {
+      console.error('Error deleting backup:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getSystemHealth(req, res) {
+    try {
+      const health = await this.safeguards.checkSystemHealth();
+      res.json(health);
+    } catch (error) {
+      console.error('Error getting system health:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
 }
 

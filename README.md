@@ -50,10 +50,13 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 **Option 2: NPX Installation**
 ```bash
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+
+# Or install to a specific directory:
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /opt/mcp-servers/like-i-said
 ```
 
 This command will automatically:
-1. Install the MCP server in your current directory
+1. Install the MCP server in your current directory (or specified path)
 2. Configure Claude Desktop if found
 3. Set up necessary directories (memories/, tasks/)
 4. No menu interaction required - it's fully automatic

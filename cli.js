@@ -290,6 +290,16 @@ function detectEnvironment() {
   };
 }
 
+// Helper function to get installation path from --path argument or default to cwd
+function getInstallPath() {
+  const pathIndex = process.argv.indexOf('--path');
+  if (pathIndex !== -1 && process.argv[pathIndex + 1]) {
+    const customPath = process.argv[pathIndex + 1];
+    return path.resolve(customPath);
+  }
+  return process.cwd();
+}
+
 // Initialize memory structure
 async function initializeMemoryStructure() {
   const dirs = [
@@ -349,7 +359,7 @@ Each memory is stored as a Markdown file with frontmatter metadata.
 
 // Configure MCP clients
 async function configureMCPClient(clientKey, clientConfig) {
-  const projectPath = process.cwd();
+  const projectPath = getInstallPath();
   const configPath = clientConfig.path;
   
   if (!configPath) {
@@ -546,17 +556,18 @@ async function main() {
 
 // Auto-detect existing memory and task directories
 function findExistingDirectories() {
+  const installPath = getInstallPath();
   const possibleMemoryPaths = [
-    // Check current directory first
-    path.join(process.cwd(), 'memories'),
-    path.join(process.cwd(), 'memory'),
+    // Check current/install directory first
+    path.join(installPath, 'memories'),
+    path.join(installPath, 'memory'),
     // Check home directory locations
     path.join(process.env.HOME || process.env.USERPROFILE, 'memories'),
     path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'memories'),
     path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'AI-Memories'),
     // Check parent directories
-    path.join(process.cwd(), '..', 'memories'),
-    path.join(process.cwd(), '..', '..', 'memories'),
+    path.join(installPath, '..', 'memories'),
+    path.join(installPath, '..', '..', 'memories'),
     // Windows-specific paths
     'D:\\memories',
     'D:\\AI-Memories',
@@ -566,16 +577,16 @@ function findExistingDirectories() {
   ];
   
   const possibleTaskPaths = [
-    // Check current directory first
-    path.join(process.cwd(), 'tasks'),
-    path.join(process.cwd(), 'task'),
+    // Check current/install directory first
+    path.join(installPath, 'tasks'),
+    path.join(installPath, 'task'),
     // Check home directory locations
     path.join(process.env.HOME || process.env.USERPROFILE, 'tasks'),
     path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'tasks'),
     path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'AI-Tasks'),
     // Check parent directories
-    path.join(process.cwd(), '..', 'tasks'),
-    path.join(process.cwd(), '..', '..', 'tasks'),
+    path.join(installPath, '..', 'tasks'),
+    path.join(installPath, '..', '..', 'tasks'),
     // Windows-specific paths
     'D:\\tasks',
     'D:\\AI-Tasks',
@@ -647,7 +658,34 @@ async function quickInstall() {
   log('\n🧪 Testing MCP server...', 'blue');
   
   // Smart path resolution based on context
-  const projectPath = context.isNpxInstall ? context.currentDir : context.scriptDir;
+  const installPath = getInstallPath();
+  
+  // Validate custom path if provided
+  const hasCustomPath = process.argv.includes('--path');
+  if (hasCustomPath) {
+    log(`\n📍 Using custom installation path: ${installPath}`, 'blue');
+    
+    // Ensure parent directory exists
+    const parentDir = path.dirname(installPath);
+    if (!fs.existsSync(parentDir)) {
+      log(`❌ Parent directory does not exist: ${parentDir}`, 'red');
+      log('Please create the parent directory first or choose a different path.', 'yellow');
+      process.exit(1);
+    }
+    
+    // Create install directory if needed
+    if (!fs.existsSync(installPath)) {
+      try {
+        fs.mkdirSync(installPath, { recursive: true });
+        log(`✓ Created installation directory: ${installPath}`, 'green');
+      } catch (error) {
+        log(`❌ Failed to create directory: ${error.message}`, 'red');
+        process.exit(1);
+      }
+    }
+  }
+  
+  const projectPath = context.isNpxInstall ? installPath : context.scriptDir;
   const baseServerPath = path.join(context.isNpxInstall ? context.scriptDir : projectPath, 'mcp-server-wrapper.js');
   
   // Create Windows-compatible paths
@@ -804,7 +842,7 @@ async function quickInstall() {
         const nodePath = detectNodePath();
         
         // Configure based on execution context and whether local files exist
-        const localServerPath = path.join(context.currentDir, 'mcp-server-wrapper.js');
+        const localServerPath = path.join(installPath, 'mcp-server-wrapper.js');
         
         if (context.isNpxInstall && !fs.existsSync(localServerPath)) {
           // NPX mode without local installation - use NPX directly
@@ -813,8 +851,8 @@ async function quickInstall() {
             command: 'npx',
             args: ['-y', '-p', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2'],
             env: {
-              MEMORY_DIR: detectedPaths.memoryDir || path.join(context.currentDir, 'memories'),
-              TASK_DIR: detectedPaths.taskDir || path.join(context.currentDir, 'tasks'),
+              MEMORY_DIR: detectedPaths.memoryDir || path.join(installPath, 'memories'),
+              TASK_DIR: detectedPaths.taskDir || path.join(installPath, 'tasks'),
               MCP_QUIET: 'true'
             }
           };
@@ -826,8 +864,8 @@ async function quickInstall() {
             command: nodePath,
             args: [normalizedPath],
             env: {
-              MEMORY_DIR: detectedPaths.memoryDir || path.join(context.currentDir, 'memories'),
-              TASK_DIR: detectedPaths.taskDir || path.join(context.currentDir, 'tasks'),
+              MEMORY_DIR: detectedPaths.memoryDir || path.join(installPath, 'memories'),
+              TASK_DIR: detectedPaths.taskDir || path.join(installPath, 'tasks'),
               MCP_QUIET: 'true'
             }
           };
@@ -943,7 +981,7 @@ async function setupAndInstall() {
   }
 
   log('\n📁 Setting up project files...', 'blue');
-  const projectPath = process.cwd();
+  const projectPath = getInstallPath();
   
   // Essential files to copy
   const filesToCopy = [
@@ -1083,6 +1121,7 @@ async function handleCommand() {
         log('\n📋 Commands:', 'blue');
         log('  claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2  - Add to Claude Code', 'green');
         log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install        - Auto-setup and configure all clients', 'yellow');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path - Install to specific directory', 'yellow');
         log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install --docker - Install with Docker configuration', 'yellow');
         log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 setup          - Alternative setup command', 'yellow');
         log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 init           - Advanced setup and configuration', 'yellow');
@@ -1098,6 +1137,7 @@ async function handleCommand() {
         log('  • Force latest version: npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install', 'yellow');
         log('  • Windows issues: npx cmd /c like-i-said-v2 install', 'yellow');
         log('  • Debug mode: node cli.js install --debug', 'yellow');
+        log('  • Custom path: npx ... install --path C:\\tools\\mcp-servers', 'yellow');
         
         log('\n📖 More info: https://github.com/endlessblink/like-i-said-mcp-server', 'blue');
       }

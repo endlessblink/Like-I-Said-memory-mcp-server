@@ -18,11 +18,18 @@ The easiest way to install Like-I-Said for Claude Desktop:
 **This method is for Claude Code users** who are using Claude through web browsers with IDE integrations (Cursor, Windsurf, VS Code).
 
 ```bash
+# Install in current directory
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+
+# Install to a specific directory
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --path /opt/mcp-servers/like-i-said
+
+# Windows example
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --path C:\tools\mcp-servers\like-i-said
 ```
 
 This will:
-- Install the MCP server
+- Install the MCP server in the specified directory (or current directory if no --path)
 - Configure your IDE (Cursor, Windsurf, VS Code)
 - Set up the necessary paths
 
