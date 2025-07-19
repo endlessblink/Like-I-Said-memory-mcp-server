@@ -53,7 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Link to related tasks when applicable
 - Include code snippets when relevant
 
-**Example**: If a user mentions "jsonrpc working dxt basic simple", immediately create a memory capturing this working configuration with context about what made it work.
+**Example**: If a user mentions "jsonrpc working basic simple", immediately create a memory capturing this working configuration with context about what made it work.
 
 ## CRITICAL: File Operation Memory Creation
 
@@ -408,47 +408,51 @@ The previous `DISABLE_AUTH=true` environment variable is still supported for bac
 **This project supports two different types of Claude clients:**
 
 #### 1. Claude Desktop (Desktop Application)
-- **Installation Method**: DXT (Desktop Extension) - One-click install
-- **File Format**: `.dxt` file
-- **Configuration**: Automatic - no manual JSON editing needed
+- **Installation Method**: Manual MCP server configuration
+- **File Format**: JSON configuration files
+- **Configuration**: Manual setup required in Claude Desktop config
 - **Use Case**: Users of the Claude Desktop application
 
-#### 2. Claude Code (Web Interface) + IDEs
+#### 2. Claude Code (CLI/Development Environment) + IDEs
 - **Installation Method**: Manual MCP server configuration
 - **File Format**: JSON configuration files
 - **Configuration**: Manual setup required in your IDE
-- **Use Case**: Users of claude.ai/code with IDEs like Cursor, Windsurf, VS Code
+- **Use Case**: Users of Claude Code CLI with IDEs like Cursor, Windsurf, VS Code
 
 ### Installation Methods by Client Type
 
-#### For Claude Desktop Users (DXT Installation)
-**Easy Installation (Recommended)**:
-1. Download the latest `like-i-said-memory-v2.dxt` file from releases
-2. Double-click the `.dxt` file to install in Claude Desktop
-3. Configure your preferences in the installation dialog
+#### For Claude Desktop Users
+**Installation**:
+1. Install the MCP server using NPX or manual installation (see below)
+2. Add the server configuration to Claude Desktop's settings
+3. Restart Claude Desktop
 4. Start using Like-I-Said immediately
 
-**What DXT Provides**:
-- Complete MCP server with all 23 tools
-- Automatic Claude Desktop configuration
-- Self-contained installation (no Node.js required)
-- Secure configuration storage
+#### For Claude Code + IDE Users
 
-#### For Claude Code + IDE Users (Manual Setup)
-
-**Step 1: Install the MCP Server**
+**Installation**:
 ```bash
-# NPX Installation (Recommended)
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+# Automatic Installation (Recommended)
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
-# Manual Installation
+# This will automatically:
+# - Install the MCP server in current directory
+# - Configure detected IDEs (Cursor, Windsurf)
+# - Create necessary directories
+# - Complete without menu interaction
+```
+
+**Manual Installation** (if automatic fails):
+```bash
 git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
 cd Like-I-Said-memory-mcp-server
 npm install
 node cli.js install
 ```
 
-**Step 2: Configure Your IDE**
+**If Automatic Configuration Fails**:
+
+The installer automatically configures detected IDEs. If you need to manually configure your IDE:
 
 **Cursor** (`~/.cursor/mcp.json`):
 ```json
@@ -456,7 +460,10 @@ node cli.js install
   "mcpServers": {
     "like-i-said-memory-v2": {
       "command": "node",
-      "args": ["path/to/server-markdown.js"]
+      "args": ["/absolute/path/to/mcp-server-wrapper.js"],
+      "env": {
+        "MCP_QUIET": "true"
+      }
     }
   }
 }
@@ -469,7 +476,10 @@ node cli.js install
     "servers": {
       "like-i-said-memory-v2": {
         "command": "node",
-        "args": ["path/to/server-markdown.js"]
+        "args": ["/absolute/path/to/mcp-server-wrapper.js"],
+        "env": {
+          "MCP_QUIET": "true"
+        }
       }
     }
   }
@@ -477,16 +487,16 @@ node cli.js install
 ```
 
 **VS Code with Continue**:
-Manual configuration required per Continue extension documentation.
+Follow Continue extension's MCP configuration guide.
 
 ### Key Differences Summary
 
-| Feature | Claude Desktop (DXT) | Claude Code (Manual) |
+| Feature | Claude Desktop | Claude Code |
 |---------|---------------------|---------------------|
-| Installation | One-click DXT file | Manual setup required |
-| Configuration | Automatic | Manual JSON editing |
-| Node.js Required | No | Yes |
-| Updates | Through Claude Desktop | Manual update process |
+| Installation | Manual setup required | Manual setup required |
+| Configuration | Manual JSON editing | Manual JSON editing |
+| Node.js Required | Yes | Yes |
+| Updates | Manual update process | Manual update process |
 | Target Users | Claude Desktop app users | Web Claude + IDE users |
 
 ## Development Workflow
@@ -565,6 +575,35 @@ npm run preview         # Preview production build
 3. Add necessary API endpoints in `dashboard-server-bridge.js`
 4. Update types in `src/types.ts`
 
+## File Safety and Moving Files
+
+### IMPORTANT: Before Moving Any Files
+
+**Check `.claude/file-safety-rules.json` for file risk levels and required checks.**
+
+#### Quick Safety Check Commands
+```bash
+# Check if a file can be safely moved
+npm run check:refs <filename>         # Check for references
+npm run check:move <filename>         # Run full safety checklist
+```
+
+#### File Risk Categories
+- **Critical Files** (NEVER move without extensive checking): `server.js`, `package.json`, core lib files
+- **High Risk Files** (Many references): `cli.js`, `CLAUDE.md`, memory/task libraries  
+- **Medium Risk** (Some references): docs, tests, config files
+- **Safe to Move** (Minimal risk): guides, debug files, examples
+
+#### Safe Move Workflow
+1. Check risk level in `.claude/file-safety-rules.json`
+2. Run `npm run check:refs <filename>`
+3. Update all found references
+4. Move the file
+5. Run `npm test` to verify
+6. Test with `npm run dev:full`
+
+See `docs/guides/SAFE-FILE-MOVING.md` for detailed instructions.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -605,6 +644,90 @@ ls -la tasks/
 - **API Server**: Console output and dashboard logs
 - **React Dashboard**: Browser console and network tab
 - **System Logs**: `data-backups/` directory for backup logs
+
+## File Organization Rules
+
+### CRITICAL: Where Files MUST Go
+
+**ROOT DIRECTORY - Only These Files:**
+- `server.js`, `server-markdown.js`, `cli.js`, `dashboard-server-bridge.js` - Entry points
+- `package.json`, `package-lock.json` - Package management
+- `vite.config.ts`, `tsconfig.json`, `tailwind.config.js`, `postcss.config.js` - Build configs
+- `.gitignore`, `.npmignore` - Ignore files
+- `README.md`, `LICENSE` - Project info
+- `CLAUDE.md` - This file
+
+**NEVER create new files in root unless they are:**
+- Entry point scripts referenced in package.json
+- Build/config files required by tools
+- Standard project files (README, LICENSE)
+
+### Directory Structure and Usage
+
+```
+Like-I-Said-memory-mcp-server/
+├── docs/                    # ALL documentation
+│   ├── guides/             # How-to guides, planning docs
+│   ├── API-REFERENCE.md    # API documentation
+│   └── *.md                # Any other docs
+├── scripts/                 # Utility scripts
+│   ├── mcp-wrappers/       # MCP-related scripts
+│   ├── vite-plugins/       # Vite plugins
+│   └── *.js                # Migration, backup, test scripts
+├── lib/                     # Core libraries
+│   └── *.js                # All library files
+├── src/                     # React source code
+│   ├── components/         # React components
+│   ├── hooks/              # React hooks
+│   ├── utils/              # Frontend utilities
+│   └── types.ts            # TypeScript definitions
+├── tests/                   # Test files
+│   └── *.js                # All test files
+├── dist/                    # Built frontend (auto-generated)
+├── memories/                # Memory storage
+│   └── [project-name]/     # Project-specific memories
+├── tasks/                   # Task storage
+│   └── [project-name]/     # Project-specific tasks
+└── data/                    # Application data
+    ├── settings.json       # App settings
+    └── backups/            # Backup files
+```
+
+### File Creation Rules
+
+1. **Documentation**: ALWAYS put in `docs/` or `docs/guides/`
+   - Planning documents → `docs/guides/`
+   - API docs → `docs/API-REFERENCE.md`
+   - Guides → `docs/guides/`
+
+2. **Scripts**: ALWAYS put in `scripts/` or subdirectories
+   - Wrapper scripts → `scripts/mcp-wrappers/`
+   - Build plugins → `scripts/vite-plugins/`
+   - Utilities → `scripts/`
+
+3. **Libraries**: ALWAYS put in `lib/`
+   - No subdirectories in lib (flat structure)
+
+4. **React Code**: ALWAYS put in `src/`
+   - Components → `src/components/`
+   - Hooks → `src/hooks/`
+   - Utilities → `src/utils/`
+
+5. **Tests**: ALWAYS put in `tests/`
+   - Unit tests → `tests/`
+   - Integration tests → `tests/`
+
+### Examples
+
+❌ WRONG:
+- Creating `SETUP-GUIDE.md` in root
+- Creating `fix-issue.js` in root
+- Creating `new-feature.js` in root
+
+✅ CORRECT:
+- Creating `docs/guides/SETUP-GUIDE.md`
+- Creating `scripts/fix-issue.js`
+- Creating `lib/new-feature.js` (if it's a library)
 
 ## Recent Updates and Status
 

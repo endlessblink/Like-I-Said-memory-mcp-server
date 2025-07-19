@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Layout Test</title>
+    <style>
+        body {
+            background: #111;
+            color: #fff;
+            font-family: system-ui;
+            padding: 20px;
+        }
+        
+        /* Working flexbox card pattern */
+        .test-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .test-card-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        .test-card-footer {
+            margin-top: auto;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Card Layout Test</h1>
+    
+    <div class="grid">
+        <div class="test-card">
+            <div class="test-card-body">
+                <h3>Short Content</h3>
+                <p>This card has minimal content.</p>
+            </div>
+            <div class="test-card-footer">
+                Footer stays at bottom
+            </div>
+        </div>
+        
+        <div class="test-card">
+            <div class="test-card-body">
+                <h3>Long Content Card</h3>
+                <p>This card has much more content to test how the flexbox layout handles different amounts of text. The footer should still stay at the bottom without any cutoff.</p>
+                <p>Additional paragraph to make it even longer. The card should expand to fit all content naturally.</p>
+            </div>
+            <div class="test-card-footer">
+                Footer stays at bottom
+            </div>
+        </div>
+        
+        <div class="test-card">
+            <div class="test-card-body">
+                <h3>Medium Content</h3>
+                <p>This card has a medium amount of content. Testing the layout consistency.</p>
+            </div>
+            <div class="test-card-footer">
+                Footer stays at bottom
+            </div>
+        </div>
+    </div>
+    
+    <h2>Firefox vs Chrome Test</h2>
+    <p>The cards above should:</p>
+    <ul>
+        <li>All have the same minimum height</li>
+        <li>Expand to fit content when needed</li>
+        <li>Keep footers at the bottom</li>
+        <li>Never cut off content</li>
+        <li>Work identically in both Firefox and Chrome</li>
+    </ul>
+</body>
+</html>

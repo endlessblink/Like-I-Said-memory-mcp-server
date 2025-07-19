@@ -1,3 +1,6 @@
+# CRITICAL: The following file MUST remain in root directory:
+# - mcp-server-wrapper.js (MCP clients depend on this exact path)
+
 # Dependencies
 node_modules/
 
@@ -52,6 +55,13 @@ __tests__/
 *.test.js
 *.spec.js
 
+# Test directories
+test-fresh-install/
+test-npx-install/
+
+# Package archives
+*.tgz
+
 # Session management
 session-dropoffs/
 SESSION-DROPOFF-*.md
@@ -59,6 +69,11 @@ DROPOFF-*.md
 
 # Debugging files
 debugging/
+
+# Documentation (except essential)
+docs/debugging/*.log
+docs/temp/
+docs/drafts/
 
 # Keep essential files
 !README.md

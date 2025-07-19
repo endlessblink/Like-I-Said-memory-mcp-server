@@ -150,11 +150,12 @@ class DashboardBridge {
         // In development, allow all origins from local network
         if (process.env.NODE_ENV !== 'production') {
           const allowedPatterns = [
-            /^http:\/\/localhost:\d+$/,
-            /^http:\/\/127\.0\.0\.1:\d+$/,
-            /^http:\/\/192\.168\.\d+\.\d+:\d+$/,  // Local network
-            /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,     // Local network
-            /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/ // Docker/VPN
+            /^http:\/\/localhost(:\d+)?$/,        // Allow with or without port
+            /^http:\/\/127\.0\.0\.1(:\d+)?$/,     // Allow with or without port
+            /^http:\/\/\[::1\](:\d+)?$/,          // IPv6 localhost
+            /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,  // Local network
+            /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,     // Local network
+            /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/ // Docker/VPN/WSL
           ];
           
           const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
@@ -173,9 +174,31 @@ class DashboardBridge {
       optionsSuccessStatus: 200,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
-      exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
+      exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+      preflightContinue: false // Ensure CORS handles preflight completely
     };
     this.app.use(cors(corsOptions));
+    
+    // Additional middleware to ensure credentials header is set for all responses
+    this.app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      if (origin && process.env.NODE_ENV !== 'production') {
+        const allowedPatterns = [
+          /^http:\/\/localhost(:\d+)?$/,
+          /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+          /^http:\/\/\[::1\](:\d+)?$/,
+          /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+          /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+          /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/
+        ];
+        
+        const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+        if (isAllowed) {
+          res.header('Access-Control-Allow-Credentials', 'true');
+        }
+      }
+      next();
+    });
     this.app.use(express.json());
 
     // Health check endpoint for server validation
@@ -306,7 +329,13 @@ class DashboardBridge {
     this.app.use(express.static('dist'));
     
     // Serve React app for non-API routes
+    // IMPORTANT: Only serve HTML for non-API routes to prevent JSON parse errors
     this.app.get('*', (req, res) => {
+      // Skip API routes - they should return 404 if not found
+      if (req.path.startsWith('/api/')) {
+        res.status(404).json({ error: 'API endpoint not found' });
+        return;
+      }
       res.sendFile(path.resolve('dist/index.html'));
     });
 
@@ -347,10 +376,12 @@ class DashboardBridge {
       const allowedOrigins = process.env.NODE_ENV === 'production' 
         ? ['https://localhost:3001', 'https://127.0.0.1:3001']
         : [
+            // Allow all common development ports
+            ...Array.from({length: 20}, (_, i) => `http://localhost:${3000 + i}`),
+            ...Array.from({length: 20}, (_, i) => `http://127.0.0.1:${3000 + i}`),
             'http://localhost:5173', 'http://127.0.0.1:5173',
             'http://localhost:5183', 'http://127.0.0.1:5183',
-            'http://localhost:3001', 'http://127.0.0.1:3001',
-            'http://localhost:3008', 'http://127.0.0.1:3008'
+            'http://localhost:8080', 'http://127.0.0.1:8080'
           ];
       
       if (origin && !allowedOrigins.includes(origin)) {
@@ -490,7 +521,9 @@ class DashboardBridge {
     console.log('👀 File watcher started for memories directory');
     
     // Watch quality standards config file
-    const standardsPath = path.join(path.dirname(this.memoriesDir), 'memory-quality-standards.md');
+    // IMPORTANT: memory-quality-standards.md is located in docs/ directory
+    // If you move this file, also update lib/standards-config-parser.cjs:13
+    const standardsPath = path.join(path.dirname(this.memoriesDir), 'docs', 'memory-quality-standards.md');
     this.standardsWatcher = chokidar.watch(standardsPath, {
       persistent: true,
       ignoreInitial: true
@@ -1394,12 +1427,40 @@ class DashboardBridge {
     return suggestions;
   }
 
+  /**
+   * Sanitize data to remove invalid Unicode characters
+   * Prevents JSON.stringify errors from lone surrogates
+   */
+  sanitizeUnicode(obj) {
+    if (typeof obj === 'string') {
+      // Replace lone surrogates and other invalid Unicode sequences
+      return obj.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.sanitizeUnicode(item));
+    }
+    
+    if (obj && typeof obj === 'object') {
+      const sanitized = {};
+      for (const [key, value] of Object.entries(obj)) {
+        sanitized[key] = this.sanitizeUnicode(value);
+      }
+      return sanitized;
+    }
+    
+    return obj;
+  }
+
   async callMcpTool(req, res) {
     try {
       const { toolName } = req.params;
       const toolArgs = req.body;
 
       console.log(`🔧 MCP Tool Call: ${toolName}`, toolArgs);
+
+      // Sanitize toolArgs to prevent Unicode errors
+      const sanitizedArgs = this.sanitizeUnicode(toolArgs);
 
       // Create basic MCP request
       const mcpRequest = {
@@ -1408,7 +1469,7 @@ class DashboardBridge {
         method: "tools/call",
         params: {
           name: toolName,
-          arguments: toolArgs
+          arguments: sanitizedArgs
         }
       };
 
@@ -1516,7 +1577,9 @@ class DashboardBridge {
           
           for (const line of lines) {
             try {
-              const parsed = JSON.parse(line);
+              // Sanitize the line before parsing to handle invalid Unicode
+              const sanitizedLine = this.sanitizeUnicode(line);
+              const parsed = JSON.parse(sanitizedLine);
               if (parsed.jsonrpc && parsed.result) {
                 jsonResponse = parsed;
                 break;

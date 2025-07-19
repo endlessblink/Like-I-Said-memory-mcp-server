@@ -1,5 +1,7 @@
 # Like-I-Said Dashboard Setup Guide
 
+⚡ **IMPORTANT**: The dashboard runs on a SINGLE PORT (not 5173!)
+
 ## Quick Start for Windows
 
 1. **Clone the repository** (in a new terminal):
@@ -10,12 +12,14 @@
 
 2. **Run the dashboard**:
    ```bash
-   run-dashboard.bat
+   npm install
+   npm run start:dashboard
    ```
 
 3. **Access the dashboard**:
-   - Open your browser to: http://localhost:5173
-   - The dashboard will automatically connect to your memories and tasks
+   - Look for "DASHBOARD READY!" in the console
+   - Open the URL shown (usually http://localhost:3002)
+   - **IGNORE any mention of port 5173** - that's only for development
 
 ## Quick Start for Mac/Linux
 
@@ -46,12 +50,14 @@
 - Install Node.js from https://nodejs.org/
 
 ### Port already in use
-- The API server runs on port 3001
-- The React dashboard runs on port 5173
-- If either port is busy, close other applications using those ports
+- The dashboard server automatically finds an available port
+- Look for "DASHBOARD READY!" in the console for the actual URL
+- The server will choose a different port if the default is busy
 
 ### Dashboard not loading
-- Wait 10-15 seconds for both servers to start
+- Check the console for the actual URL (shown after "DASHBOARD READY!")
+- **IGNORE port 5173** - that's only for development
+- The dashboard runs on a single port (usually 3002)
 - Check the terminal for any error messages
 - Try refreshing the browser
 

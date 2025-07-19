@@ -16,19 +16,27 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings, Palette, Keyboard, Info, HelpCircle } from 'lucide-react';
+import { Settings, Palette, Keyboard, Info, HelpCircle, Download, Upload } from 'lucide-react';
 import { themes } from '@/config/themes';
 import { updateTheme } from '@/utils/theme-fix';
 
 interface SettingsDropdownProps {
   onShowKeyboardShortcuts?: () => void;
   onShowTutorial?: () => void;
+  onShowExportDialog?: () => void;
+  onShowImportDialog?: () => void;
+  hasSelectedMemories?: boolean;
+  selectedCount?: number;
   className?: string;
 }
 
 export function SettingsDropdown({
   onShowKeyboardShortcuts,
   onShowTutorial,
+  onShowExportDialog,
+  onShowImportDialog,
+  hasSelectedMemories = false,
+  selectedCount = 0,
   className = ''
 }: SettingsDropdownProps) {
   const [currentTheme, setCurrentTheme] = React.useState(
@@ -86,6 +94,28 @@ export function SettingsDropdown({
             <Keyboard className="mr-2 h-4 w-4" />
             <span>Keyboard Shortcuts</span>
             <span className="ml-auto text-xs text-muted-foreground">?</span>
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSeparator />
+
+        {/* Data Management */}
+        {onShowExportDialog && (
+          <DropdownMenuItem onClick={onShowExportDialog} className="cursor-pointer">
+            <Download className="mr-2 h-4 w-4" />
+            <span>Export Memories</span>
+            {hasSelectedMemories && (
+              <span className="ml-auto text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                {selectedCount}
+              </span>
+            )}
+          </DropdownMenuItem>
+        )}
+        
+        {onShowImportDialog && (
+          <DropdownMenuItem onClick={onShowImportDialog} className="cursor-pointer">
+            <Upload className="mr-2 h-4 w-4" />
+            <span>Import Memories</span>
           </DropdownMenuItem>
         )}
 

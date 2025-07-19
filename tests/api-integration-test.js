@@ -62,7 +62,7 @@ async function testApiEndpoint(name, url, expectedStatus = 200) {
 
 // Test WebSocket connection
 async function testWebSocket() {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     try {
       const WebSocket = (await import('ws')).default;
       const ws = new WebSocket('ws://localhost:3001');

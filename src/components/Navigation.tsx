@@ -127,7 +127,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   className={`flex items-center rounded-lg text-sm font-semibold transition-all`}
                   style={{
                     gap: 'var(--space-2)',
-                    padding: `var(--space-2) var(--space-4)`,
+                    padding: `var(--space-2) var(--space-3)`,
                     minHeight: 'var(--space-11)',
                     background: currentTab === tab.id ? 'var(--gradient-primary)' : 'transparent',
                     color: currentTab === tab.id ? 'white' : 'var(--muted-foreground)',
@@ -218,10 +218,10 @@ export const Navigation: React.FC<NavigationProps> = ({
             {/* Add Memory Button */}
             <Button 
               onClick={onAddMemory}
-              className="btn-primary text-xs lg:text-sm px-4 py-2 rounded-lg font-semibold min-h-[44px]"
+              className="btn-primary text-xs px-3 py-1.5 rounded-lg font-semibold"
             >
               <span className="lg:hidden text-lg">+</span>
-              <span className="hidden lg:inline font-bold">+ Add Memory</span>
+              <span className="hidden lg:inline">+ Memory</span>
             </Button>
           </div>
         </div>

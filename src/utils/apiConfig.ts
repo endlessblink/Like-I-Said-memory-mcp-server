@@ -1,8 +1,14 @@
-// Cached API port
+// Cached API port - use localStorage for cross-tab consistency
 let cachedApiPort: number | null = null;
 
 // Get the API base URL dynamically
 export async function getApiPort(): Promise<number> {
+  // Check localStorage first for cross-tab consistency
+  const storedPort = localStorage.getItem('like-i-said-api-port');
+  if (storedPort && !cachedApiPort) {
+    cachedApiPort = parseInt(storedPort);
+  }
+  
   // Return cached port if available
   if (cachedApiPort !== null) {
     return cachedApiPort;
@@ -28,7 +34,7 @@ export async function getApiPort(): Promise<number> {
 
   // Fallback: try common ports in sequence
   // Updated priority based on Desktop Commander findings
-  const commonPorts = [3008, 3007, 3006, 3005, 3004, 3002, 3001, 3003];
+  const commonPorts = [3002, 3008, 3007, 3006, 3005, 3004, 3003, 3001];
   
   for (const port of commonPorts) {
     try {
@@ -39,9 +45,14 @@ export async function getApiPort(): Promise<number> {
       });
       
       if (response.ok) {
-        cachedApiPort = port;
-        console.log(`✅ API server found on port ${port}`);
-        return port;
+        const data = await response.json();
+        // Only accept servers that identify as Like-I-Said dashboard
+        if (data.server === 'Dashboard Bridge' || data.message === 'Like-I-Said MCP Server Dashboard API') {
+          cachedApiPort = port;
+          localStorage.setItem('like-i-said-api-port', port.toString());
+          console.log(`✅ API server found on port ${port}`);
+          return port;
+        }
       }
     } catch {
       // Continue to next port
@@ -51,6 +62,7 @@ export async function getApiPort(): Promise<number> {
   // Default to 3002 if no server found
   console.warn('No API server found, defaulting to port 3002');
   cachedApiPort = 3002;
+  localStorage.setItem('like-i-said-api-port', '3002');
   return 3002;
 }
 
@@ -74,4 +86,11 @@ export async function getWebSocketUrl(): Promise<string> {
 // Reset cached port (useful for retrying connection)
 export function resetApiPortCache(): void {
   cachedApiPort = null;
+  localStorage.removeItem('like-i-said-api-port');
+}
+
+// Force clear all caches and rediscover port
+export async function forceRediscoverPort(): Promise<number> {
+  resetApiPortCache();
+  return await getApiPort();
 }

@@ -1,32 +1,18 @@
 @echo off
-echo ===========================================
-echo Like-I-Said Dashboard Launcher
-echo ===========================================
+REM Enable UTF-8 for better character support
+chcp 65001 >nul 2>&1
+
+echo.
+echo Starting Like-I-Said Dashboard...
 echo.
 
-:: Check if node_modules exists
-if not exist "node_modules" (
-    echo Installing dependencies (this may take a few minutes)...
-    call npm install
-    if errorlevel 1 (
-        echo.
-        echo ERROR: Failed to install dependencies!
-        echo Please make sure Node.js is installed from https://nodejs.org/
-        pause
-        exit /b 1
-    )
-    echo.
-)
+REM Start a background process to open browser after dashboard starts
+start /min cmd /c "timeout /t 10 /nobreak >nul & if exist .dashboard-port (for /f %%p in (.dashboard-port) do start http://localhost:%%p)"
 
-:: Start both servers in development mode (no build needed)
-echo Starting servers...
-echo - API Server: http://localhost:3001
-echo - Dashboard: http://localhost:5173
+REM Run the dashboard normally - it will show its own nice output
+npm run dashboard
+
+REM This only runs if dashboard exits
 echo.
-echo The dashboard will open automatically in your browser.
-echo Press Ctrl+C to stop the servers.
-echo.
-
-call npm run dev:full
-
+echo Dashboard stopped.
 pause

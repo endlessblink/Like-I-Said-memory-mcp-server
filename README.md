@@ -42,38 +42,49 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 ### For Claude Desktop Users (Recommended)
 
 ```bash
-npx @endlessblink/like-i-said-v2@2.6.8 like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 ```
 
-This will open an installer menu:
-1. **Choose option 1** - "Auto-setup (Recommended)" 
-2. The installer will automatically configure Claude Desktop
-3. Restart Claude Desktop when installation completes
+**Important**: Ignore any deprecation warnings about installing v2.5.1 - these are outdated. The latest version (v2.6.9+) has fixed all JSON-RPC issues.
+
+This command will automatically:
+1. Install the MCP server in your current directory
+2. Configure Claude Desktop if found
+3. Set up necessary directories (memories/, tasks/)
+4. No menu interaction required - it's fully automatic
 
 ### Test It's Working
 
-In Claude Desktop:
+1. **Restart your IDE or Claude Desktop** after installation
+2. Ask Claude: "What MCP tools do you have available?"
+3. You should see 12 tools including `add_memory`, `create_task`, etc.
+
+Example usage:
 ```
 "Create a task: Build authentication system"
-"I'm starting work on the auth system now"
 "Remember: We're using JWT tokens with refresh rotation"
-```
-
-Close Claude completely, then reopen:
-```
 "What am I currently working on?"
-"Show me everything related to authentication"
 ```
 
 ## 🖥️ Installation for Other MCP Clients
 
-### For Claude Code (Web Interface)
+### For Claude Code (CLI/Development Environment)
 
-Claude Code (claude.ai/code) requires using an IDE with MCP support. Choose one of the following:
+Claude Code is a CLI development environment that can be used with IDEs that support MCP. To install Like-I-Said for use with Claude Code:
+
+```bash
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+```
+
+This command will automatically:
+1. Install the MCP server in your current directory
+2. Configure any detected IDEs (Cursor, Windsurf, etc.)
+3. Set up necessary directories
+4. Complete installation without any menu interaction
 
 ### Prerequisites
 - Node.js 18+ installed on your system
-- Claude Code access (claude.ai/code)
+- Claude Code CLI installed
 - One of the supported IDEs below
 
 ### For Cursor
@@ -127,10 +138,10 @@ git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
 cd Like-I-Said-memory-mcp-server
 
 # Windows
-run-dashboard.bat
+scripts\run-dashboard.bat
 
 # Mac/Linux
-./run-dashboard.sh
+./scripts/run-dashboard.sh
 ```
 
 **Manual Start**
@@ -138,12 +149,15 @@ run-dashboard.bat
 # If you already have the repo cloned
 cd Like-I-Said-memory-mcp-server
 npm install
-npm run dev:full
+npm run start:dashboard
 ```
 
 ### Accessing the Dashboard
 
-1. Open your browser to `http://localhost:5173`
+⚡ **IMPORTANT**: The dashboard URL is shown when you start the server!
+1. Look for "DASHBOARD READY! Access it at:" in the console
+2. Open the URL shown (usually `http://localhost:3002`)
+3. **IGNORE port 5173** - that's only for development
 2. The dashboard shows all memories and tasks with real-time updates
 3. Features include:
    - 📊 Task progress visualization
@@ -171,7 +185,7 @@ npm run dev:full
 - **Dynamic path configuration** - "Change my task folder to D:\Projects"
 - **Environment variables** - Set MEMORY_DIR and TASK_DIR
 - **Windows optimized** - Full Windows path support
-- **Real-time dashboard** - Visual interface at http://localhost:3001
+- **Real-time dashboard** - Visual interface (see console for URL)
 
 ## 🛠️ Available Tools (23 Total)
 

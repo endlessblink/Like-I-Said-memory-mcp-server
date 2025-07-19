@@ -7,18 +7,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
-    },
-    extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
+    }
   },
   server: {
-    host: '0.0.0.0',
     port: 5173,
-    watch: {
-      usePolling: true,
-      interval: 100
-    },
-    hmr: {
-      overlay: true
-    }
+    host: true,
+    open: false,  // Don't open browser automatically
+    cors: true
+  },
+  preview: {
+    port: 4173,
+    host: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true
   }
 })

@@ -17,11 +17,14 @@ npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 
 ### 2. Start the Dashboard
 ```bash
-npm run dev:full
+npm run start:dashboard
 ```
 
 ### 3. Open Dashboard
-Navigate to `http://localhost:5173` in your browser
+⚡ **IMPORTANT**: Look for "DASHBOARD READY!" in the console
+- The server will show the URL (usually `http://localhost:3002`)
+- Open that URL in your browser
+- **IGNORE port 5173** if mentioned - that's only for development
 
 That's it! The dashboard is now running and will show memories in real-time as you use Claude.
 
@@ -106,14 +109,16 @@ npm run build
 
 #### Development Mode (Recommended for First Use)
 ```bash
-# Start everything with one command
-npm run dev:full
+# Start the dashboard server
+npm run start:dashboard
 ```
 
 This starts:
-- MCP Server (for Claude integration)
-- API Server on port 3001
-- React Dashboard on port 5173 (with hot reload)
+- API Server with dashboard (single port, shown in console)
+- WebSocket for real-time updates
+- All memory and task management features
+
+⚠️ **Note**: Port 5173 is ONLY for React development. Normal users should use the URL shown in console (usually port 3002).
 
 #### Production Mode
 ```bash
@@ -124,7 +129,7 @@ npm start
 npm run start:dashboard
 ```
 
-Dashboard will be available at `http://localhost:3001`
+Dashboard will be available at the URL shown in console (check for "DASHBOARD READY!")
 
 ## Verifying Installation
 
@@ -185,8 +190,8 @@ ps aux | grep node
 # Check ports
 netstat -an | grep -E "3001|5173"
 
-# Restart everything
-npm run dev:full
+# Restart the dashboard
+npm run start:dashboard
 ```
 
 ### "Port already in use" Error

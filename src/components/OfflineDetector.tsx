@@ -133,7 +133,10 @@ export function OfflineDetector({
           throw new Error(`API returned ${response.status}`)
         }
       } catch (error) {
-        console.warn('🔶 API connectivity check failed:', error)
+        // Only log non-timeout errors to reduce console noise
+        if (error.name !== 'TimeoutError') {
+          console.warn('🔶 API connectivity check failed:', error)
+        }
         setState(prev => ({
           ...prev,
           apiStatus: 'disconnected',

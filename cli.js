@@ -701,6 +701,13 @@ async function quickInstall() {
         log('✓ Created memories directory', 'green');
       }
       
+      // Create tasks directory
+      const tasksDir = path.join(projectPath, 'tasks');
+      if (!fs.existsSync(tasksDir)) {
+        fs.mkdirSync(tasksDir, { recursive: true });
+        log('✓ Created tasks directory', 'green');
+      }
+      
       if (copied > 0) {
         log(`📋 Copied ${copied} files to current directory`, 'green');
         
@@ -797,15 +804,18 @@ async function quickInstall() {
         
         // Configure based on execution context
         if (context.isNpxInstall) {
-          // NPX mode - use the working pattern from v2.6.8
+          // NPX mode - point to the LOCAL installation, not NPX cache
+          const localServerPath = path.join(context.currentDir, 'mcp-server-wrapper.js');
+          // Normalize path for cross-platform compatibility
+          const normalizedPath = localServerPath.replace(/\\/g, '/');
+          
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
-            command: 'npx',
-            args: ['-y', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2', 'start'],
+            command: nodePath,
+            args: [normalizedPath],
             env: {
-              MEMORY_DIR: detectedPaths.memoryDir || process.env.MEMORY_DIR || '',
-              TASK_DIR: detectedPaths.taskDir || process.env.TASK_DIR || '',
-              MCP_QUIET: 'true',
-              NO_COLOR: '1'
+              MEMORY_DIR: detectedPaths.memoryDir || path.join(context.currentDir, 'memories'),
+              TASK_DIR: detectedPaths.taskDir || path.join(context.currentDir, 'tasks'),
+              MCP_QUIET: 'true'
             }
           };
         } else {
@@ -835,9 +845,38 @@ async function quickInstall() {
     }
   }
 
+  // Check for Claude Code CLI and configure it
+  try {
+    // Check if claude CLI is installed
+    execSync('claude --version', { stdio: 'ignore' });
+    
+    // Configure Claude Code CLI using claude mcp add
+    const serverPath = context.isNpxInstall 
+      ? path.join(context.currentDir, 'server-markdown.js')
+      : path.join(projectPath, 'server-markdown.js');
+    
+    const normalizedServerPath = serverPath.replace(/\\/g, '/');
+    
+    try {
+      // Add the MCP server to Claude Code
+      execSync(`claude mcp add like-i-said-memory-v2 node "${normalizedServerPath}"`, {
+        stdio: 'inherit'
+      });
+      
+      log('✅ Claude Code CLI configured', 'green');
+      configured++;
+    } catch (error) {
+      log('⚠️  Failed to configure Claude Code CLI', 'yellow');
+      log('  You can manually add it with:', 'yellow');
+      log(`  claude mcp add like-i-said-memory-v2 node "${normalizedServerPath}"`, 'blue');
+    }
+  } catch (error) {
+    // Claude CLI not installed, skip
+  }
+
   if (configured === 0) {
     log('\n⚠️  No AI clients found', 'yellow');
-    log('Please install Claude Desktop, Cursor, or Windsurf first', 'yellow');
+    log('Please install Claude Desktop, Cursor, Windsurf, or Claude Code CLI first', 'yellow');
     return;
   }
 
@@ -877,6 +916,7 @@ async function quickInstall() {
   log('• Claude Desktop: Close and restart completely', 'yellow');
   log('• Cursor: Ctrl+Shift+P → "Reload Window"', 'yellow');
   log('• Windsurf: Auto-detects changes', 'yellow');
+  log('• Claude Code CLI: Already configured, no restart needed', 'yellow');
   
   log('\n🚀 Test: Ask "What MCP tools do you have available?"', 'blue');
   log('\n📊 Web Dashboard: Run "npm run dev:full" for browser interface', 'blue');

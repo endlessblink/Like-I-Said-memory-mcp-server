@@ -75,14 +75,6 @@ docker-compose.yml
 jsconfig.json
 tsconfig.json
 
-# DXT build artifacts and temp directories
-*.dxt
-temp-dxt/
-temp-dxt-*/
-dist-dxt/
-dist-dxt-*/
-build-dxt*.js
-.dxtignore
 
 # Temporary build directories
 dist-final-working/

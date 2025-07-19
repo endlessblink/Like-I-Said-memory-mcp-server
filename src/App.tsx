@@ -38,6 +38,7 @@ import { AdvancedSearch } from '@/components/AdvancedSearch'
 import { ProjectTabs } from '@/components/ProjectTabs'
 import { SortControls } from '@/components/SortControls'
 import { ExportImport } from '@/components/ExportImport'
+import { ExportImportDialogs } from '@/components/ExportImportDialogs'
 import { StatisticsDashboard } from '@/components/StatisticsDashboard'
 import { AIEnhancement } from '@/components/AIEnhancement'
 import { TaskEnhancement } from '@/components/TaskEnhancement'
@@ -62,7 +63,7 @@ import {
   MemoryTableSkeleton,
   EmptyState 
 } from '@/components/LoadingStates'
-import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings } from 'lucide-react'
+import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings, Download } from 'lucide-react'
 import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
 import { searchMemories, sortMemories } from '@/utils/helpers'
 
@@ -241,6 +242,8 @@ function AppContent() {
   const [currentProject, setCurrentProject] = useState("all")
   const [selectedMemories, setSelectedMemories] = useState<Set<string>>(new Set())
   const [showBulkTagDialog, setShowBulkTagDialog] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
   const [bulkTagInput, setBulkTagInput] = useState("")
   const [sortOptions, setSortOptions] = useState<SortOptions>({ field: 'date', direction: 'desc' })
   const [bulkTagAction, setBulkTagAction] = useState<"add" | "remove">("add")
@@ -1472,12 +1475,6 @@ Respond with JSON format:
             
             {/* Right Section - Settings & Controls */}
             <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-              <div className="hidden 2xl:block">
-                <ExportImport
-                  memories={memories}
-                  onImportMemories={handleImportMemories}
-                />
-              </div>
               <div className="hidden md:flex items-center gap-2 px-2 py-1 bg-card/40 backdrop-blur-md rounded-lg border border-border/30">
                 <div className="flex items-center gap-2">
                   <div className="relative" title={wsConnected ? 'Real-time updates active' : 'WebSocket disconnected'}>
@@ -1529,10 +1526,14 @@ Respond with JSON format:
                 <span className="text-base">🔍</span>
               </Button>
               
-              {/* Settings Dropdown - Consolidates theme, shortcuts, tutorial, etc. */}
+              {/* Settings Dropdown - Consolidates theme, shortcuts, tutorial, export/import */}
               <SettingsDropdown
                 onShowKeyboardShortcuts={() => setShowKeyboardHelp(true)}
                 onShowTutorial={() => setShowTutorial(true)}
+                onShowExportDialog={() => setShowExportDialog(true)}
+                onShowImportDialog={() => setShowImportDialog(true)}
+                hasSelectedMemories={selectedMemories.size > 0}
+                selectedCount={selectedMemories.size}
               />
               
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -2085,11 +2086,15 @@ Respond with JSON format:
                         </Button>
 
                         {/* Export Selected */}
-                        <ExportImport
-                          memories={memories}
-                          selectedMemories={selectedMemories}
-                          onImportMemories={handleImportMemories}
-                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowExportDialog(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Export Selected ({selectedMemories.size})
+                        </Button>
 
                         {/* Delete Selected */}
                         <TooltipProvider>
@@ -2636,6 +2641,17 @@ Respond with JSON format:
         open={showTutorial}
         onOpenChange={setShowTutorial}
         onComplete={() => setShowTutorial(false)}
+      />
+
+      {/* Export/Import Dialogs */}
+      <ExportImportDialogs
+        memories={memories}
+        onImportMemories={handleImportMemories}
+        selectedMemories={selectedMemories}
+        showExportDialog={showExportDialog}
+        showImportDialog={showImportDialog}
+        onExportDialogChange={setShowExportDialog}
+        onImportDialogChange={setShowImportDialog}
       />
     </div>
   )
