@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { viteServePort } from './scripts/vite-plugins/vite-serve-port.js'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), viteServePort()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')

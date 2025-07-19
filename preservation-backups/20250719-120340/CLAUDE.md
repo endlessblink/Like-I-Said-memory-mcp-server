@@ -432,11 +432,8 @@ The previous `DISABLE_AUTH=true` environment variable is still supported for bac
 
 **Installation**:
 ```bash
-# For Claude Code CLI (Recommended)
-claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
-
-# Alternative: Direct NPX Installation
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+# Automatic Installation (Recommended)
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
 # This will automatically:
 # - Install the MCP server in current directory

@@ -14,27 +14,52 @@ export async function getApiPort(): Promise<number> {
     return cachedApiPort;
   }
 
-  // Skip the /api-port check in development mode to avoid console errors
-  // The fallback port detection below works reliably
-  if (import.meta.env.DEV) {
-    // In development, go straight to port detection
-  } else {
-    try {
-      // In production, try to get the port from the server endpoint
-      const response = await fetch('/api-port');
-      if (response.ok) {
-        const data = await response.json();
+  // Always try to get the port from the port discovery endpoint first
+  try {
+    const response = await fetch('/api-port', {
+      method: 'GET',
+      signal: AbortSignal.timeout(1000) // 1 second timeout
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.port) {
         cachedApiPort = data.port;
-        return cachedApiPort;
+        localStorage.setItem('like-i-said-api-port', data.port.toString());
+        console.log(`✅ API server port discovered: ${data.port}`);
+        return data.port;
+      } else if (data.ports) {
+        // If we get a list of ports to try, use them
+        console.log('📋 Got list of ports to try:', data.ports);
+        for (const port of data.ports) {
+          try {
+            const testResponse = await fetch(`http://localhost:${port}/api/status`, {
+              method: 'GET',
+              mode: 'cors',
+              signal: AbortSignal.timeout(500) // 500ms timeout for each port
+            });
+            
+            if (testResponse.ok) {
+              const testData = await testResponse.json();
+              if (testData.server === 'Dashboard Bridge' || testData.message === 'Like-I-Said MCP Server Dashboard API') {
+                cachedApiPort = port;
+                localStorage.setItem('like-i-said-api-port', port.toString());
+                console.log(`✅ API server found on port ${port}`);
+                return port;
+              }
+            }
+          } catch {
+            // Continue to next port
+          }
+        }
       }
-    } catch (error) {
-      console.warn('Failed to fetch API port from server:', error);
     }
+  } catch (error) {
+    console.log('Port discovery endpoint not available, falling back to port scanning');
   }
 
   // Fallback: try common ports in sequence
   // Updated priority based on Desktop Commander findings
-  const commonPorts = [3002, 3008, 3007, 3006, 3005, 3004, 3003, 3001];
+  const commonPorts = [3001, 3002, 3008, 3007, 3006, 3005, 3004, 3003];
   
   for (const port of commonPorts) {
     try {
@@ -59,11 +84,11 @@ export async function getApiPort(): Promise<number> {
     }
   }
 
-  // Default to 3002 if no server found
-  console.warn('No API server found, defaulting to port 3002');
-  cachedApiPort = 3002;
-  localStorage.setItem('like-i-said-api-port', '3002');
-  return 3002;
+  // Default to 3001 if no server found
+  console.warn('No API server found, defaulting to port 3001');
+  cachedApiPort = 3001;
+  localStorage.setItem('like-i-said-api-port', '3001');
+  return 3001;
 }
 
 // Get the full API URL

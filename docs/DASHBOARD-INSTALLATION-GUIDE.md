@@ -10,7 +10,12 @@ This guide will help you install and set up the Like-I-Said MCP Server v2 Dashbo
 
 ## Quick Start (5 minutes)
 
-### 1. Install via NPX (Easiest)
+### 1. Choose Your Installation Method
+
+#### For Claude Desktop Users
+Download the `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases) and double-click to install.
+
+#### For Claude Code + IDE Users
 ```bash
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```

@@ -20,7 +20,7 @@ Turn Claude Desktop into your intelligent project manager. Track tasks, remember
   - [Starting the Dashboard](#starting-the-dashboard)
   - [Accessing the Dashboard](#accessing-the-dashboard)
 - [Key Features](#-key-features)
-- [Available Tools](#️-available-tools-23-total)
+- [Available Tools](#️-available-tools-27-total)
 - [How It Works](#-how-it-works)
 - [Advanced Usage](#-advanced-usage)
 - [Troubleshooting](#-troubleshooting)
@@ -41,11 +41,16 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 
 ### For Claude Desktop Users (Recommended)
 
+**Option 1: DXT Installation (Easiest)**
+1. Download the latest `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases)
+2. Double-click the `.dxt` file
+3. Claude Desktop will automatically install everything
+4. Start using Like-I-Said immediately!
+
+**Option 2: NPX Installation**
 ```bash
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 ```
-
-**Important**: Ignore any deprecation warnings about installing v2.5.1 - these are outdated. The latest version (v2.6.9+) has fixed all JSON-RPC issues.
 
 This command will automatically:
 1. Install the MCP server in your current directory
@@ -57,7 +62,7 @@ This command will automatically:
 
 1. **Restart your IDE or Claude Desktop** after installation
 2. Ask Claude: "What MCP tools do you have available?"
-3. You should see 12 tools including `add_memory`, `create_task`, etc.
+3. You should see 27 tools including `add_memory`, `create_task`, etc.
 
 Example usage:
 ```
@@ -68,19 +73,31 @@ Example usage:
 
 ## 🖥️ Installation for Other MCP Clients
 
-### For Claude Code (CLI/Development Environment)
+### For Claude Code (Web Interface + IDEs)
 
-Claude Code is a CLI development environment that can be used with IDEs that support MCP. To install Like-I-Said for use with Claude Code:
+**Claude Code** refers to using Claude through your web browser (claude.ai) with IDE integrations. 
 
+**Option 1: Quick Setup (No Local Files)**
 ```bash
-npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+# Run MCP server directly from NPX - no local installation needed
+claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 ```
 
-This command will automatically:
-1. Install the MCP server in your current directory
-2. Configure any detected IDEs (Cursor, Windsurf, etc.)
-3. Set up necessary directories
-4. Complete installation without any menu interaction
+**Option 2: Full Installation (With Dashboard Access)**
+```bash
+# Install locally for dashboard and customization
+npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+```
+
+**Key Differences:**
+- **Option 1**: Runs entirely from NPX cache, no local files, instant setup
+- **Option 2**: Creates local files, enables dashboard access at http://localhost:3001
+
+Both options provide all 27 tools. Choose based on your needs:
+- Quick setup without clutter? Use Option 1
+- Want dashboard and local customization? Use Option 2
+
+**Verify All Tools**: After installation, ask Claude "What MCP tools do you have available?" - you should see exactly 27 tools.
 
 ### Prerequisites
 - Node.js 18+ installed on your system
@@ -89,37 +106,47 @@ This command will automatically:
 
 ### For Cursor
 
-1. Create or edit `~/.cursor/mcp.json`:
+**Option 1: Quick Setup (No Local Files)**
 ```json
+// ~/.cursor/mcp.json
 {
   "mcpServers": {
-    "like-i-said-v2": {
+    "like-i-said-memory-v2": {
       "command": "npx",
-      "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"]
+      "args": ["-y", "-p", "@endlessblink/like-i-said-v2@latest", "like-i-said-v2"]
     }
   }
 }
 ```
 
-2. Restart Cursor and verify in Claude Code
+**Option 2: Local Installation**
+1. First run: `npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install`
+2. The installer will automatically configure Cursor for you
+
+3. Restart Cursor and verify all 27 tools are available
 
 ### For Windsurf
 
-1. Create or edit `~/.codeium/windsurf/mcp_config.json`:
+**Option 1: Quick Setup (No Local Files)**
 ```json
+// ~/.codeium/windsurf/mcp_config.json
 {
   "mcp": {
     "servers": {
-      "like-i-said-v2": {
+      "like-i-said-memory-v2": {
         "command": "npx",
-        "args": ["-p", "@endlessblink/like-i-said-v2", "like-i-said-v2", "start"]
+        "args": ["-y", "-p", "@endlessblink/like-i-said-v2@latest", "like-i-said-v2"]
       }
     }
   }
 }
 ```
 
-2. Restart Windsurf and verify in Claude Code
+**Option 2: Local Installation**
+1. First run: `npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install`
+2. The installer will automatically configure Windsurf for you
+
+3. Restart Windsurf and verify all 27 tools are available
 
 ### For VS Code with Continue
 
@@ -187,7 +214,7 @@ npm run start:dashboard
 - **Windows optimized** - Full Windows path support
 - **Real-time dashboard** - Visual interface (see console for URL)
 
-## 🛠️ Available Tools (23 Total)
+## 🛠️ Available Tools (27 Total)
 
 ### Core Task Tools
 - `create_task` - Create tasks with automatic memory linking
@@ -265,11 +292,10 @@ Each task tracks:
 ### "Server not connecting"
 ```bash
 # Update to latest version
-npm install -g @endlessblink/like-i-said-v2@2.6.5
+npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
-# Reinstall in Claude Desktop
-npx @endlessblink/like-i-said-v2@2.6.8 like-i-said-v2 install
-# Choose option 1 when the menu appears
+# For Claude Code users (no local files)
+claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 ```
 
 ### "Can't find memories after path change"

@@ -15,6 +15,8 @@ The easiest way to install Like-I-Said for Claude Desktop:
 
 ### 2. NPX Installation (For Claude Code + IDEs)
 
+**This method is for Claude Code users** who are using Claude through web browsers with IDE integrations (Cursor, Windsurf, VS Code).
+
 ```bash
 npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
 ```

@@ -1,14 +1,20 @@
 # 30-Second Quick Start 🚀
 
-## Windows Users - Copy & Paste This:
+## For Claude Code + IDE Users
+
+**If you're using Claude Code with an IDE** (Cursor, Windsurf, VS Code), copy & paste this:
 ```bash
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 ```
 
-That's it! Restart Claude Desktop and you're done.
+That's it! Restart your IDE and you're done.
+
+## For Claude Desktop Users
+
+**If you're using Claude Desktop application**, download the `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases) and double-click to install.
 
 ## Test It's Working:
-In Claude Desktop, type:
+In Claude, type:
 ```
 "Hey Claude, save a memory: I just installed Like-I-Said v2!"
 ```
@@ -35,6 +41,10 @@ Set debug mode and try again:
 ```bash
 set DEBUG_MCP=true
 ```
+
+**Wrong installation method?**
+- Claude Desktop app → Use DXT file installation
+- Claude Code + IDE → Use NPX command above
 
 ## What You Get:
 - 💾 Persistent memory across Claude sessions

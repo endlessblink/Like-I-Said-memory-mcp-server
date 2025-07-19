@@ -65,7 +65,7 @@ class JSONRPCFilter extends Transform {
 }
 
 // Start the server with environment variables to suppress output
-const serverPath = join(__dirname, 'server-markdown.js');
+const serverPath = join(__dirname, '..', '..', 'server-markdown.js');
 const env = {
   ...process.env,
   MCP_MODE: 'true',

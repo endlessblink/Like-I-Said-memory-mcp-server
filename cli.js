@@ -773,6 +773,7 @@ async function quickInstall() {
   const env = detectEnvironment();
   const configs = {
     claude: env.configs['claude-desktop'],
+    'claude-code': env.configs['claude-code'],
     cursor: env.configs['cursor'],
     windsurf: env.configs['windsurf']
   };
@@ -802,11 +803,23 @@ async function quickInstall() {
         // Use full Node.js path to avoid "command not found" errors
         const nodePath = detectNodePath();
         
-        // Configure based on execution context
-        if (context.isNpxInstall) {
-          // NPX mode - point to the LOCAL installation, not NPX cache
-          const localServerPath = path.join(context.currentDir, 'mcp-server-wrapper.js');
-          // Normalize path for cross-platform compatibility
+        // Configure based on execution context and whether local files exist
+        const localServerPath = path.join(context.currentDir, 'mcp-server-wrapper.js');
+        
+        if (context.isNpxInstall && !fs.existsSync(localServerPath)) {
+          // NPX mode without local installation - use NPX directly
+          // This is what happens when using: claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+          clientConfig.mcpServers['like-i-said-memory-v2'] = {
+            command: 'npx',
+            args: ['-y', '-p', '@endlessblink/like-i-said-v2@latest', 'like-i-said-v2'],
+            env: {
+              MEMORY_DIR: detectedPaths.memoryDir || path.join(context.currentDir, 'memories'),
+              TASK_DIR: detectedPaths.taskDir || path.join(context.currentDir, 'tasks'),
+              MCP_QUIET: 'true'
+            }
+          };
+        } else if (fs.existsSync(localServerPath)) {
+          // Local installation exists - use local path
           const normalizedPath = localServerPath.replace(/\\/g, '/');
           
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
@@ -819,7 +832,7 @@ async function quickInstall() {
             }
           };
         } else {
-          // Local mode - use local files
+          // Fallback - use configured path
           clientConfig.mcpServers['like-i-said-memory-v2'] = {
             command: nodePath,
             args: [configPathSetup.primary],
@@ -850,25 +863,19 @@ async function quickInstall() {
     // Check if claude CLI is installed
     execSync('claude --version', { stdio: 'ignore' });
     
-    // Configure Claude Code CLI using claude mcp add
-    const serverPath = context.isNpxInstall 
-      ? path.join(context.currentDir, 'server-markdown.js')
-      : path.join(projectPath, 'server-markdown.js');
-    
-    const normalizedServerPath = serverPath.replace(/\\/g, '/');
-    
     try {
-      // Add the MCP server to Claude Code
-      execSync(`claude mcp add like-i-said-memory-v2 node "${normalizedServerPath}"`, {
+      // Add the MCP server to Claude Code using NPX command
+      // This ensures all 27 tools are available regardless of installation method
+      execSync('claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2', {
         stdio: 'inherit'
       });
       
-      log('✅ Claude Code CLI configured', 'green');
+      log('✅ Claude Code CLI configured with all 27 tools', 'green');
       configured++;
     } catch (error) {
       log('⚠️  Failed to configure Claude Code CLI', 'yellow');
       log('  You can manually add it with:', 'yellow');
-      log(`  claude mcp add like-i-said-memory-v2 node "${normalizedServerPath}"`, 'blue');
+      log('  claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2', 'blue');
     }
   } catch (error) {
     // Claude CLI not installed, skip
@@ -914,6 +921,7 @@ async function quickInstall() {
   log(`\n✅ Installation Complete! Configured ${configured} client(s)`, 'green');
   log('\n⚠️  Restart Required:', 'yellow');
   log('• Claude Desktop: Close and restart completely', 'yellow');
+  log('• Claude Code (VS Code): Reload VS Code window', 'yellow');
   log('• Cursor: Ctrl+Shift+P → "Reload Window"', 'yellow');
   log('• Windsurf: Auto-detects changes', 'yellow');
   log('• Claude Code CLI: Already configured, no restart needed', 'yellow');
@@ -1041,7 +1049,7 @@ async function handleCommand() {
         await main();
         break;
       case 'start':
-        await import('./mcp-quiet-wrapper.js');
+        await import('./scripts/mcp-wrappers/mcp-quiet-wrapper.js');
         break;
       case 'dashboard':
         await startDashboard();
@@ -1058,31 +1066,42 @@ async function handleCommand() {
         await import('./debug-cursor.js');
         break;
     default:
-      log('Like-I-Said Memory MCP Server v2.0', 'blue');
-      log('\n🎯 Supported Clients:', 'green');
-      log('  • Claude Desktop, Claude Code (VS Code)', 'yellow');
-      log('  • Cursor, Windsurf, Continue', 'yellow');
-      log('  • Zed Editor, Codeium, Docker', 'yellow');
-      
-      log('\n📋 Commands:', 'blue');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install        - Auto-setup and configure all clients (recommended)', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install --docker - Install with Docker configuration', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 setup          - Alternative setup command', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 init           - Advanced setup and configuration', 'yellow');
-      log('  npx -p @endlessblink/like-i-said-v2 like-i-said-v2 start          - Start the MCP server manually', 'yellow');
-      
-      log('\n🚀 Quick Start:', 'green');
-      log('  1. npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
-      log('  2. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
-      log('  3. Ask: "What MCP tools do you have available?"', 'yellow');
-      
-      log('\n🔧 Troubleshooting:', 'blue');
-      log('  • Force latest version: npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install', 'yellow');
-      log('  • Windows issues: npx cmd /c like-i-said-v2 install', 'yellow');
-      log('  • Debug mode: node cli.js install --debug', 'yellow');
-      
+      // When no command is provided, start the MCP server (for NPX execution)
+      // This is what happens when Claude Code runs: npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+      const context = detectExecutionContext();
+      if (context.isNpxInstall || !process.stdout.isTTY) {
+        // Running from NPX or in non-interactive mode - start MCP server
+        await import('./scripts/mcp-wrappers/mcp-quiet-wrapper.js');
+      } else {
+        // Running interactively - show help
+        log('Like-I-Said Memory MCP Server v2.0', 'blue');
+        log('\n🎯 Supported Clients:', 'green');
+        log('  • Claude Desktop, Claude Code (VS Code)', 'yellow');
+        log('  • Cursor, Windsurf, Continue', 'yellow');
+        log('  • Zed Editor, Codeium, Docker', 'yellow');
+        
+        log('\n📋 Commands:', 'blue');
+        log('  claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2  - Add to Claude Code', 'green');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install        - Auto-setup and configure all clients', 'yellow');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install --docker - Install with Docker configuration', 'yellow');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 setup          - Alternative setup command', 'yellow');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 init           - Advanced setup and configuration', 'yellow');
+        log('  npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 start          - Start the MCP server manually', 'yellow');
+        
+        log('\n🚀 Quick Start:', 'green');
+        log('  1. For Claude Code: claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2', 'green');
+        log('  2. For others: npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install', 'yellow');
+        log('  3. Restart your AI client (Claude Desktop, Cursor, Windsurf)', 'yellow');
+        log('  4. Ask: "What MCP tools do you have available?"', 'yellow');
+        
+        log('\n🔧 Troubleshooting:', 'blue');
+        log('  • Force latest version: npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install', 'yellow');
+        log('  • Windows issues: npx cmd /c like-i-said-v2 install', 'yellow');
+        log('  • Debug mode: node cli.js install --debug', 'yellow');
+        
         log('\n📖 More info: https://github.com/endlessblink/like-i-said-mcp-server', 'blue');
-        break;
+      }
+      break;
     }
   } catch (error) {
     const context = detectExecutionContext();
