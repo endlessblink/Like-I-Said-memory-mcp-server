@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.8.6",
+  "version": "2.8.7",
   "description": "Task Management & Memory for Claude - Track tasks, remember context, and maintain continuity across sessions with 27 powerful tools. Works with Claude Desktop and Claude Code.",
   "main": "server.js",
   "type": "module",
