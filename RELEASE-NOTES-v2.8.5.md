@@ -25,7 +25,7 @@ claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@late
 ### 📦 Installation Methods
 
 #### Option 1: Automatic Installation (Recommended)
-Works for both Claude Desktop and Claude Code:
+Works for both Claude Desktop and Claude Code - one command does everything:
 ```bash
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
@@ -33,11 +33,11 @@ npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path
 ```
 
-This command automatically:
-- Installs the MCP server
+This single command automatically:
+- Installs the MCP server completely (no additional commands needed)
 - Configures your Claude client (Desktop or Code)
 - Sets up necessary directories
-- No manual configuration needed
+- No manual configuration or menu interaction required
 
 #### Option 2: Claude Code Direct Registration
 If you're using Claude Code and Option 1 didn't work:
