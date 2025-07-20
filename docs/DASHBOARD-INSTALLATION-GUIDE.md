@@ -13,7 +13,9 @@ This guide will help you install and set up the Like-I-Said MCP Server v2 Dashbo
 ### 1. Choose Your Installation Method
 
 #### For Claude Desktop Users
-Download the `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases) and double-click to install.
+```bash
+npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+```
 
 #### For Claude Code + IDE Users
 ```bash
@@ -63,9 +65,9 @@ npm run build
 <details>
 <summary><b>Claude Desktop Configuration</b></summary>
 
-1. Download the `.dxt` file from releases
-2. Double-click to install
-3. Dashboard URL will be provided in Claude Desktop
+1. Run the NPX installation command
+2. Restart Claude Desktop
+3. Dashboard will be available at the URL shown in console
 
 </details>
 

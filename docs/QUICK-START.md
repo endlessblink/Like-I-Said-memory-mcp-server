@@ -11,7 +11,10 @@ That's it! Restart your IDE and you're done.
 
 ## For Claude Desktop Users
 
-**If you're using Claude Desktop application**, download the `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases) and double-click to install.
+**If you're using Claude Desktop application**, use the same NPX command:
+```bash
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+```
 
 ## Test It's Working:
 In Claude, type:
@@ -43,15 +46,14 @@ set DEBUG_MCP=true
 ```
 
 **Wrong installation method?**
-- Claude Desktop app → Use DXT file installation
-- Claude Code + IDE → Use NPX command above
+- Both Claude Desktop and Claude Code use the same NPX installation
 
 ## What You Get:
 - 💾 Persistent memory across Claude sessions
 - 📁 Claude can organize memories by project
 - 🔄 Dynamic path configuration
 - 📊 Task management with memory linking
-- 🎯 23 powerful tools for Claude to use
+- 🎯 27 powerful tools for Claude to use
 
 ## Video Demo:
 [Coming soon - see it in action!]

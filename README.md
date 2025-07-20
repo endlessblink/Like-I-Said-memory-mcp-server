@@ -10,9 +10,8 @@ Turn Claude Desktop into your intelligent project manager. Track tasks, remember
 ## 📚 Table of Contents
 
 - [What Makes This Different](#-what-makes-this-different)
-- [Quick Start (Claude Desktop)](#-quick-start-30-seconds)
-- [Installation for Other MCP Clients](#️-installation-for-other-mcp-clients)
-  - [Claude Code (Web)](#for-claude-code-web-interface)
+- [Installation](#-installation)
+- [Manual IDE Configuration](#️-manual-ide-configuration)
   - [Cursor IDE](#for-cursor)
   - [Windsurf Editor](#for-windsurf)
   - [VS Code with Continue](#for-vs-code-with-continue)
@@ -37,33 +36,37 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 - **Cross-Session Continuity** - Pick up exactly where you left off, even days later
 - **Project-Based Organization** - Keep multiple projects separate and organized
 
-## 🚀 Quick Start (30 seconds)
+## 🚀 Installation
 
-### For Claude Desktop Users (Recommended)
+### Installation Methods
 
-**Option 1: DXT Installation (Easiest)**
-1. Download the latest `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases)
-2. Double-click the `.dxt` file
-3. Claude Desktop will automatically install everything
-4. Start using Like-I-Said immediately!
-
-**Option 2: NPX Installation**
+#### Option 1: Automatic Installation (Recommended)
+Works for both Claude Desktop and Claude Code:
 ```bash
 npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
 # Or install to a specific directory:
-npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /opt/mcp-servers/like-i-said
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path
 ```
 
-This command will automatically:
-1. Install the MCP server in your current directory (or specified path)
-2. Configure Claude Desktop if found
-3. Set up necessary directories (memories/, tasks/)
-4. No menu interaction required - it's fully automatic
+This command automatically:
+- Installs the MCP server
+- Configures your Claude client (Desktop or Code)
+- Sets up necessary directories
+- No manual configuration needed
 
-### Test It's Working
+#### Option 2: Claude Code Direct Registration
+If you're using Claude Code and Option 1 didn't work:
+```bash
+claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+```
 
-1. **Restart your IDE or Claude Desktop** after installation
+This registers the MCP server directly with Claude Code's configuration system.
+
+### Verify Installation
+
+After installation:
+1. Restart your Claude client
 2. Ask Claude: "What MCP tools do you have available?"
 3. You should see 27 tools including `add_memory`, `create_task`, etc.
 
@@ -74,38 +77,9 @@ Example usage:
 "What am I currently working on?"
 ```
 
-## 🖥️ Installation for Other MCP Clients
+## 🖥️ Manual IDE Configuration
 
-### For Claude Code (Web Interface + IDEs)
-
-**Claude Code** refers to using Claude through your web browser (claude.ai) with IDE integrations. 
-
-**Option 1: Quick Setup (No Local Files)**
-```bash
-# Run MCP server directly from NPX - no local installation needed
-claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
-```
-
-**Option 2: Full Installation (With Dashboard Access)**
-```bash
-# Install locally for dashboard and customization
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
-```
-
-**Key Differences:**
-- **Option 1**: Runs entirely from NPX cache, no local files, instant setup
-- **Option 2**: Creates local files, enables dashboard access at http://localhost:3001
-
-Both options provide all 27 tools. Choose based on your needs:
-- Quick setup without clutter? Use Option 1
-- Want dashboard and local customization? Use Option 2
-
-**Verify All Tools**: After installation, ask Claude "What MCP tools do you have available?" - you should see exactly 27 tools.
-
-### Prerequisites
-- Node.js 18+ installed on your system
-- Claude Code CLI installed
-- One of the supported IDEs below
+If automatic configuration fails, you can manually configure your IDE:
 
 ### For Cursor
 
@@ -186,7 +160,7 @@ npm run start:dashboard
 
 ⚡ **IMPORTANT**: The dashboard URL is shown when you start the server!
 1. Look for "DASHBOARD READY! Access it at:" in the console
-2. Open the URL shown (usually `http://localhost:3002`)
+2. Open the URL shown (usually `http://localhost:3001`)
 3. **IGNORE port 5173** - that's only for development
 2. The dashboard shows all memories and tasks with real-time updates
 3. Features include:

@@ -102,16 +102,19 @@ npm run storybook  # Start Storybook development server
 npm run build-storybook # Build Storybook static files
 ```
 
-### Package Management
+### MCP Server Installation
 ```bash
-# Install as global package
-npm install -g @endlessblink/like-i-said-v2
+# For Claude Code - Install MCP server (Recommended)
+claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 
-# Install via npx (recommended)
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+# Alternative - Install with dashboard and auto-configuration
+npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
-# Configure MCP clients
-node cli.js install
+# Install to custom directory
+npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path
+
+# For contributors - Install dependencies for local development
+npm install
 ```
 
 ## Architecture Overview
@@ -428,21 +431,37 @@ The previous `DISABLE_AUTH=true` environment variable is still supported for bac
 3. Restart Claude Desktop
 4. Start using Like-I-Said immediately
 
-#### For Claude Code + IDE Users
+#### For Claude Code Users
 
-**Installation**:
+**IMPORTANT: Two Different Installation Methods**
+
+**1. Published Package Installation (Most Users)**
 ```bash
-# For Claude Code CLI (Recommended)
+# For published package from npm registry
 claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 
-# Alternative: Direct NPX Installation
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+# This command:
+# - Downloads the latest version from npm
+# - Uses NPX to run the MCP server
+# - Provides all 27 tools
+# - Updates automatically with @latest
+```
 
-# This will automatically:
-# - Install the MCP server in current directory
-# - Configure detected IDEs (Cursor, Windsurf)
-# - Create necessary directories
-# - Complete without menu interaction
+**2. Local Development Installation (Contributors/Developers)**
+```bash
+# For local development/testing (points to local files)
+claude mcp add like-i-said-memory-v2 node /path/to/like-i-said-mcp-server-v2/server-markdown.js
+
+# This command:
+# - Points directly to local server file
+# - Used for development and testing
+# - Requires local git clone of the repository
+```
+
+**Alternative: NPX Installation**
+```bash
+# Direct NPX installation (configures multiple clients)
+npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 ```
 
 **Manual Installation** (if automatic fails):

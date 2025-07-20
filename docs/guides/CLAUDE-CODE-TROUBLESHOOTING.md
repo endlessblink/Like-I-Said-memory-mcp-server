@@ -27,12 +27,23 @@ The Like-I-Said MCP Server v2 provides **27 tools** to Claude Code. If you're no
 
 ## Installation Methods
 
-### Method 1: Claude Code CLI (Recommended)
+**IMPORTANT: Two Different Installation Types**
+
+### Published Package Installation (Most Users)
 ```bash
+# For users installing the published npm package
 claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 ```
+This is the **correct method for most users** and downloads the latest version from npm.
 
-### Method 2: Direct NPX Configuration
+### Local Development Installation (Contributors Only)
+```bash
+# For developers working on the project locally
+claude mcp add like-i-said-memory-v2 node /absolute/path/to/server-markdown.js
+```
+This points directly to local development files and is **only for contributors**.
+
+### Manual Configuration (Fallback)
 If the Claude CLI method fails, you can manually configure:
 
 1. Find your Claude Code MCP configuration:

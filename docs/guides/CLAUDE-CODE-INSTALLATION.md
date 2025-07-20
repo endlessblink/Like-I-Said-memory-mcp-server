@@ -2,7 +2,7 @@
 
 ## What is Claude Code?
 
-Claude Code refers to using Claude through your web browser (claude.ai) with IDE integrations. This is different from Claude Desktop, which is a standalone application.
+Claude Code is Anthropic's terminal CLI tool that runs locally in your command line. It allows you to use Claude directly from your terminal and integrates with various IDEs. This is different from Claude Desktop, which is a standalone desktop application.
 
 ## Installation Command
 
@@ -74,16 +74,15 @@ Follow the Continue extension's MCP configuration guide to add the server.
 After installation:
 1. Restart your IDE
 2. In Claude, ask: "What MCP tools do you have available?"
-3. You should see 12+ tools including `add_memory`, `create_task`, etc.
+3. You should see 27 tools including `add_memory`, `create_task`, etc.
 
 ## Troubleshooting
 
 ### Wrong Installation Method Used
 
-If you accidentally used the Claude Desktop method (DXT file) but are using Claude Code:
-1. Remove any DXT configurations from Claude Desktop
-2. Use the NPX command above instead
-3. Restart your IDE
+If you accidentally used the wrong installation method:
+1. Use the NPX command above for proper installation
+2. Restart your IDE
 
 ### Command Not Found
 

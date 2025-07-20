@@ -35,12 +35,32 @@ We're excited to announce the release of Like-I-Said v2.6.8, featuring a **brand
 
 ## 📦 Installation
 
-### Option 1: NPX Installation (Recommended)
+### Installation Methods
+
+#### Option 1: Automatic Installation (Recommended)
+Works for both Claude Desktop and Claude Code:
 ```bash
-npx -p @endlessblink/like-i-said-v2 like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+
+# Or install to a specific directory:
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path
 ```
 
-### Option 2: Manual Installation
+This command automatically:
+- Installs the MCP server
+- Configures your Claude client (Desktop or Code)
+- Sets up necessary directories
+- No manual configuration needed
+
+#### Option 2: Claude Code Direct Registration
+If you're using Claude Code and Option 1 didn't work:
+```bash
+claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+```
+
+This registers the MCP server directly with Claude Code's configuration system.
+
+### Option 3: Manual Installation
 ```bash
 # Clone the repository
 git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
@@ -58,8 +78,8 @@ npm run build
 ## 🔧 Configuration
 
 ### For Claude Desktop Users
-1. Download the `.dxt` file from the releases page
-2. Double-click to install in Claude Desktop
+1. Run the NPX installation command (Option 1 above)
+2. Restart Claude Desktop
 3. The dashboard will be available automatically
 
 ### For Cursor/Windsurf/VS Code Users

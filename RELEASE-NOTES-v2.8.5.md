@@ -24,25 +24,28 @@ claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@late
 
 ### 📦 Installation Methods
 
-#### For Claude Desktop Users
+#### Option 1: Automatic Installation (Recommended)
+Works for both Claude Desktop and Claude Code:
 ```bash
-# Same as before - creates local files
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+
+# Or install to a specific directory:
+npx @endlessblink/like-i-said-v2@latest like-i-said-v2 install --path /custom/path
 ```
 
-#### For Claude Code Users
+This command automatically:
+- Installs the MCP server
+- Configures your Claude client (Desktop or Code)
+- Sets up necessary directories
+- No manual configuration needed
 
-**Option 1: Quick Setup (Recommended)**
+#### Option 2: Claude Code Direct Registration
+If you're using Claude Code and Option 1 didn't work:
 ```bash
-# No local files - instant setup
 claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
 ```
 
-**Option 2: With Dashboard**
-```bash
-# Creates local files for dashboard access
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
-```
+This registers the MCP server directly with Claude Code's configuration system.
 
 ### 🔧 Technical Improvements
 
@@ -69,7 +72,8 @@ npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
 
 - Updated README with clear installation options
 - Added detailed guides for each installation method
-- Clarified differences between Claude Desktop and Claude Code
+- Fixed Claude Code description (it's a terminal CLI, not a web interface)
+- Clarified dashboard runs on port 3001 by default
 
 ### 🔄 Migration Guide
 

@@ -4,16 +4,11 @@ Like-I-Said v2 supports multiple installation methods depending on your use case
 
 ## Quick Install Options
 
-### 1. Claude Desktop Users (DXT Installation) - Recommended
+### 1. Claude Desktop Users - Recommended
 
-The easiest way to install Like-I-Said for Claude Desktop:
+The recommended installation method for Claude Desktop users is via NPX (see option 2 below).
 
-1. Download the latest `.dxt` file from [Releases](https://github.com/endlessblink/Like-I-Said-memory-mcp-server/releases)
-2. Double-click the `.dxt` file
-3. Claude Desktop will automatically install and configure everything
-4. Start using Like-I-Said immediately!
-
-### 2. NPX Installation (For Claude Code + IDEs)
+### 2. NPX Installation (For All Users)
 
 **This method is for Claude Code users** who are using Claude through web browsers with IDE integrations (Cursor, Windsurf, VS Code).
 
