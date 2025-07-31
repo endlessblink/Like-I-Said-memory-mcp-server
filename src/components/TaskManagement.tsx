@@ -22,7 +22,7 @@ import { TemplateSelector } from './TemplateSelector'
 import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
 import { MemoryViewModal } from './MemoryViewModal'
 import { Memory } from '@/types'
-import { Clock, Edit, FileText, Users, Eye } from 'lucide-react'
+import { Clock, Edit, FileText, Users, Eye, Loader2 } from 'lucide-react'
 import { formatDistanceToNow } from '@/utils/helpers'
 
 interface Task {

@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "2.8.8",
+  "version": "2.8.10",
   "description": "Task Management & Memory for Claude - Track tasks, remember context, and maintain continuity across sessions with 27 powerful tools. Works with Claude Desktop and Claude Code.",
   "main": "server.js",
   "type": "module",
@@ -74,6 +74,18 @@
     "test:mcp": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}' | node server-markdown.js",
     "test:api": "node tests/api-integration-test.js",
     "test:integration": "npm run test:api && npm run test:mcp && npm run test:websocket",
+    "test:regression": "jest tests/mcp-server-regression.test.js tests/react-import-regression.test.js tests/integration-full.test.js",
+    "test:imports": "jest tests/react-import-regression.test.js",
+    "test:mcp-regression": "jest tests/mcp-server-regression.test.js",
+    "test:full-integration": "jest tests/integration-full.test.js",
+    "test:quick": "npm run test:imports && npm run test:mcp-regression",
+    "test:ci": "npm run test:regression && npm run build && npm run test:mcp",
+    "test:watch-regression": "jest --watch tests/mcp-server-regression.test.js tests/react-import-regression.test.js",
+    "test:security": "npm audit --audit-level moderate",
+    "autotest:setup": "bash scripts/setup-git-hooks.sh",
+    "autotest:status": "ls -la .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null && echo '✅ Git hooks installed' || echo '❌ Git hooks not installed'",
+    "test:continuous": "node scripts/continuous-testing.js",
+    "test:dev": "npm run test:continuous",
     "test:ui": "npm run test:ui-visual && npm run test:ui-connection",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:ui",
     "test:pre-push": "npm run test:all",
@@ -136,5 +148,8 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.0.4",
     "vite": "^4.4.9"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

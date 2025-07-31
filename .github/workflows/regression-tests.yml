@@ -1,0 +1,115 @@
+name: Regression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  regression-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run React import regression tests
+      run: npm run test:imports
+      
+    - name: Run MCP server regression tests
+      run: npm run test:mcp-regression
+      timeout-minutes: 5
+      
+    - name: Run full integration tests
+      run: npm run test:full-integration
+      timeout-minutes: 10
+      
+    - name: Build React dashboard
+      run: npm run build
+      
+    - name: Test MCP server connectivity
+      run: npm run test:mcp
+      timeout-minutes: 3
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run security audit
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+      
+    - name: Check for vulnerabilities
+      run: |
+        if npm audit --audit-level high --dry-run > /dev/null 2>&1; then
+          echo "✅ No high-severity vulnerabilities found"
+        else
+          echo "⚠️ High-severity vulnerabilities detected"
+          npm audit --audit-level high
+          exit 1
+        fi
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run Jest tests with coverage
+      run: npm run test:coverage
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  notification:
+    runs-on: ubuntu-latest
+    needs: [regression-tests, security-audit, code-quality]
+    if: failure()
+    steps:
+    - name: Notify on failure
+      run: |
+        echo "🚨 Regression tests failed!"
+        echo "One or more test suites failed. Please check the logs above."
+        exit 1

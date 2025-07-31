@@ -23,14 +23,14 @@ This is the #1 cause of WSL2 networking issues!
    ```
 3. Run the setup script:
    ```powershell
-   .\setup-wsl-port-forwarding.ps1
+   .\scripts\setup-wsl-port-forwarding.ps1
    ```
 
 ### Step 3: Start the Dashboard
 
 In WSL2:
 ```bash
-./start-dashboard-wsl.sh
+./scripts/start-dashboard-wsl.sh
 ```
 
 Then access in Firefox: **http://localhost:3010**
@@ -79,7 +79,7 @@ Then access in Firefox: **http://localhost:3010**
 
 2. **Run port forwarding again** (WSL2 IP changes on restart):
    ```powershell
-   .\setup-wsl-port-forwarding.ps1
+   .\scripts\setup-wsl-port-forwarding.ps1
    ```
 
 3. **Try a different browser** (Edge or Chrome) to rule out Firefox-specific issues

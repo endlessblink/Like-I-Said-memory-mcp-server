@@ -89,14 +89,16 @@ export class MemoryAPI {
       throw new Error('Memory content cannot be empty')
     }
 
-    // Safeguard: Reject mock data patterns
+    // Safeguard: Reject mock data patterns (more specific patterns to avoid false positives)
     const mockDataPatterns = [
       /mock-\d+/i,
-      /test.*data/i,
+      /^test\s+data$/i,               // Only match exact "test data"
+      /\btest\s+data\b/i,             // Match "test data" as whole words
       /sample.*content/i,
       /lorem ipsum/i,
       /fake.*data/i,
-      /placeholder/i
+      /placeholder.*content/i,         // More specific placeholder pattern
+      /dummy.*data/i                   // Add dummy data pattern
     ];
     
     const containsMockPattern = mockDataPatterns.some(pattern => 

@@ -11,6 +11,9 @@ test/
 tests/
 *.test.js
 *.spec.js
+test-*.html
+tests/issue-fixes-test.js
+tests/task-id-validation.test.js
 
 # Documentation source
 docs/
@@ -86,3 +89,21 @@ assets/images/
 # Session dropoff files
 SESSION-DROPOFF-*.md
 session-dropoffs/
+
+# Platform-specific files
+platform-aware-*.patch
+platform-aware-paths.js
+scripts/platform-config.example.json
+
+# Dashboard port files
+.dashboard-port
+
+# Data directories
+data/
+vectors/
+data-backups/
+backup-*/
+
+# User tasks and memories
+tasks/
+memories/

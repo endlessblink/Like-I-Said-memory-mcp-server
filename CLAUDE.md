@@ -679,10 +679,22 @@ ls -la tasks/
 - `README.md`, `LICENSE` - Project info
 - `CLAUDE.md` - This file
 
-**NEVER create new files in root unless they are:**
-- Entry point scripts referenced in package.json
-- Build/config files required by tools
-- Standard project files (README, LICENSE)
+**🚨 CRITICAL RULE: NEVER CREATE FILES IN ROOT DIRECTORY**
+
+**ONLY these files are allowed in root:**
+- Entry point scripts referenced in package.json (`cli.js`, `server.js`, `server-markdown.js`, `dashboard-server-bridge.js`, `mcp-server-wrapper.js`)
+- Package management (`package.json`, `package-lock.json`)
+- Build/config files required by tools (`vite.config.ts`, `tsconfig.json`, `tailwind.config.js`, `postcss.config.js`, `jest.config.cjs`, `eslint.config.js`)
+- Standard project files (`README.md`, `CLAUDE.md`, `.gitignore`, `index.html`)
+
+**🚫 ABSOLUTELY PROHIBITED IN ROOT:**
+- Documentation files (`.md` files except README.md and CLAUDE.md)
+- Utility scripts (`.js`, `.sh`, `.bat`, `.ps1` files not in package.json)
+- Configuration examples or templates
+- Log files
+- Test files (`.html`, `.test.js`, etc.)
+- Temporary files (`.tmp`, `.bak`, etc.)
+- Platform-specific scripts or configs
 
 ### Directory Structure and Usage
 
@@ -738,18 +750,50 @@ Like-I-Said-memory-mcp-server/
 5. **Tests**: ALWAYS put in `tests/`
    - Unit tests → `tests/`
    - Integration tests → `tests/`
+   - Test HTML files → `tests/`
+
+6. **Logs**: ALWAYS put in `logs/`
+   - Application logs → `logs/`
+   - Debug logs → `logs/`
+   - Server logs → `logs/`
+
+### ⚠️ ENFORCEMENT RULES
+
+**Before creating ANY file, ask yourself:**
+1. Is this an entry point script referenced in package.json? → Root allowed
+2. Is this a build/config file required by a tool? → Root allowed  
+3. Is this README.md, CLAUDE.md, or .gitignore? → Root allowed
+4. **OTHERWISE** → MUST go in appropriate subdirectory
+
+**Common Violations to Avoid:**
+- Startup scripts (start-*.js, start-*.bat, start-*.sh) → `scripts/`
+- Test scripts (test-*.js) → `scripts/` or `tests/`
+- Setup/utility scripts → `scripts/`
+- Release notes, guides → `docs/` or `docs/guides/`
+- Config examples → `docs/guides/` or `data/`
+- Platform-specific files → `scripts/`
+- Log files → `logs/`
+- Temporary files → DELETE immediately
 
 ### Examples
 
-❌ WRONG:
+❌ **ABSOLUTELY WRONG:**
 - Creating `SETUP-GUIDE.md` in root
-- Creating `fix-issue.js` in root
-- Creating `new-feature.js` in root
+- Creating `start-dashboard.js` in root  
+- Creating `test-platform.js` in root
+- Creating `config.example.json` in root
+- Creating `RELEASE-NOTES.md` in root
+- Creating `*.log` files in root
+- Creating `*.tmp` files in root
 
-✅ CORRECT:
+✅ **ALWAYS CORRECT:**
 - Creating `docs/guides/SETUP-GUIDE.md`
-- Creating `scripts/fix-issue.js`
-- Creating `lib/new-feature.js` (if it's a library)
+- Creating `scripts/start-dashboard.js`
+- Creating `scripts/test-platform.js` or `tests/test-platform.js`
+- Creating `docs/guides/config.example.json`
+- Creating `docs/RELEASE-NOTES.md`
+- Configuring logs to `logs/` directory
+- Immediately deleting temp files or using proper temp directories
 
 ## Recent Updates and Status
 

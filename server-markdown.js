@@ -1365,14 +1365,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Invalid memory: Content is required and must be a non-empty string');
         }
         
-        // Safeguard: Reject mock data indicators
+        // Safeguard: Reject mock data indicators (more specific patterns to avoid false positives)
         const mockDataPatterns = [
           /mock-\d+/i,
-          /test.*data/i,
+          /^test\s+data$/i,               // Only match exact "test data"
+          /\btest\s+data\b/i,             // Match "test data" as whole words
           /sample.*content/i,
           /lorem ipsum/i,
           /fake.*data/i,
-          /placeholder/i
+          /placeholder.*content/i,         // More specific placeholder pattern
+          /dummy.*data/i                   // Add dummy data pattern
         ];
         
         const containsMockPattern = mockDataPatterns.some(pattern => 
@@ -1483,12 +1485,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           technologies: enrichedMemory.metadata?.technologies
         });
         
-        // Process memory for task automation
+        // Process memory for task automation (skip if method doesn't exist)
         let taskAutomationResult = null;
         try {
-          taskAutomationResult = await memoryTaskAutomator.processMemory(memory);
+          if (typeof memoryTaskAutomator.processMemory === 'function') {
+            taskAutomationResult = await memoryTaskAutomator.processMemory(memory);
+          }
           
-          if (taskAutomationResult.performed) {
+          if (taskAutomationResult?.performed) {
             console.error(`[MCP] Memory task automation performed: ${taskAutomationResult.action} - ${taskAutomationResult.message}`);
             
             // Update memory with automation metadata
@@ -1737,7 +1741,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           
           if (suggestion.suggestion || behaviorAction?.action === 'create_memory') {
             // Auto-create the memory if it's important enough
-            const autoMemory = await storage.addMemory({
+            const autoMemory = await storage.saveMemory({
               content: `## Search Query: ${query}\n\n*Auto-captured unfound search term*\n\nThis search query returned no results but appears to contain important information that should be remembered.\n\n### Search Intelligence\n- Intent: ${queryIntent.type}\n- Contexts: ${queryIntent.contexts.join(', ') || 'general'}\n- Expanded terms tried: ${expandedQueries.slice(0, 5).join(', ')}`,
               category: suggestion.proposedMemory?.category || 'research',
               tags: [...(suggestion.proposedMemory?.tags || []), 'search-capture', 'auto-created', ...queryIntent.contexts],

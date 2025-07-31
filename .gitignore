@@ -48,12 +48,12 @@ dist-installer-*/
 *-linux
 *-macos
 
-# Test files
-test-*.js
+# Test files (but keep important tests)
+test-*.html
 test-*.mjs
 __tests__/
-*.test.js
-*.spec.js
+!tests/issue-fixes-test.js
+!tests/task-id-validation.test.js
 
 # Test directories
 test-fresh-install/
@@ -61,6 +61,14 @@ test-npx-install/
 
 # Package archives
 *.tgz
+
+# Platform-specific files (temporary)
+platform-aware-*.patch
+platform-aware-paths.js
+scripts/platform-config.example.json
+
+# Dashboard port files
+.dashboard-port
 
 # Session management
 session-dropoffs/

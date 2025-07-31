@@ -38,6 +38,18 @@ Unlike simple memory tools, Like-I-Said v2 provides **intelligent task managemen
 
 ## 🚀 Installation
 
+### Prerequisites
+
+Before installing Like-I-Said v2, you need to have **Node.js** installed on your system:
+
+- **Node.js** (version 14 or higher) - [Download from nodejs.org](https://nodejs.org/)
+  - This includes NPM and NPX which are required for installation
+  - To check if you have Node.js installed, run: `node --version`
+  - If you see a version number (e.g., v18.17.0), you're ready to proceed
+  - If not, download and install Node.js from the link above
+
+> **Note**: NPX commands require Node.js to be installed. If you see an error like "npx: command not found", please install Node.js first from [https://nodejs.org/](https://nodejs.org/)
+
 ### Installation Methods
 
 #### Option 1: Automatic Installation (Recommended)
