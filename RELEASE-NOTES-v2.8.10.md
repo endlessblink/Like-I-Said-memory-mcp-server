@@ -28,26 +28,51 @@
 
 ## 📦 How to Update
 
+### ⚠️ IMPORTANT: Dashboard Rebuild Required!
+The Loader2 fix requires rebuilding the React dashboard after updating.
+
 ### For npm users:
 ```bash
-npm update @endlessblink/like-i-said-v2
-# or
+# 1. Update the package
 npm install @endlessblink/like-i-said-v2@latest
+
+# 2. Rebuild the dashboard (REQUIRED for Loader2 fix!)
+cd node_modules/@endlessblink/like-i-said-v2
+npm run build
 ```
 
 ### For Claude Code users:
 ```bash
-# Remove old version
+# 1. Remove old version
 claude mcp remove like-i-said-memory-v2
 
-# Install new version
+# 2. Install new version
 claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+
+# 3. The dashboard should auto-rebuild with npx
 ```
 
 ### For local development:
 ```bash
+# 1. Pull latest changes
 git pull origin main
+
+# 2. Install dependencies
 npm install
+
+# 3. Rebuild dashboard (REQUIRED!)
+npm run build
+
+# 4. Start the dashboard
+npm run dashboard
+# or
+npm run dev:full
+```
+
+### Quick Start After Update:
+```bash
+# This starts both API and rebuilt dashboard
+npm run dev:full
 ```
 
 ## 🎯 Key Improvements
