@@ -1,0 +1,91 @@
+# CRITICAL: The following file MUST remain in root directory:
+# - mcp-server-wrapper.js (MCP clients depend on this exact path)
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Data directories
+memories/
+tasks/
+data/
+vectors/
+data-backups/
+backup-*/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Large installer files
+dist-installer-*/
+*.exe
+*-linux
+*-macos
+
+# Test files (but keep important tests)
+test-*.html
+test-*.mjs
+__tests__/
+!tests/issue-fixes-test.js
+!tests/task-id-validation.test.js
+
+# Test directories
+test-fresh-install/
+test-npx-install/
+
+# Package archives
+*.tgz
+
+# Platform-specific files (temporary)
+platform-aware-*.patch
+platform-aware-paths.js
+scripts/platform-config.example.json
+
+# Dashboard port files
+.dashboard-port
+
+# Session management
+session-dropoffs/
+SESSION-DROPOFF-*.md
+DROPOFF-*.md
+
+# Debugging files
+debugging/
+
+# Documentation (except essential)
+docs/debugging/*.log
+docs/temp/
+docs/drafts/
+
+# Keep essential files
+!README.md
+!CLAUDE.md
+!LICENSE
+!package.json
+!package-lock.json

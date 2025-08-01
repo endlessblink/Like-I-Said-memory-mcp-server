@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-07-19T09:03:44Z",
+  "version": "2.6.21",
+  "node_version": "v20.19.2",
+  "npm_version": "10.8.2",
+  "platform": "Linux",
+  "git_commit": "8856aec3cb314b682f28a8d20bce8d07e0dc6fb4",
+  "git_branch": "preserve/2025-01-19-stable",
+  "critical_files": {
+    "mcp_server": "server-markdown.js",
+    "api_bridge": "dashboard-server-bridge.js",
+    "memory_format": "lib/memory-format.js",
+    "task_storage": "lib/task-storage.js",
+    "system_safeguards": "lib/system-safeguards.js"
+  },
+  "test_status": "pending"
+}
