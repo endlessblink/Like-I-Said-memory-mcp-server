@@ -1,4 +1,4 @@
-import { sqliteManager } from '../../../lib/sqlite-manager.js';
+import { sqliteManager, SQLiteManager } from '../../../lib/sqlite-manager.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -10,9 +10,10 @@ import chokidar from 'chokidar';
  * Files are the source of truth, SQLite provides performance indexing
  */
 export class HybridTaskManager {
-  constructor(tasksDir = null) {
+  constructor(tasksDir = null, options = {}) {
     this.tasksDir = tasksDir || path.join(process.cwd(), 'tasks');
-    this.db = sqliteManager;
+    // Allow custom SQLiteManager instance
+    this.db = options.db || sqliteManager;
     this.watcher = null;
     this.syncQueue = [];
     this.syncTimeout = null;

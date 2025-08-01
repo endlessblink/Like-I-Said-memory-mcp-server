@@ -32,6 +32,7 @@ import { SessionTracker } from './lib/session-tracker.js';
 import { QueryAnalyzer, RelevanceScorer, ContentClassifier, CircuitBreaker } from './lib/claude-historian-features.js';
 import { FuzzyMatcher } from './lib/fuzzy-matching.js';
 import { WorkDetectorWrapper } from './lib/work-detector-wrapper.js';
+import { v3Tools, handleV3Tool } from './lib/v3-mcp-tools.js';
 // Removed ConnectionProtection and DataIntegrity imports to prevent any exit calls
 // import { createRequire } from 'module';
 // const require = createRequire(import.meta.url);
@@ -1306,6 +1307,8 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
           properties: {},
         },
       },
+      // V3 Hierarchical Tools
+      ...v3Tools,
     ],
   };
 });
@@ -3790,6 +3793,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
       }
+
+      // V3 Hierarchical Tools
+      case 'create_project':
+      case 'create_stage':
+      case 'create_hierarchical_task':
+      case 'create_subtask':
+      case 'move_task':
+      case 'view_project':
+        return await handleV3Tool(name, args);
 
       default:
         throw new Error(`Unknown tool: ${name}`);

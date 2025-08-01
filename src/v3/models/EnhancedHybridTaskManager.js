@@ -9,8 +9,8 @@ import yaml from 'js-yaml';
  * Extends the base HybridTaskManager with additional fields and functionality
  */
 export class EnhancedHybridTaskManager extends HybridTaskManager {
-  constructor(tasksDir = null) {
-    super(tasksDir);
+  constructor(tasksDir = null, options = {}) {
+    super(tasksDir, options);
   }
 
   /**
