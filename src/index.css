@@ -7,6 +7,7 @@
 @import './styles/themes/dropdown-fix.css'; /* Dropdown and theme fixes */
 @import './styles/themes/light-theme-fixes.css'; /* Light theme readability improvements */
 @import './styles/safe-areas.css'; /* Import safe area handling */
+@import './styles/task-status-animations.css'; /* Task status button animations */
 
 @tailwind base;
 @tailwind components;

@@ -787,7 +787,17 @@ class DashboardBridge {
   async getMemories(req, res) {
     try {
       const memories = [];
-      const { project, page = 1, limit = 50, sort = 'timestamp', order = 'desc' } = req.query;
+      const { 
+        project, 
+        page = 1, 
+        limit = 50, 
+        sort = 'timestamp', 
+        order = 'desc',
+        filter_search,
+        filter_tags,
+        filter_categories,
+        filter_content_type
+      } = req.query;
       
       // Validate pagination parameters
       const pageNum = Math.max(1, parseInt(page) || 1);
@@ -879,9 +889,41 @@ class DashboardBridge {
           uniqueMemories.push(memory);
         }
       }
+
+      // Apply server-side filters for performance
+      let filteredMemories = uniqueMemories;
+      
+      if (filter_search) {
+        const searchTerm = filter_search.toLowerCase();
+        filteredMemories = filteredMemories.filter(memory => 
+          memory.content?.toLowerCase().includes(searchTerm) ||
+          memory.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      if (filter_tags) {
+        const filterTags = filter_tags.split(',').map(tag => tag.trim());
+        filteredMemories = filteredMemories.filter(memory => 
+          memory.tags && filterTags.some(tag => memory.tags.includes(tag))
+        );
+      }
+      
+      if (filter_categories) {
+        const filterCategories = filter_categories.split(',').map(cat => cat.trim());
+        filteredMemories = filteredMemories.filter(memory => 
+          memory.category && filterCategories.includes(memory.category)
+        );
+      }
+      
+      if (filter_content_type) {
+        const filterTypes = filter_content_type.split(',').map(type => type.trim());
+        filteredMemories = filteredMemories.filter(memory => 
+          memory.metadata?.content_type && filterTypes.includes(memory.metadata.content_type)
+        );
+      }
       
       // Sort by specified field and order
-      uniqueMemories.sort((a, b) => {
+      filteredMemories.sort((a, b) => {
         let aVal, bVal;
         switch (sort) {
           case 'timestamp':
@@ -910,9 +952,9 @@ class DashboardBridge {
       });
 
       // Calculate pagination
-      const total = uniqueMemories.length;
+      const total = filteredMemories.length;
       const totalPages = Math.ceil(total / limitNum);
-      const paginatedMemories = uniqueMemories.slice(offset, offset + limitNum);
+      const paginatedMemories = filteredMemories.slice(offset, offset + limitNum);
 
       res.json({
         data: paginatedMemories,

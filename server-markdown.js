@@ -3921,6 +3921,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'create_subtask':
       case 'move_task':
       case 'view_project':
+      case 'find_project':
         return await handleV3Tool(name, args);
 
       default:

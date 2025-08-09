@@ -296,7 +296,7 @@ export function MemoryCard({
       className={`
         card-glass ${getComplexityClass(memory.complexity || 1)} group cursor-pointer overflow-hidden
         ${selected ? 'ring-2 ring-violet-500 border-violet-400' : ''}
-        w-full h-[300px] flex flex-col
+        w-full min-h-[280px] h-auto flex flex-col
         focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-900
       `}
       tabIndex={0}
@@ -419,7 +419,7 @@ export function MemoryCard({
 
         {/* Summary - Fixed height container */}
         <div className="flex-1 mb-4 min-h-0 relative z-10">
-          <div className="text-sm text-gray-300 leading-relaxed overflow-hidden" style={{ maxHeight: '4.5rem' }}>
+          <div className="text-sm text-gray-300 leading-relaxed">
             <div className="line-clamp-3 break-words">
               {generateSummary(memory.content, memory)}
             </div>
@@ -439,10 +439,10 @@ export function MemoryCard({
                 {displayTags.map((tag, index) => (
                   <span 
                     key={`${tag}-${index}`} 
-                    className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[80px] truncate z-20" 
+                    className="inline-flex items-center text-2xs bg-gray-700/90 text-gray-200 px-2 py-0.5 rounded-sm font-medium whitespace-nowrap max-w-[120px] z-20" 
                     title={`#${tag}`}
                   >
-                    #{tag.length > 10 ? tag.substring(0, 10) + '...' : tag}
+                    <span className="truncate">#{tag}</span>
                   </span>
                 ))}
                 {remainingCount > 0 && (
@@ -471,7 +471,7 @@ export function MemoryCard({
             {memory.project && (
               <div className="flex items-center gap-1 min-w-0" title={memory.project}>
                 <FileText className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate max-w-[50px]">{memory.project}</span>
+                <span className="truncate max-w-[80px]" title={memory.project}>{memory.project}</span>
               </div>
             )}
             

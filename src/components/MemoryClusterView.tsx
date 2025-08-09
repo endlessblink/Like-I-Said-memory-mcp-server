@@ -473,8 +473,8 @@ export function MemoryClusterView({
                   <div className={`
                     ${viewMode === 'grid' 
                       ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' 
-                      : 'space-y-2'
-                    }
+                      : 'space-y-3'
+                    } max-h-none overflow-visible
                   `}>
                     {cluster.memories.map((memory) => (
                       <div key={memory.id}>
@@ -489,27 +489,27 @@ export function MemoryClusterView({
                           />
                         ) : (
                           <div 
-                            className="flex items-center gap-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-colors"
+                            className="flex items-start gap-3 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-colors"
                             onClick={() => onMemoryClick?.(memory)}
                           >
                             <div 
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
                               style={{ backgroundColor: cluster.color }}
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm text-white font-medium truncate">
+                              <div className="text-sm text-white font-medium break-words mb-1">
                                 {extractTitle(memory.content, memory)}
                               </div>
-                              <div className="text-xs text-gray-400 truncate">
+                              <div className="text-xs text-gray-400 break-words line-clamp-2">
                                 {extractSummary(memory.content, memory)}
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {extractTags(memory).slice(0, 2).map(tag => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  #{tag}
-                                </Badge>
-                              ))}
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {extractTags(memory).slice(0, 3).map(tag => (
+                                  <Badge key={tag} variant="outline" className="text-xs">
+                                    #{tag}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}

@@ -626,6 +626,60 @@ export class EnhancedHybridTaskManager extends HybridTaskManager {
       return [];
     }
   }
+
+  /**
+   * Find existing project by name or title
+   * Safe, non-breaking search method for deduplication
+   * @param {string} searchTerm - Project name or title to search for
+   * @returns {Promise<Array>} Array of matching master-level tasks
+   */
+  async findExistingProject(searchTerm) {
+    if (!searchTerm) return [];
+    
+    try {
+      // Normalize the search term for project slug comparison
+      const normalized = searchTerm.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+      // Search for master-level tasks that match:
+      // 1. Exact project slug match
+      // 2. Case-insensitive title match
+      // 3. Normalized title match (spaces/underscores to hyphens)
+      const results = this.db.all(`
+        SELECT * FROM tasks 
+        WHERE level = 'master' 
+        AND (
+          project = ? OR 
+          LOWER(title) = LOWER(?) OR
+          LOWER(REPLACE(REPLACE(title, ' ', '-'), '_', '-')) = ?
+        )
+        ORDER BY created_at ASC
+      `, [normalized, searchTerm, normalized]);
+      
+      return results || [];
+    } catch (error) {
+      console.error('[EnhancedHybridTaskManager] Error finding existing project:', error);
+      return []; // Safe fallback - return empty array on error
+    }
+  }
+
+  /**
+   * Get all master-level projects
+   * @returns {Promise<Array>} Array of all master-level tasks
+   */
+  async getAllProjects() {
+    try {
+      const projects = this.db.all(`
+        SELECT * FROM tasks 
+        WHERE level = 'master' 
+        ORDER BY created_at DESC
+      `);
+      
+      return projects || [];
+    } catch (error) {
+      console.error('[EnhancedHybridTaskManager] Error getting all projects:', error);
+      return [];
+    }
+  }
 }
 
 // Export singleton instance

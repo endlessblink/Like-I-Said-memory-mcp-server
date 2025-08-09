@@ -18,11 +18,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TaskTreeView } from './TaskTreeView'
 import { TaskStatusButton, TaskStatusButtonGroup } from './TaskStatusButton'
+import { TaskStatusButtonGroup as ImprovedTaskStatusButtonGroup, TaskStatusIndicator } from './TaskStatusButtonImproved'
 import { TemplateSelector } from './TemplateSelector'
 import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
 import { MemoryViewModal } from './MemoryViewModal'
 import { Memory } from '@/types'
-import { Clock, Edit, FileText, Users, Eye, Loader2 } from 'lucide-react'
+import { Clock, Edit, FileText, Users, Eye, Loader2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatDistanceToNow } from '@/utils/helpers'
 
 interface Task {
@@ -87,6 +88,15 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
   }>({
     project: currentProject || 'all'
   })
+  
+  // Task creation states
+  const [isCreatingTask, setIsCreatingTask] = useState(false)
+  const [taskCreationResult, setTaskCreationResult] = useState<{
+    success: boolean
+    taskTitle?: string
+    linkedCount?: number
+    message: string
+  } | null>(null)
   
   // Bulk operations state
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
@@ -294,6 +304,7 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
   const createTask = async () => {
     if (!newTask.title.trim()) return
 
+    setIsCreatingTask(true)
     try {
       const response = await fetch('/api/mcp-tools/create_task', {
         method: 'POST',
@@ -310,6 +321,37 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
       })
 
       if (response.ok) {
+        const result = await response.json()
+        
+        // Parse the response to extract linking information
+        const responseText = result.content?.[0]?.text || ''
+        const memoryConnectionsMatch = responseText.match(/Auto-linked: (\d+) memories/)
+        const linkedCount = memoryConnectionsMatch ? parseInt(memoryConnectionsMatch[1]) : 0
+        
+        // Show success message with linking results
+        if (newTask.autoLinkMemories && linkedCount > 0) {
+          setTaskCreationResult({
+            success: true,
+            taskTitle: newTask.title,
+            linkedCount,
+            message: `Task created successfully! 🧠 Automatically linked ${linkedCount} relevant ${linkedCount === 1 ? 'memory' : 'memories'}.`
+          })
+        } else if (newTask.autoLinkMemories && linkedCount === 0) {
+          setTaskCreationResult({
+            success: true,
+            taskTitle: newTask.title,
+            linkedCount: 0,
+            message: `Task created successfully! No relevant memories found for automatic linking.`
+          })
+        } else {
+          setTaskCreationResult({
+            success: true,
+            taskTitle: newTask.title,
+            linkedCount: 0,
+            message: `Task created successfully!`
+          })
+        }
+
         setNewTask({
           title: '',
           description: '',
@@ -321,20 +363,32 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
         })
         setSuggestedMemories([])
         setShowCreateDialog(false)
+        
+        // Auto-dismiss success message after 4 seconds
+        setTimeout(() => setTaskCreationResult(null), 4000)
+        
         if (onTasksChange) {
           await onTasksChange()
         } else {
-          if (onTasksChange) {
-        await onTasksChange()
-      } else {
-        await loadTasks()
-      }
+          await loadTasks()
         }
       } else {
-        console.warn('Task creation not available yet')
+        const error = await response.text()
+        setTaskCreationResult({
+          success: false,
+          message: `Failed to create task: ${error}`
+        })
+        setTimeout(() => setTaskCreationResult(null), 5000)
       }
     } catch (error) {
-      console.warn('Task creation not available yet:', error)
+      console.error('Task creation failed:', error)
+      setTaskCreationResult({
+        success: false,
+        message: `Failed to create task: ${error.message}`
+      })
+      setTimeout(() => setTaskCreationResult(null), 5000)
+    } finally {
+      setIsCreatingTask(false)
     }
   }
 
@@ -864,8 +918,19 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                 }}>
                   Cancel
                 </Button>
-                <Button onClick={createTask} disabled={!newTask.title.trim()}>
-                  Create Task
+                <Button 
+                  onClick={createTask} 
+                  disabled={!newTask.title.trim() || isCreatingTask}
+                  className="min-w-[120px]"
+                >
+                  {isCreatingTask ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </div>
+                  ) : (
+                    'Create Task'
+                  )}
                 </Button>
               </div>
             </div>
@@ -979,6 +1044,39 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                 Delete Selected
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Creation Result Notification */}
+      {taskCreationResult && (
+        <div className={`p-4 rounded-lg border transition-all duration-300 ${
+          taskCreationResult.success 
+            ? 'bg-green-900/30 border-green-600/50 text-green-300' 
+            : 'bg-red-900/30 border-red-600/50 text-red-300'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`text-xl ${taskCreationResult.success ? 'text-green-400' : 'text-red-400'}`}>
+                {taskCreationResult.success ? '✅' : '❌'}
+              </div>
+              <div>
+                <div className="font-medium">{taskCreationResult.message}</div>
+                {taskCreationResult.taskTitle && (
+                  <div className="text-sm opacity-80 mt-1">
+                    Task: "{taskCreationResult.taskTitle}"
+                  </div>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTaskCreationResult(null)}
+              className="text-gray-400 hover:text-gray-200"
+            >
+              ✕
+            </Button>
           </div>
         </div>
       )}
@@ -1102,6 +1200,18 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                                     >
                                       <Edit className="h-4 w-4" />
                                     </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+                                          deleteTask(task.id)
+                                        }
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                                      aria-label={`Delete task: ${task.title}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
                                   </div>
                                 </div>
 
@@ -1159,9 +1269,12 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                                     
                                     {/* Memory Connections */}
                                     {task.memory_connections && task.memory_connections.length > 0 && (
-                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                      <div className="flex items-center gap-1 flex-shrink-0" title={`${task.memory_connections.length} linked ${task.memory_connections.length === 1 ? 'memory' : 'memories'}`}>
                                         <FileText className="h-3 w-3 text-purple-400" />
-                                        <span>{task.memory_connections.length}</span>
+                                        <span className="text-purple-400 font-medium">{task.memory_connections.length}</span>
+                                        {task.memory_connections.length > 3 && (
+                                          <span className="text-xs text-purple-300">🔗</span>
+                                        )}
                                       </div>
                                     )}
                                     
@@ -1231,9 +1344,44 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <span>🧠 {task.memory_connections?.length || 0}</span>
+                        <span className={`flex items-center gap-1 ${
+                          task.memory_connections && task.memory_connections.length > 0 
+                            ? 'text-purple-400 font-medium' 
+                            : ''
+                        }`} title={`${task.memory_connections?.length || 0} linked ${(task.memory_connections?.length || 0) === 1 ? 'memory' : 'memories'}`}>
+                          🧠 {task.memory_connections?.length || 0}
+                          {task.memory_connections && task.memory_connections.length > 3 && (
+                            <span className="text-xs">🔗</span>
+                          )}
+                        </span>
                         <span>📁 {task.project}</span>
                         <span>{new Date(task.created).toLocaleDateString()}</span>
+                        
+                        {/* Action Buttons for List View */}
+                        <div className="flex items-center gap-1 ml-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleTaskClick(task)
+                            }}
+                            className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                            aria-label={`Edit task: ${task.title}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+                                deleteTask(task.id)
+                              }
+                            }}
+                            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-300 transition-colors rounded-lg flex items-center justify-center touch-manipulation"
+                            aria-label={`Delete task: ${task.title}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1413,9 +1561,11 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                     <StatusIcon status={selectedTask.status} showTooltip={false} size="md" />
                     Update Status
                   </h4>
-                  <TaskStatusButtonGroup 
+                  <ImprovedTaskStatusButtonGroup 
                     currentStatus={selectedTask.status}
                     onStatusChange={(newStatus) => updateTaskStatus(selectedTask.id, newStatus)}
+                    showAnimation={true}
+                    compact={false}
                   />
                 </div>
               )}
@@ -1515,20 +1665,35 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
                       </Badge>
                     )}
                   </h4>
-                  {(selectedTask.memory_connections?.length || 0) > 0 && (
+                  <div className="flex gap-2">
+                    {(selectedTask.memory_connections?.length || 0) > 0 && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-xs hover:bg-gray-700"
+                        onClick={() => {
+                          console.log('View all memories for task:', selectedTask.id)
+                          // TODO: Open memories tab with task filter
+                        }}
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        View All
+                      </Button>
+                    )}
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="text-xs hover:bg-gray-700"
+                      className="text-xs hover:bg-purple-700/50 border-purple-600/30 text-purple-300"
                       onClick={() => {
-                        console.log('View all memories for task:', selectedTask.id)
-                        // TODO: Open memories tab with task filter
+                        // TODO: Implement manual memory linking
+                        console.log('Link more memories to task:', selectedTask.id)
                       }}
+                      title="Manually link additional memories to this task"
                     >
-                      <Eye className="w-3 h-3 mr-1" />
-                      View All
+                      <Plus className="w-3 h-3 mr-1" />
+                      Link More
                     </Button>
-                  )}
+                  </div>
                 </div>
                 
                 {(selectedTask.memory_connections && selectedTask.memory_connections.length > 0) || (taskContext && taskContext.direct_memories.length > 0) ? (
