@@ -114,3 +114,58 @@ export interface Project {
   created: string
   modified: string
 }
+
+// === V3 HIERARCHICAL TASK TYPES ===
+export type TaskLevel = 'master' | 'epic' | 'task' | 'subtask';
+export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface V3Task {
+  id: string;
+  title: string;
+  description?: string;
+  level: TaskLevel;
+  status: TaskStatus;
+  priority: TaskPriority;
+  path: string; // materialized path like "001.002.003"
+  semantic_path?: string; // human-readable path
+  parent_id?: string;
+  project?: string;
+  tags?: string[];
+  estimated_hours?: number;
+  actual_hours?: number;
+  created_at: string;
+  updated_at: string;
+  due_date?: string;
+  assignee?: string;
+  children?: V3Task[]; // populated for tree view
+}
+
+export interface TaskHierarchyViewProps {
+  tasks: V3Task[];
+  selectedTaskId?: string;
+  onTaskSelect?: (task: V3Task) => void;
+  onTaskUpdate?: (taskId: string, updates: Partial<V3Task>) => Promise<void>;
+  onTaskMove?: (taskId: string, newParentId?: string) => Promise<void>;
+  className?: string;
+}
+
+export interface UseV3TasksOptions {
+  autoRefresh?: boolean;
+  includeCompleted?: boolean;
+  project?: string;
+}
+
+export interface UseV3TasksReturn {
+  tasks: V3Task[];
+  loading: boolean;
+  error: string | null;
+  refreshTasks: () => Promise<void>;
+  createTask: (task: Partial<V3Task>) => Promise<V3Task>;
+  updateTask: (taskId: string, updates: Partial<V3Task>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  moveTask: (taskId: string, newParentId?: string) => Promise<void>;
+  getTaskTree: () => V3Task[];
+  searchTasks: (query: string) => V3Task[];
+  getTaskById: (taskId: string) => V3Task | null;
+}

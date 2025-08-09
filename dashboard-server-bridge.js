@@ -8,6 +8,7 @@ import path from 'path';
 import chokidar from 'chokidar';
 import { WebSocketServer } from 'ws';
 import http from 'http';
+import crypto from 'crypto';
 import { spawn } from 'child_process';
 import { MemoryFormat } from './lib/memory-format.js';
 import { TaskStorage } from './lib/task-storage.js';
@@ -284,6 +285,14 @@ class DashboardBridge {
     this.app.post('/api/tasks', requireAuth(), this.createTask.bind(this));
     this.app.put('/api/tasks/:id', requireAuth(), this.updateTask.bind(this));
     this.app.delete('/api/tasks/:id', requireAuth(), this.deleteTask.bind(this));
+    
+    // V3 Task API Routes (hierarchical tasks)
+    this.app.get('/api/v3/tasks', requireAuth(), this.getV3Tasks.bind(this));
+    this.app.get('/api/v3/tasks/:id', requireAuth(), this.getV3Task.bind(this));
+    this.app.post('/api/v3/tasks', requireAuth(), this.createV3Task.bind(this));
+    this.app.patch('/api/v3/tasks/:id', requireAuth(), this.updateV3Task.bind(this));
+    this.app.delete('/api/v3/tasks/:id', requireAuth(), this.deleteV3Task.bind(this));
+    this.app.post('/api/v3/tasks/:id/move', requireAuth(), this.moveV3Task.bind(this));
     
     // Protected System API Routes
     this.app.get('/api/system/health', requireAuth(), this.getSystemHealth.bind(this));
@@ -1158,8 +1167,13 @@ class DashboardBridge {
       
       // Format the response with duplicate groups
       const response = {
-        totalDuplicates: duplicates.reduce((sum, group) => sum + group.removeFiles.length, 0),
-        groups: duplicates.map(group => ({
+        totalDuplicates: duplicates.totalDuplicateFiles || 0,
+        statistics: {
+          totalMemories: duplicates.totalMemories || 0,
+          uniqueMemories: duplicates.uniqueMemories || 0,
+          duplicatedIds: duplicates.duplicatedIds || 0
+        },
+        groups: (duplicates.duplicates || []).map(group => ({
           id: group.id,
           originalFile: group.keepFile,
           duplicates: group.removeFiles,
@@ -1182,29 +1196,41 @@ class DashboardBridge {
       
       if (previewOnly) {
         const duplicates = await deduplicator.previewDeduplication();
-        const totalToRemove = duplicates.reduce((sum, group) => sum + group.removeFiles.length, 0);
         
         res.json({
           preview: true,
-          totalToRemove,
-          groups: duplicates
+          totalToRemove: duplicates.totalDuplicateFiles || 0,
+          statistics: {
+            totalMemories: duplicates.totalMemories || 0,
+            uniqueMemories: duplicates.uniqueMemories || 0,
+            duplicatedIds: duplicates.duplicatedIds || 0,
+            totalDuplicateFiles: duplicates.totalDuplicateFiles || 0
+          },
+          duplicateGroups: duplicates.duplicates || []
         });
       } else {
         const result = await deduplicator.deduplicateMemories();
         
-        // Broadcast update to WebSocket clients
-        this.broadcastUpdate({
-          type: 'deduplication_complete',
-          data: {
-            duplicatesRemoved: result.duplicatesRemoved,
-            message: 'Memory deduplication completed'
+        // Broadcast update to WebSocket clients (if available)
+        try {
+          if (this.broadcastUpdate && typeof this.broadcastUpdate === 'function') {
+            this.broadcastUpdate({
+              type: 'deduplication_complete',
+              data: {
+                filesRemoved: result.filesRemoved || 0,
+                message: 'Memory deduplication completed'
+              }
+            });
           }
-        });
+        } catch (error) {
+          console.warn('Failed to broadcast deduplication update:', error.message);
+        }
         
         res.json({
           success: true,
-          duplicatesRemoved: result.duplicatesRemoved,
-          message: `Successfully removed ${result.duplicatesRemoved} duplicate memories`
+          filesRemoved: result.filesRemoved || 0,
+          duplicatesRemoved: result.duplicateFiles || 0,
+          message: `Successfully removed ${result.filesRemoved || 0} duplicate files`
         });
       }
     } catch (error) {
@@ -3280,6 +3306,168 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
       res.json(health);
     } catch (error) {
       console.error('Error getting system health:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // V3 Hierarchical Task API Methods
+  async getV3Tasks(req, res) {
+    try {
+      const { project, status, level } = req.query;
+      
+      // For now, return sample data
+      // TODO: Integrate with SemanticHybridTaskManager
+      const sampleTasks = [
+        {
+          id: 'project-001',
+          title: 'Like-I-Said V3 Development',
+          description: 'Complete V3 hierarchical task management system',
+          level: 'master',
+          parent_id: null,
+          path: '001',
+          path_order: 1,
+          status: 'in_progress',
+          project: 'like-i-said-v3',
+          priority: 'high',
+          semantic_path: '001-PROJECT-like-i-said-v3-development-project-001',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'stage-001',
+          title: 'Phase 1: Core Hierarchy System',
+          description: 'Implement basic 4-level hierarchy with SQLite backend',
+          level: 'epic',
+          parent_id: 'project-001',
+          path: '001.001',
+          path_order: 1,
+          status: 'in_progress',
+          project: 'like-i-said-v3',
+          priority: 'high',
+          semantic_path: '001-PROJECT-like-i-said-v3-development-project-001/001-STAGE-phase-1-core-hierarchy-stage-001',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'task-001',
+          title: 'Build basic hierarchy UI with React-Window',
+          description: 'Create virtualized tree component for task hierarchy',
+          level: 'task',
+          parent_id: 'stage-001',
+          path: '001.001.001',
+          path_order: 1,
+          status: 'in_progress',
+          project: 'like-i-said-v3',
+          priority: 'high',
+          semantic_path: '001-PROJECT-like-i-said-v3-development-project-001/001-STAGE-phase-1-core-hierarchy-stage-001/001-TASK-build-hierarchy-ui-task-001',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      res.json({ tasks: sampleTasks });
+    } catch (error) {
+      console.error('Error fetching V3 tasks:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getV3Task(req, res) {
+    try {
+      const { id } = req.params;
+      
+      // Sample task for demo
+      const sampleTask = {
+        id,
+        title: 'Sample V3 Task',
+        description: 'This is a sample hierarchical task',
+        level: 'task',
+        parent_id: 'stage-001',
+        path: '001.001.001',
+        path_order: 1,
+        status: 'todo',
+        project: 'like-i-said-v3',
+        priority: 'medium',
+        semantic_path: '001-PROJECT-sample/001-STAGE-demo/001-TASK-sample-task',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      res.json(sampleTask);
+    } catch (error) {
+      console.error('Error fetching V3 task:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createV3Task(req, res) {
+    try {
+      const taskData = req.body;
+      
+      // Generate ID if not provided
+      const newTask = {
+        id: taskData.id || crypto.randomUUID(),
+        ...taskData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // TODO: Create task with SemanticHybridTaskManager
+      console.log('Creating V3 task:', newTask);
+      
+      res.status(201).json(newTask);
+    } catch (error) {
+      console.error('Error creating V3 task:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateV3Task(req, res) {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // TODO: Update task with SemanticHybridTaskManager
+      console.log('Updating V3 task:', id, updates);
+      
+      const updatedTask = {
+        id,
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      res.json(updatedTask);
+    } catch (error) {
+      console.error('Error updating V3 task:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteV3Task(req, res) {
+    try {
+      const { id } = req.params;
+      
+      // TODO: Delete task with SemanticHybridTaskManager
+      console.log('Deleting V3 task:', id);
+      
+      res.json({ success: true, message: 'Task deleted' });
+    } catch (error) {
+      console.error('Error deleting V3 task:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async moveV3Task(req, res) {
+    try {
+      const { id } = req.params;
+      const { newParentId } = req.body;
+      
+      // TODO: Move task with SemanticHybridTaskManager
+      console.log('Moving V3 task:', id, 'to parent:', newParentId);
+      
+      res.json({ success: true, message: 'Task moved' });
+    } catch (error) {
+      console.error('Error moving V3 task:', error);
       res.status(500).json({ error: error.message });
     }
   }

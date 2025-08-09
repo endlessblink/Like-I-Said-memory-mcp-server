@@ -48,6 +48,7 @@ import { MemoryTreeView } from '@/components/MemoryTreeView'
 import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp'
 import { TemplateSelector } from '@/components/TemplateSelector'
 import { GlobalSearch } from '@/components/GlobalSearch'
+import { ProjectsView } from '@/components/v3/ProjectsView'
 import { CategorySuggestions } from '@/components/CategorySuggestions'
 import { SearchPresets } from '@/components/SearchPresets'
 import { TutorialLauncher, OnboardingTutorial } from '@/components/OnboardingTutorial'
@@ -63,7 +64,7 @@ import {
   MemoryTableSkeleton,
   EmptyState 
 } from '@/components/LoadingStates'
-import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings, Download } from 'lucide-react'
+import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings, Download, FolderOpen } from 'lucide-react'
 import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
 import { searchMemories, sortMemories } from '@/utils/helpers'
 
@@ -228,7 +229,7 @@ function AppContent() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isEditLoading, setIsEditLoading] = useState(false)
-  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "relationships" | "ai" | "settings">("memories")
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "projects" | "relationships" | "ai" | "settings">("memories")
   const [aiMode, setAiMode] = useState<'memories' | 'tasks'>('memories')
   const [useAdvancedEditor, setUseAdvancedEditor] = useState(false)
   const [useAdvancedEditorCreate, setUseAdvancedEditorCreate] = useState(false)
@@ -1447,6 +1448,7 @@ Respond with JSON format:
                   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
                   { id: "memories", label: "Memories", icon: Brain },
                   { id: "tasks", label: "Tasks", icon: ListTodo },
+                  { id: "projects", label: "Projects", icon: FolderOpen },
                   { id: "relationships", label: "Relationships", shortLabel: "Relations", icon: Link },
                   { id: "ai", label: "AI Enhancement", shortLabel: "AI", icon: Bot },
                   { id: "settings", label: "Settings", icon: Settings }
@@ -1895,6 +1897,7 @@ Respond with JSON format:
                 {currentTab === "dashboard" && "Dashboard"}
                 {currentTab === "memories" && "Memories"}
                 {currentTab === "tasks" && "Tasks"}
+                {currentTab === "v3" && "V3 Hierarchy"}
                 {currentTab === "relationships" && "Relationships"}
                 {currentTab === "ai" && "AI Enhancement"}
                 {currentTab === "settings" && "Settings"}
@@ -1968,6 +1971,10 @@ Respond with JSON format:
                 currentProject={currentProject}
                 onTasksChange={loadTasks}
               />
+            )}
+
+            {currentTab === "projects" && (
+              <ProjectsView />
             )}
 
             {currentTab === "ai" && (

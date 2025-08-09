@@ -1527,6 +1527,54 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           responseText += `\n🎯 Confidence: ${(taskAutomationResult.confidence * 100).toFixed(1)}%`;
         }
         
+        // Enhanced: Add task connections display
+        try {
+          // Get memory connections to tasks if they exist
+          const savedMemory = await storage.getMemory(memory.id);
+          if (savedMemory && savedMemory.task_connections && savedMemory.task_connections.length > 0) {
+            const taskConnectionsDisplay = await taskMemoryLinker.formatMemoryTaskConnections(savedMemory, { 
+              showDetails: false, 
+              maxConnections: 5 
+            });
+            responseText += taskConnectionsDisplay;
+          }
+          
+          // If task automation created/updated a task, show the connection
+          if (taskAutomationResult?.taskId) {
+            try {
+              // Find tasks related to this memory through the project/category
+              const relatedTasks = await taskStorage.listTasks({ 
+                project: project || 'default' 
+              });
+              
+              const matchingTask = relatedTasks.find(task => 
+                task.id === taskAutomationResult.taskId || 
+                task.serial === taskAutomationResult.taskSerial
+              );
+              
+              if (matchingTask) {
+                responseText += `\n\n🔗 Task Connection Created:\n`;
+                responseText += `├─ 📋 ${matchingTask.serial}: ${matchingTask.title} [automated] 🤖auto-linked\n`;
+                
+                // Try to get V3 hierarchy for the connected task
+                try {
+                  const hierarchyDisplay = await taskMemoryLinker.getTaskHierarchyInfo(matchingTask.id);
+                  if (hierarchyDisplay) {
+                    responseText += hierarchyDisplay;
+                  }
+                } catch (hierarchyError) {
+                  // V3 hierarchy optional, continue without it
+                }
+              }
+            } catch (taskLookupError) {
+              console.error('[MCP] Error looking up automated task for display:', taskLookupError);
+            }
+          }
+        } catch (connectionError) {
+          console.error('[MCP] Error displaying task connections:', connectionError);
+          // Continue without connections display - this is non-critical
+        }
+        
         responseText += `\n\nContent Preview:\n${content.substring(0, 150)}${content.length > 150 ? '...' : ''}`;
         
         return {
@@ -1561,11 +1609,83 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
 
+        // Enhanced: Build response with task connections
+        let memoryDisplayText = `📄 Memory: ${memory.filename}\n🆔 ID: ${memory.id}\n📁 Project: ${memory.project || 'default'}\n📂 Category: ${memory.category || 'none'}\n🎯 Complexity: ${memory.complexity || 1}\n🏷️ Priority: ${memory.priority || 'medium'}\n📊 Status: ${memory.status || 'active'}\n🏷️ Tags: ${memory.tags?.join(', ') || 'none'}\n🔗 Related: ${memory.related_memories?.join(', ') || 'none'}\n👁️ Access Count: ${memory.access_count || 0}\n⏰ Created: ${new Date(memory.timestamp).toLocaleString()}\n🕐 Last Accessed: ${memory.last_accessed ? new Date(memory.last_accessed).toLocaleString() : 'Never'}\n📝 Content Type: ${memory.metadata?.content_type || 'text'}\n📏 Size: ${memory.metadata?.size || memory.content.length} characters\n🎨 Mermaid: ${memory.metadata?.mermaid_diagram ? 'Yes' : 'No'}`;
+
+        // Enhanced: Add task connections display for get_memory
+        try {
+          if (memory.task_connections && memory.task_connections.length > 0) {
+            const taskConnectionsDisplay = await taskMemoryLinker.formatMemoryTaskConnections(memory, { 
+              showDetails: true, 
+              maxConnections: 10 
+            });
+            memoryDisplayText += taskConnectionsDisplay;
+          }
+          
+          // Show V3 hierarchy for any connected tasks if available
+          if (memory.task_connections && memory.task_connections.length > 0) {
+            try {
+              // Get hierarchy for the first connected task (most relevant)
+              const primaryTask = memory.task_connections[0];
+              const hierarchyDisplay = await taskMemoryLinker.getTaskHierarchyInfo(primaryTask.task_id);
+              if (hierarchyDisplay) {
+                memoryDisplayText += hierarchyDisplay;
+              }
+            } catch (hierarchyError) {
+              // V3 hierarchy is optional
+              console.error('[MCP] V3 hierarchy display failed:', hierarchyError.message);
+            }
+          }
+          
+          // If no task connections exist, try to find potential connections
+          if (!memory.task_connections || memory.task_connections.length === 0) {
+            try {
+              // Create a dummy task object for finding potential connections
+              const memoryAsTask = {
+                title: memory.filename || 'Memory Content',
+                description: memory.content.substring(0, 300),
+                project: memory.project || 'default',
+                category: memory.category || 'general',
+                tags: memory.tags || [],
+                created: memory.timestamp || new Date().toISOString()
+              };
+              
+              const potentialConnections = await taskMemoryLinker.autoLinkMemories(memoryAsTask);
+              if (potentialConnections && potentialConnections.length > 0) {
+                memoryDisplayText += `\n\n💡 Potential Task Connections (${potentialConnections.length} found):\n`;
+                memoryDisplayText += `   These tasks might be related to this memory:\n`;
+                
+                const topConnections = potentialConnections.slice(0, 3);
+                for (let i = 0; i < topConnections.length; i++) {
+                  const conn = topConnections[i];
+                  const isLast = i === topConnections.length - 1;
+                  const prefix = isLast ? '└─ ' : '├─ ';
+                  const relevanceScore = (conn.relevance * 100).toFixed(0);
+                  
+                  memoryDisplayText += `${prefix}📋 ${conn.memory_serial}: Potential match [${relevanceScore}% relevance]\n`;
+                }
+                
+                if (potentialConnections.length > 3) {
+                  memoryDisplayText += `   ... and ${potentialConnections.length - 3} more potential connections\n`;
+                }
+              }
+            } catch (potentialError) {
+              // Potential connections are optional
+              console.error('[MCP] Potential connections lookup failed:', potentialError.message);
+            }
+          }
+        } catch (connectionError) {
+          console.error('[MCP] Error displaying task connections in get_memory:', connectionError);
+          // Continue without connections display - this is non-critical
+        }
+
+        memoryDisplayText += `\n\nContent:\n${memory.content}`;
+
         return {
           content: [
             {
               type: 'text',
-              text: `📄 Memory: ${memory.filename}\n🆔 ID: ${memory.id}\n📁 Project: ${memory.project || 'default'}\n📂 Category: ${memory.category || 'none'}\n🎯 Complexity: ${memory.complexity || 1}\n🏷️ Priority: ${memory.priority || 'medium'}\n📊 Status: ${memory.status || 'active'}\n🏷️ Tags: ${memory.tags?.join(', ') || 'none'}\n🔗 Related: ${memory.related_memories?.join(', ') || 'none'}\n👁️ Access Count: ${memory.access_count || 0}\n⏰ Created: ${new Date(memory.timestamp).toLocaleString()}\n🕐 Last Accessed: ${memory.last_accessed ? new Date(memory.last_accessed).toLocaleString() : 'Never'}\n📝 Content Type: ${memory.metadata?.content_type || 'text'}\n📏 Size: ${memory.metadata?.size || memory.content.length} characters\n🎨 Mermaid: ${memory.metadata?.mermaid_diagram ? 'Yes' : 'No'}\n\nContent:\n${memory.content}`,
+              text: memoryDisplayText,
             },
           ],
         };

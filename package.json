@@ -54,7 +54,7 @@
     "start:dashboard": "node dashboard-server-bridge.js",
     "dev": "cross-env CHOKIDAR_USEPOLLING=true vite --host 0.0.0.0",
     "dev:full": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"green,magenta\"",
-    "dashboard": "node start-unified-dashboard.js",
+    "dashboard": "node scripts/start-unified-dashboard.js",
     "dashboard:old": "concurrently \"npm run start:dashboard\" \"npm run dev\" --names \"API,UI\" --prefix-colors \"green,magenta\"",
     "build": "vite build",
     "preview": "vite preview",

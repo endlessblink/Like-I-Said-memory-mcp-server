@@ -490,6 +490,142 @@ export class EnhancedHybridTaskManager extends HybridTaskManager {
     
     return this.db.all(query, params);
   }
+
+  /**
+   * Get task hierarchy information for display
+   * @param {string} taskId - Task ID to get hierarchy for
+   * @returns {Promise<Object|null>} Hierarchy information
+   */
+  async getTaskHierarchy(taskId) {
+    try {
+      const task = await this.getTask(taskId);
+      if (!task) return null;
+
+      const hierarchy = {};
+
+      // Get the task itself
+      hierarchy.task = {
+        id: task.id,
+        title: task.title,
+        type: task.type || 'task',
+        status: task.status,
+        parent_id: task.parent_id
+      };
+
+      // If task has a parent, get the parent chain
+      if (task.parent_id) {
+        const parent = await this.getTask(task.parent_id);
+        if (parent) {
+          // Check if parent is a stage
+          if (parent.type === 'stage') {
+            hierarchy.stage = {
+              id: parent.id,
+              title: parent.title,
+              type: parent.type,
+              parent_id: parent.parent_id
+            };
+            
+            // If stage has a parent, it should be a project
+            if (parent.parent_id) {
+              const project = await this.getTask(parent.parent_id);
+              if (project && project.type === 'project') {
+                hierarchy.project = {
+                  id: project.id,
+                  title: project.title,
+                  type: project.type
+                };
+              }
+            }
+          } else if (parent.type === 'project') {
+            // Task directly under project
+            hierarchy.project = {
+              id: parent.id,
+              title: parent.title,
+              type: parent.type
+            };
+          } else if (parent.type === 'task') {
+            // This is a subtask, parent is another task
+            hierarchy.parent_task = {
+              id: parent.id,
+              title: parent.title,
+              type: parent.type,
+              parent_id: parent.parent_id
+            };
+            
+            // Try to get the grandparent (could be stage or project)
+            if (parent.parent_id) {
+              const grandparent = await this.getTask(parent.parent_id);
+              if (grandparent) {
+                if (grandparent.type === 'stage') {
+                  hierarchy.stage = {
+                    id: grandparent.id,
+                    title: grandparent.title,
+                    type: grandparent.type,
+                    parent_id: grandparent.parent_id
+                  };
+                  
+                  // Get project if stage has parent
+                  if (grandparent.parent_id) {
+                    const project = await this.getTask(grandparent.parent_id);
+                    if (project && project.type === 'project') {
+                      hierarchy.project = {
+                        id: project.id,
+                        title: project.title,
+                        type: project.type
+                      };
+                    }
+                  }
+                } else if (grandparent.type === 'project') {
+                  hierarchy.project = {
+                    id: grandparent.id,
+                    title: grandparent.title,
+                    type: grandparent.type
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Get subtasks if any
+      const subtasks = await this.getTaskChildren(taskId);
+      if (subtasks && subtasks.length > 0) {
+        hierarchy.subtasks = subtasks.map(subtask => ({
+          id: subtask.id,
+          title: subtask.title,
+          type: subtask.type || 'subtask',
+          status: subtask.status
+        }));
+      }
+
+      return hierarchy;
+    } catch (error) {
+      console.error('[EnhancedHybridTaskManager] Error getting task hierarchy:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get children of a task
+   * @param {string} parentId - Parent task ID
+   * @returns {Promise<Array>} Array of child tasks
+   */
+  async getTaskChildren(parentId) {
+    try {
+      const children = this.db.all(`
+        SELECT id, title, type, status, parent_id
+        FROM tasks 
+        WHERE parent_id = ? 
+        ORDER BY created_at ASC
+      `, [parentId]);
+
+      return children || [];
+    } catch (error) {
+      console.error('[EnhancedHybridTaskManager] Error getting task children:', error);
+      return [];
+    }
+  }
 }
 
 // Export singleton instance
