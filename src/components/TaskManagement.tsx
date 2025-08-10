@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,7 +22,9 @@ import { TaskStatusButtonGroup as ImprovedTaskStatusButtonGroup, TaskStatusIndic
 import { TemplateSelector } from './TemplateSelector'
 import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
 import { MemoryViewModal } from './MemoryViewModal'
-import EnhancedTaskDetailDialog from './EnhancedTaskDetailDialog'
+
+// Lazy load the heavy Enhanced Task Detail Dialog
+const EnhancedTaskDetailDialog = lazy(() => import('./EnhancedTaskDetailDialog'))
 import { Memory } from '@/types'
 import { Clock, Edit, FileText, Users, Eye, Loader2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatDistanceToNow } from '@/utils/helpers'
@@ -1506,7 +1508,8 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
       </Tabs>
 
       {/* Enhanced Task Detail Dialog */}
-      <EnhancedTaskDetailDialog
+      <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><Loader2 className="w-8 h-8 animate-spin text-white" /></div>}>
+        <EnhancedTaskDetailDialog
         task={selectedTask}
         isOpen={!!selectedTask && useEnhancedDialog}
         onClose={() => setSelectedTask(null)}
@@ -1523,6 +1526,7 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
         getTaskContext={getTaskContext}
         formatRelativeTime={formatRelativeTime}
       />
+      </Suspense>
 
       {/* Basic Dialog (Fallback) */}
       {selectedTask && !useEnhancedDialog && (

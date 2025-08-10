@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react"
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useApiHelpers } from '@/hooks/useApiHelpers'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -31,31 +31,36 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import Editor from '@monaco-editor/react'
+
+// Core components - loaded immediately
 import { MemoryCard } from '@/components/MemoryCard'
-import { MemoryEditModal } from '@/components/MemoryEditModal'
-import { AdvancedSearch } from '@/components/AdvancedSearch'
 import { ProjectTabs } from '@/components/ProjectTabs'
 import { SortControls } from '@/components/SortControls'
-import { ExportImport } from '@/components/ExportImport'
-import { ExportImportDialogs } from '@/components/ExportImportDialogs'
-import { StatisticsDashboard } from '@/components/StatisticsDashboard'
-import { AIEnhancement } from '@/components/AIEnhancement'
-import { TaskEnhancement } from '@/components/TaskEnhancement'
-import { MemoryRelationships } from '@/components/MemoryRelationships'
-import { TaskManagement } from '@/components/TaskManagement'
-import { MemoryTreeView } from '@/components/MemoryTreeView'
-import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp'
-import { TemplateSelector } from '@/components/TemplateSelector'
-import { GlobalSearch } from '@/components/GlobalSearch'
-import { ProjectsView } from '@/components/v3/ProjectsView'
-import { CategorySuggestions } from '@/components/CategorySuggestions'
-import { SearchPresets } from '@/components/SearchPresets'
-import { TutorialLauncher, OnboardingTutorial } from '@/components/OnboardingTutorial'
-import { PathConfiguration } from '@/components/PathConfiguration'
 import { ToastProvider, useToast, toastHelpers } from '@/components/ToastNotifications'
 import { ProgressProvider, useOperationProgress } from '@/components/ProgressIndicators'
 import { SettingsDropdown } from '@/components/SettingsDropdown'
+
+// Lazy loaded heavy components
+const Editor = lazy(() => import('@monaco-editor/react'))
+const TaskManagement = lazy(() => import('@/components/TaskManagement').then(m => ({ default: m.TaskManagement })))
+const TaskEnhancement = lazy(() => import('@/components/TaskEnhancement').then(m => ({ default: m.TaskEnhancement })))
+const AIEnhancement = lazy(() => import('@/components/AIEnhancement').then(m => ({ default: m.AIEnhancement })))
+const AdvancedSearch = lazy(() => import('@/components/AdvancedSearch').then(m => ({ default: m.AdvancedSearch })))
+const StatisticsDashboard = lazy(() => import('@/components/StatisticsDashboard').then(m => ({ default: m.StatisticsDashboard })))
+const MemoryEditModal = lazy(() => import('@/components/MemoryEditModal').then(m => ({ default: m.MemoryEditModal })))
+const ExportImport = lazy(() => import('@/components/ExportImport').then(m => ({ default: m.ExportImport })))
+const ExportImportDialogs = lazy(() => import('@/components/ExportImportDialogs').then(m => ({ default: m.ExportImportDialogs })))
+const MemoryRelationships = lazy(() => import('@/components/MemoryRelationships').then(m => ({ default: m.MemoryRelationships })))
+const MemoryTreeView = lazy(() => import('@/components/MemoryTreeView').then(m => ({ default: m.MemoryTreeView })))
+const KeyboardShortcutsHelp = lazy(() => import('@/components/KeyboardShortcutsHelp').then(m => ({ default: m.KeyboardShortcutsHelp })))
+const TemplateSelector = lazy(() => import('@/components/TemplateSelector').then(m => ({ default: m.TemplateSelector })))
+const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(m => ({ default: m.GlobalSearch })))
+const ProjectsView = lazy(() => import('@/components/v3/ProjectsView').then(m => ({ default: m.ProjectsView })))
+const CategorySuggestions = lazy(() => import('@/components/CategorySuggestions').then(m => ({ default: m.CategorySuggestions })))
+const SearchPresets = lazy(() => import('@/components/SearchPresets').then(m => ({ default: m.SearchPresets })))
+const OnboardingTutorial = lazy(() => import('@/components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })))
+const TutorialLauncher = lazy(() => import('@/components/OnboardingTutorial').then(m => ({ default: m.TutorialLauncher })))
+const PathConfiguration = lazy(() => import('@/components/PathConfiguration').then(m => ({ default: m.PathConfiguration })))
 import { 
   PageLoadingSpinner, 
   RefreshSpinner, 
@@ -1950,31 +1955,39 @@ Respond with JSON format:
           >
             <div className="space-section">
             {currentTab === "dashboard" && (
-              <StatisticsDashboard memories={memories} />
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <StatisticsDashboard memories={memories} />
+              </Suspense>
             )}
 
             {currentTab === "relationships" && (
-              <MemoryRelationships
-                memories={memories}
-                extractTitle={extractTitle}
-                generateSummary={generateSummary}
-                extractTags={extractTags}
-                getTagColor={getTagColor}
-                onMemoryEdit={handleEdit}
-              />
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <MemoryRelationships
+                  memories={memories}
+                  extractTitle={extractTitle}
+                  generateSummary={generateSummary}
+                  extractTags={extractTags}
+                  getTagColor={getTagColor}
+                  onMemoryEdit={handleEdit}
+                />
+              </Suspense>
             )}
 
             {currentTab === "tasks" && (
-              <TaskManagement
-                tasks={tasks}
-                isLoading={isLoadingTasks}
-                currentProject={currentProject}
-                onTasksChange={loadTasks}
-              />
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <TaskManagement
+                  tasks={tasks}
+                  isLoading={isLoadingTasks}
+                  currentProject={currentProject}
+                  onTasksChange={loadTasks}
+                />
+              </Suspense>
             )}
 
             {currentTab === "projects" && (
-              <ProjectsView />
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <ProjectsView />
+              </Suspense>
             )}
 
             {currentTab === "ai" && (
@@ -2001,9 +2014,10 @@ Respond with JSON format:
                 </div>
 
                 {aiMode === 'memories' ? (
-                  <AIEnhancement
-                    memories={memories}
-                    onEnhanceMemory={enhanceMemoryWithLLM}
+                  <Suspense fallback={<PageLoadingSpinner />}>
+                    <AIEnhancement
+                      memories={memories}
+                      onEnhanceMemory={enhanceMemoryWithLLM}
                     onEnhanceAll={enhanceAllMemories}
                     enhancingMemories={enhancingMemories}
                     isEnhancing={isEnhancing}
@@ -2016,12 +2030,15 @@ Respond with JSON format:
                     enhancementDisabled={enhancementDisabled}
                     enhancementFailures={enhancementFailures}
                   />
+                  </Suspense>
                 ) : (
-                  <TaskEnhancement
-                    tasks={tasks}
-                    currentProject={currentProject}
-                    onTasksChange={loadTasks}
-                  />
+                  <Suspense fallback={<PageLoadingSpinner />}>
+                    <TaskEnhancement
+                      tasks={tasks}
+                      currentProject={currentProject}
+                      onTasksChange={loadTasks}
+                    />
+                  </Suspense>
                 )}
               </div>
             )}
@@ -2140,14 +2157,16 @@ Respond with JSON format:
                 <div className="mb-6 space-y-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1" data-tutorial="search">
-                      <AdvancedSearch
-                        query={search}
-                        filters={searchFilters}
-                        onQueryChange={setSearch}
-                        onFiltersChange={setSearchFilters}
-                        availableTags={availableTags}
-                        availableProjects={availableProjects}
-                      />
+                      <Suspense fallback={<ButtonSpinner />}>
+                        <AdvancedSearch
+                          query={search}
+                          filters={searchFilters}
+                          onQueryChange={setSearch}
+                          onFiltersChange={setSearchFilters}
+                          availableTags={availableTags}
+                          availableProjects={availableProjects}
+                        />
+                      </Suspense>
                     </div>
                     <div data-tutorial="presets">
                       <SearchPresets
@@ -2620,15 +2639,19 @@ Respond with JSON format:
       )}
 
       {/* Memory Template Selector */}
-      <TemplateSelector
+      <Suspense fallback={<PageLoadingSpinner />}>
+        <TemplateSelector
         open={showMemoryTemplateSelector}
         onOpenChange={setShowMemoryTemplateSelector}
         type="memory"
         onSelectTemplate={handleMemoryTemplate}
       />
 
+      </Suspense>
+
       {/* Global Search */}
-      <GlobalSearch
+      <Suspense fallback={<PageLoadingSpinner />}>
+        <GlobalSearch
         open={showGlobalSearch}
         onOpenChange={setShowGlobalSearch}
         memories={memories}
@@ -2636,6 +2659,7 @@ Respond with JSON format:
         onSelectMemory={handleGlobalSearchSelectMemory}
         onSelectTask={handleGlobalSearchSelectTask}
       />
+      </Suspense>
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp 
