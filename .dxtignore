@@ -16,6 +16,8 @@ dist-dxt-production/
 __tests__/
 test/
 tests/
+scripts/testing/
+scripts/maintenance/debug-*
 *.test.js
 *.spec.js
 coverage/

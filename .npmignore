@@ -12,8 +12,12 @@ tests/
 *.test.js
 *.spec.js
 test-*.html
-tests/issue-fixes-test.js
-tests/task-id-validation.test.js
+__tests__/
+
+# Development scripts (keep essential ones)
+scripts/testing/
+scripts/maintenance/debug-*
+scripts/v3/
 
 # Documentation source
 docs/

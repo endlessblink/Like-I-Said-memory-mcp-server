@@ -1,161 +1,472 @@
-# Testing Guide for Like-I-Said MCP Server
+# Comprehensive Testing Guide for Like-I-Said MCP Server v2
 
 ## Overview
 
-This project uses comprehensive testing to ensure reliability and catch issues before they reach users.
+This project uses comprehensive testing across multiple categories to ensure reliability across all platforms, installation methods, and MCP clients. This guide covers all testing scenarios from unit tests to platform-specific validation.
+
+## Quick Test Commands
+
+```bash
+# Run all tests
+npm test                  # Jest unit tests
+npm run test:all          # All automated tests
+npm run test:coverage     # Coverage report
+
+# Run specific test categories
+npm run test:api          # API endpoint tests
+npm run test:ui           # UI layout tests  
+npm run test:syntax       # TypeScript validation
+npm run test:websocket    # WebSocket reconnection tests
+npm run test:pre-push     # Pre-commit validation
+npm run test:integration  # Full integration tests
+
+# Test specific components
+npm run test:watch        # Watch mode for development
+npm run test:mcp         # MCP server functionality
+npm run test:dashboard    # Dashboard startup
+```
 
 ## Test Categories
 
-### 1. Syntax Validation (`npm run test:syntax`)
-- Checks TypeScript compilation
-- Validates build process
-- Detects problematic code patterns
-- **Run before every commit**
+### 1. Unit Tests (`npm test`)
+**Framework**: Jest  
+**Location**: `tests/` directory  
+**Config**: `jest.config.cjs`
 
-### 2. API Integration Tests (`npm run test:api`)
-- Tests all API endpoints
-- Validates data loading
-- Checks CORS configuration
-- Tests WebSocket connectivity
-- **Run after API changes**
+#### Coverage Areas:
+- Memory storage operations
+- Task management functions  
+- Path parsing and validation
+- Mock data detection patterns
+- Component rendering (React)
+- API service functions
+- Windows path handling
+- Task ID validation
 
-### 3. UI Layout Tests (`npm run test:ui`)
-- Detects CSS issues (overlapping elements, fixed positioning)
-- Checks responsive design
-- Validates mobile navigation
-- **Run after UI changes**
+#### Running Unit Tests:
+```bash
+# Run all unit tests
+npm test
 
-### 4. WebSocket Reconnection Test (`npm run test:websocket`)
-- Tests auto-reconnection on port changes
-- Validates connection resilience
-- **Run after WebSocket changes**
+# Run specific test file
+npm test windows-path-handling.test.js
 
-### 5. Pre-Push Validation (`npm run test:pre-push`)
-- Runs critical tests before pushing
-- Includes syntax, build, and unit tests
-- **Automatically run before git push**
+# Run with coverage
+npm run test:coverage
 
-## Running Tests
+# Watch mode for development
+npm run test:watch
+```
+
+### 2. Integration Tests
+
+#### Full System Integration
+```bash
+# Test complete system
+node tests/test-complete-system.js
+
+# Test MCP server startup
+node tests/test-mcp-server-startup.js
+
+# Test dashboard startup
+node tests/test-dashboard-startup.js
+
+# Test everything works together
+node tests/test-everything-works.js
+```
+
+#### API Integration Tests
+```bash
+# Test API endpoints
+node tests/api-integration-test.js
+
+# Test UI-API connection
+node tests/test-ui-api-connection.js
+
+# Test WebSocket reconnection
+node tests/websocket-reconnection-test.js
+```
+
+### 3. Platform-Specific Testing
+
+#### Windows Testing
+```bash
+# Windows-specific tests
+npm run test:windows
+
+# Test Windows path handling
+npm test windows-path-handling.test.js
+
+# WSL compatibility check
+node scripts/test-platform-detection.js
+```
+
+**Windows Test Checklist:**
+- [ ] Path handling with drive letters (C:\, D:\)
+- [ ] Case-insensitive paths
+- [ ] Spaces in paths
+- [ ] UNC paths (\\server\share)
+- [ ] WSL interoperability
+- [ ] PowerShell script execution
+- [ ] Batch file compatibility
+
+#### macOS Testing
+```bash
+# macOS-specific paths
+npm run test:mac
+
+# Test case-sensitive filesystem
+node tests/test-mac-paths.js
+```
+
+**macOS Test Checklist:**
+- [ ] Case-sensitive paths
+- [ ] Home directory expansion (~)
+- [ ] Application Support paths
+- [ ] Permissions (especially for ~/Library)
+
+#### Linux Testing
+```bash
+# Linux-specific tests
+npm run test:linux
+
+# Test permissions
+node tests/test-linux-permissions.js
+```
+
+### 4. Installation Testing
+
+#### NPX Installation Test
+```bash
+# Test NPX installation flow
+./scripts/test-npx-local.sh
+
+# Test NPX configuration
+node scripts/test-npx-config.js
+
+# Simulate Claude Code installation
+./scripts/simulate-claude-code.sh
+```
+
+**NPX Installation Checklist:**
+- [ ] Package downloads correctly
+- [ ] Dependencies install
+- [ ] Configuration files created
+- [ ] MCP server starts
+- [ ] Dashboard accessible
+- [ ] Memory/task paths configured
+
+#### Fresh Installation Test
+```bash
+# Clean environment test
+rm -rf test-local-install
+npm run test:fresh-install
+
+# Test custom path installation
+node scripts/test-custom-path.js
+
+# Comprehensive custom path test
+node scripts/test-custom-path-comprehensive.js
+```
+
+**Installation Test Scenarios:**
+1. **Default Installation**
+   - Standard paths
+   - Default configuration
+   - No existing data
+
+2. **Custom Path Installation**
+   - User-specified memory path
+   - User-specified task path
+   - Non-standard directories
+
+3. **Upgrade Installation**
+   - Existing configuration
+   - Data migration
+   - Backward compatibility
+
+### 5. Manual Testing Checklist
+
+#### Pre-Release Checklist
+- [ ] **MCP Server**
+  - [ ] All 27 tools appear in Claude
+  - [ ] Memory creation works
+  - [ ] Task creation works
+  - [ ] Search functionality
+  - [ ] Auto-linking between memories and tasks
+
+- [ ] **Dashboard**
+  - [ ] Loads at http://localhost:3002
+  - [ ] Real-time WebSocket updates
+  - [ ] Memory cards display correctly
+  - [ ] Task management works
+  - [ ] Search and filters work
+  - [ ] Theme switching
+  - [ ] Export/Import functionality
+
+- [ ] **Installation**
+  - [ ] NPX installation completes
+  - [ ] Manual installation works
+  - [ ] Claude Desktop configuration
+  - [ ] Claude Code configuration
+  - [ ] IDE configurations (Cursor, Windsurf)
+
+- [ ] **Cross-Platform**
+  - [ ] Windows 10/11
+  - [ ] macOS (Intel and Apple Silicon)
+  - [ ] Linux (Ubuntu, Debian)
+  - [ ] WSL2
+
+#### Dashboard Manual Tests
+1. **Memory Operations**
+   - Create new memory
+   - Edit existing memory
+   - Delete memory
+   - Bulk operations
+   - Search memories
+   - Filter by project/category
+
+2. **Task Operations**
+   - Create task
+   - Update task status
+   - Add subtasks
+   - Link to memories
+   - Delete task
+   - View task hierarchy
+
+3. **UI/UX Tests**
+   - Theme switching (light/dark)
+   - Responsive design (mobile/tablet)
+   - Keyboard shortcuts
+   - Loading states
+   - Error handling
+   - Toast notifications
+
+### 6. Performance Testing
 
 ```bash
-# Run all integration tests
-npm run test:integration
+# Load testing
+npm run test:load
 
-# Run specific test category
-npm run test:api
-npm run test:ui
-npm run test:syntax
+# Memory performance with large datasets
+node tests/test-memory-performance.js
 
-# Run before pushing to GitHub
+# Dashboard rendering performance
+npm run test:ui-performance
+```
+
+**Performance Benchmarks:**
+- Memory operations: < 100ms
+- Task operations: < 100ms
+- Dashboard load: < 2 seconds
+- WebSocket latency: < 50ms
+- Search response: < 200ms
+
+### 7. Security Testing
+
+```bash
+# Security validation
+npm run test:security
+
+# Path traversal prevention
+node tests/test-path-security.js
+
+# Authentication tests (if enabled)
+npm run test:auth
+```
+
+**Security Checklist:**
+- [ ] Path traversal prevention
+- [ ] Input sanitization
+- [ ] XSS prevention
+- [ ] CORS configuration
+- [ ] Authentication (when enabled)
+- [ ] Rate limiting
+
+### 8. Regression Testing
+
+```bash
+# Run regression suite
+npm run test:regression
+
+# Test specific bug fixes
+node tests/mcp-server-regression.test.js
+node tests/react-import-regression.test.js
+```
+
+**Key Regression Tests:**
+- Mock data detection fix
+- React import issues
+- Path validation bugs
+- WebSocket reconnection
+- Task ID validation
+
+### 9. Test Results and Known Issues
+
+#### Current Test Status (v2.8.10)
+- ✅ **Unit Tests**: 15/15 passing
+- ✅ **Integration Tests**: All passing
+- ✅ **Windows Tests**: Fully compatible
+- ✅ **NPX Installation**: Working
+- ✅ **Custom Paths**: Supported
+
+#### Known Issues and Workarounds
+
+1. **WSL File System**
+   - Issue: Phantom directories in WSL
+   - Workaround: Use native Windows paths when possible
+
+2. **Port Conflicts**
+   - Issue: Dashboard port 3002 may be in use
+   - Workaround: Set `PORT=3003 npm run start:dashboard`
+
+3. **Ollama Optional Dependency**
+   - Issue: Ollama client may fail to load
+   - Resolution: Optional dependency, doesn't affect core functionality
+
+### 10. Continuous Testing
+
+#### Pre-Commit Hooks
+```bash
+# Setup pre-commit hooks
+./scripts/setup-git-hooks.sh
+
+# Manual pre-push validation
 npm run test:pre-push
-
-# Run all tests
-npm run test:all
 ```
 
-## Adding Tests for New Features
+#### Automated Testing
+```bash
+# Setup continuous testing
+./scripts/setup-automated-testing.sh
 
-When adding a new feature:
+# Run continuous test monitor
+node scripts/continuous-testing.js
+```
 
-### 1. Create Unit Tests
+#### GitHub Actions (if configured)
+- Runs on every push
+- Tests all platforms
+- Validates build process
+- Checks code quality
+
+### 11. Debugging Test Failures
+
+#### Common Issues and Solutions
+
+1. **Test Timeout**
+   ```bash
+   # Increase timeout
+   jest --testTimeout=20000
+   ```
+
+2. **Mock Detection Failures**
+   ```bash
+   # Clear test cache
+   npm run test:clear-cache
+   ```
+
+3. **Path-related Failures**
+   ```bash
+   # Check path configuration
+   node scripts/verify-path-parsing.js
+   ```
+
+4. **WebSocket Connection Issues**
+   ```bash
+   # Test WebSocket separately
+   node tests/websocket-reconnection-test.js
+   ```
+
+### 12. Test Development
+
+#### Adding New Tests
+
+1. **Unit Tests**: Add to `tests/` directory
+2. **Integration Tests**: Add to `tests/` with descriptive names
+3. **Platform Tests**: Add to appropriate section in `tests/`
+
+#### Test File Naming Convention
+- Unit tests: `*.test.js`
+- Integration tests: `*-integration.test.js`
+- Platform tests: `*-platform.test.js`
+- UI tests: `*-ui.test.js`
+
+#### Test Structure
 ```javascript
-// src/components/NewFeature.test.tsx
-describe('NewFeature', () => {
-  it('should render correctly', () => {
-    // Test rendering
+describe('Component/Feature Name', () => {
+  beforeEach(() => {
+    // Setup
   });
-  
-  it('should handle user interaction', () => {
-    // Test functionality
+
+  afterEach(() => {
+    // Cleanup
+  });
+
+  it('should do something specific', () => {
+    // Test implementation
+    expect(result).toBe(expected);
   });
 });
 ```
 
-### 2. Add Integration Tests
-```javascript
-// tests/integration/new-feature-integration.js
-describe('New Feature Integration', () => {
-  it('should work with existing features', async () => {
-    // Test integration points
-  });
-});
+## Test Coverage Requirements
+
+### Minimum Coverage Targets
+- Overall: 70%
+- Critical paths: 90%
+- New features: 80%
+- Bug fixes: 100% (test for regression)
+
+### Coverage Reports
+```bash
+# Generate coverage report
+npm run test:coverage
+
+# View coverage in browser
+open coverage/lcov-report/index.html
 ```
 
-### 3. Update UI Tests
-If your feature adds UI elements:
-- Add checks to `ui-layout-test.js`
-- Test responsive behavior
-- Check for accessibility
+## Troubleshooting Test Issues
 
-### 4. Update API Tests
-If your feature adds endpoints:
-- Add endpoint tests to `api-integration-test.js`
-- Test error cases
-- Validate response format
+### Environment Setup
+```bash
+# Verify Node version (16+ required)
+node --version
 
-## Common Test Patterns
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
 
-### Testing API Endpoints
-```javascript
-await testApiEndpoint('Endpoint Name', '/api/endpoint', expectedStatus);
+# Clear test cache
+npm run test:clear-cache
 ```
 
-### Testing UI Components
-```javascript
-// Check for problematic CSS
-const problematicPatterns = [
-  {
-    pattern: /position:\s*fixed.*bottom:\s*0/,
-    issue: 'Fixed positioning can overlap taskbar',
-    suggestion: 'Add safe area insets'
-  }
-];
+### Debug Mode
+```bash
+# Run tests in debug mode
+NODE_ENV=test DEBUG=* npm test
+
+# Run specific test with debugging
+node --inspect tests/test-file.js
 ```
 
-### Testing WebSocket
-```javascript
-const ws = new WebSocket('ws://localhost:3001');
-ws.on('message', (data) => {
-  // Validate message handling
-});
+### Test Isolation
+```bash
+# Run tests in band (no parallelization)
+npm test -- --runInBand
+
+# Run single test file
+npm test -- --testPathPattern=specific-test
 ```
 
-## CI/CD Integration
+## Additional Resources
 
-Add to `.github/workflows/test.yml`:
-```yaml
-- run: npm run test:syntax
-- run: npm run test:integration
-- run: npm run build
-```
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Testing React Components](https://testing-library.com/docs/react-testing-library/intro/)
+- [MCP Testing Guide](https://modelcontextprotocol.io/docs/testing)
+- Project-specific test utilities: `tests/test-utils.js`
 
-## Best Practices
+---
 
-1. **Write tests first** - TDD helps design better APIs
-2. **Test edge cases** - Empty data, errors, timeouts
-3. **Keep tests fast** - Mock external dependencies
-4. **Test one thing** - Each test should verify one behavior
-5. **Use descriptive names** - Test names should explain what they verify
-6. **Clean up** - Always clean up test data/connections
-
-## Debugging Failed Tests
-
-1. Run test in isolation: `node tests/specific-test.js`
-2. Add console.logs to understand flow
-3. Check if services are running (API server, etc.)
-4. Verify test environment matches production
-
-## Coverage Goals
-
-- **Unit Tests**: 80% code coverage
-- **Integration Tests**: All critical paths
-- **E2E Tests**: Main user workflows
-- **Performance Tests**: Response times < 200ms
-
-## Future Improvements
-
-- [ ] Add Jest for unit testing
-- [ ] Add Playwright for E2E testing
-- [ ] Add performance benchmarks
-- [ ] Add visual regression tests
-- [ ] Set up automated CI/CD
+For questions or issues with testing, please refer to the [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) guide or open an issue on GitHub.

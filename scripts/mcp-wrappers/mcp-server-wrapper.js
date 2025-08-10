@@ -8,8 +8,8 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Start the actual server
-const serverPath = join(__dirname, 'server-markdown.js');
+// Start the actual server - go up two levels from scripts/mcp-wrappers/
+const serverPath = join(__dirname, '..', '..', 'server-markdown.js');
 const child = spawn('node', [serverPath], {
   stdio: 'inherit',
   env: process.env
