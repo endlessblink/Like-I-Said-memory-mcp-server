@@ -14,7 +14,7 @@ const targetDir = args[1] || 'restored-v2';
 if (!backupFile) {
   console.error('❌ Error: Please provide a backup file path');
   console.log('\nUsage: node restore-backup.js <backup-file> [target-directory]');
-  console.log('Example: node restore-backup.js backups/like-i-said-v2-backup-20250801-000350.tar.gz restored-v2');
+  console.log('Example: node restore-backup.js data-backups/like-i-said-v2-backup-20250801-000350.tar.gz restored-v2');
   process.exit(1);
 }
 

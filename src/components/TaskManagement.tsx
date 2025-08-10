@@ -22,6 +22,7 @@ import { TaskStatusButtonGroup as ImprovedTaskStatusButtonGroup, TaskStatusIndic
 import { TemplateSelector } from './TemplateSelector'
 import { StatusIcon, getStatusIcon, getStatusColor } from './StatusIcon'
 import { MemoryViewModal } from './MemoryViewModal'
+import EnhancedTaskDetailDialog from './EnhancedTaskDetailDialog'
 import { Memory } from '@/types'
 import { Clock, Edit, FileText, Users, Eye, Loader2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatDistanceToNow } from '@/utils/helpers'
@@ -79,6 +80,7 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskContext, setTaskContext] = useState<TaskContext | null>(null)
+  const [useEnhancedDialog, setUseEnhancedDialog] = useState(true) // Toggle for enhanced vs basic dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [allProjects, setAllProjects] = useState<string[]>([])
   const [filter, setFilter] = useState<{
@@ -1503,362 +1505,52 @@ export function TaskManagement({ tasks: propTasks, isLoading: propIsLoading, cur
         </TabsContent>
       </Tabs>
 
-      {/* Task Detail Modal - Clean Recreation */}
-      {selectedTask && (
+      {/* Enhanced Task Detail Dialog */}
+      <EnhancedTaskDetailDialog
+        task={selectedTask}
+        isOpen={!!selectedTask && useEnhancedDialog}
+        onClose={() => setSelectedTask(null)}
+        onUpdateTask={async (taskId: string, updates: Partial<Task>) => {
+          // For now, just handle status updates - can be expanded later
+          if (updates.status) {
+            await updateTaskStatus(taskId, updates.status)
+          }
+        }}
+        onDeleteTask={async (taskId: string) => {
+          await deleteTask(taskId)
+        }}
+        taskContext={taskContext}
+        getTaskContext={getTaskContext}
+        formatRelativeTime={formatRelativeTime}
+      />
+
+      {/* Basic Dialog (Fallback) */}
+      {selectedTask && !useEnhancedDialog && (
         <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-            <DialogHeader className="pb-4 border-b border-gray-700 flex-shrink-0">
-              <DialogTitle className="sr-only">Task Details: {selectedTask.title}</DialogTitle>
-              
-              {/* Title and Status Row */}
-              <div className="flex items-center gap-3 mb-3">
-                <StatusIcon status={selectedTask.status} showTooltip={false} size="lg" />
-                <h2 className="text-lg font-semibold text-white flex-1 truncate">
-                  {selectedTask.title}
-                </h2>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Badge className={getPriorityBadge(selectedTask.priority)}>
-                    {selectedTask.priority.toUpperCase()}
-                  </Badge>
-                  {selectedTask.category && (
-                    <Badge className={getCategoryClass(selectedTask.category)}>
-                      {selectedTask.category.toUpperCase()}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              {/* Meta Information Row */}
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <Badge variant="outline" className="text-xs font-mono">
-                  {selectedTask.serial}
-                </Badge>
-                <span className="text-gray-400">•</span>
-                <span>{formatRelativeTime(selectedTask.created)} ago</span>
-                {selectedTask.memory_connections && selectedTask.memory_connections.length > 0 && (
-                  <>
-                    <span className="text-gray-400">•</span>
-                    <span>🧠 {selectedTask.memory_connections.length} memories</span>
-                  </>
-                )}
-                {selectedTask.tags && selectedTask.tags.length > 0 && (
-                  <>
-                    <span className="text-gray-400">•</span>
-                    <span>🏷️ {selectedTask.tags.length} tags</span>
-                  </>
-                )}
-                <span className="text-gray-400">•</span>
-                <span>📁 {selectedTask.project || 'default'}</span>
-              </div>
+          <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{selectedTask.title}</DialogTitle>
             </DialogHeader>
-            
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto space-y-6 py-4">
-              {/* Quick Actions and Status */}
-              {selectedTask.status !== 'done' && (
-                <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
-                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                    <StatusIcon status={selectedTask.status} showTooltip={false} size="md" />
-                    Update Status
-                  </h4>
-                  <ImprovedTaskStatusButtonGroup 
-                    currentStatus={selectedTask.status}
-                    onStatusChange={(newStatus) => updateTaskStatus(selectedTask.id, newStatus)}
-                    showAnimation={true}
-                    compact={false}
-                  />
-                </div>
-              )}
-
-              {/* Completion Info */}
-              {selectedTask.completed && (
-                <div className="bg-green-900/20 p-4 rounded-lg border border-green-700/50">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400 text-lg">✅</span>
-                    <span className="text-green-400 font-semibold">Task Completed</span>
-                    <span className="text-green-300 ml-2">{formatRelativeTime(selectedTask.completed)}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Task Overview */}
-              <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
-                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Task Overview
-                </h4>
-                
-                {selectedTask.description ? (
-                  <div className="prose prose-sm max-w-none">
-                    <div className="text-gray-300 bg-gray-900/50 p-4 rounded-lg border border-gray-600 leading-relaxed">
-                      {selectedTask.description.split('\n').map((line, i) => (
-                        <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-gray-500 italic bg-gray-900/30 p-4 rounded-lg border border-gray-600">
-                    No description provided for this task.
-                  </div>
-                )}
-
-                {/* Task Metadata Grid */}
-                <div className="mt-4 pt-4 border-t border-gray-600 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-gray-400 font-medium">Status</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StatusIcon status={selectedTask.status} showTooltip={false} size="sm" />
-                      <span className="text-white capitalize">{selectedTask.status.replace('_', ' ')}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col">
-                    <span className="text-gray-400 font-medium">Priority</span>
-                    <Badge className={`${getPriorityBadge(selectedTask.priority)} mt-1 w-fit`}>
-                      {selectedTask.priority.toUpperCase()}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex flex-col">
-                    <span className="text-gray-400 font-medium">Category</span>
-                    <Badge className={`${getCategoryClass(selectedTask.category || 'personal')} mt-1 w-fit`}>
-                      {selectedTask.category || 'None'}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex flex-col">
-                    <span className="text-gray-400 font-medium">Project</span>
-                    <div className="flex items-center gap-1 mt-1 text-white">
-                      <span>📁</span>
-                      <span className="truncate">{selectedTask.project || 'No project'}</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <div className="text-gray-300">
+                {selectedTask.description || 'No description'}
               </div>
-
-              {/* Tags */}
-              {selectedTask.tags && selectedTask.tags.length > 0 && (
-                <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
-                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                    <span>🏷️</span>
-                    Tags ({selectedTask.tags.length})
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTask.tags.map((tag, i) => (
-                      <Badge key={i} variant="outline" className="text-xs hover:bg-gray-700 transition-colors">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Connected Memories */}
-              <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-white flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Linked Memories
-                    {(selectedTask.memory_connections?.length || 0) > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {selectedTask.memory_connections?.length || 0} connection{(selectedTask.memory_connections?.length || 0) === 1 ? '' : 's'}
-                      </Badge>
-                    )}
-                  </h4>
-                  <div className="flex gap-2">
-                    {(selectedTask.memory_connections?.length || 0) > 0 && (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs hover:bg-gray-700"
-                        onClick={() => {
-                          console.log('View all memories for task:', selectedTask.id)
-                          // TODO: Open memories tab with task filter
-                        }}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        View All
-                      </Button>
-                    )}
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="text-xs hover:bg-purple-700/50 border-purple-600/30 text-purple-300"
-                      onClick={() => {
-                        // TODO: Implement manual memory linking
-                        console.log('Link more memories to task:', selectedTask.id)
-                      }}
-                      title="Manually link additional memories to this task"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Link More
-                    </Button>
-                  </div>
-                </div>
-                
-                {(selectedTask.memory_connections && selectedTask.memory_connections.length > 0) || (taskContext && taskContext.direct_memories.length > 0) ? (
-                  <div className="space-y-3">
-                    {/* Show memory connections from task if available */}
-                    {selectedTask.memory_connections && selectedTask.memory_connections.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Memory Connections ({selectedTask.memory_connections.length})</h5>
-                        {selectedTask.memory_connections.slice(0, 5).map((conn, i) => (
-                          <div key={`${conn.memory_id}-${i}`} className="bg-gray-900/50 p-3 rounded-lg mb-2">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-400">
-                                {conn.connection_type} • {Math.round(conn.relevance * 100)}% relevance
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">{conn.memory_serial || conn.memory_id}</span>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="text-xs p-1 h-6"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                      const response = await fetch(`/api/memories/${conn.memory_id}`);
-                                      if (response.ok) {
-                                        const memory = await response.json();
-                                        setMemoryViewModal({
-                                          isOpen: true,
-                                          memory: memory
-                                        });
-                                      }
-                                    } catch (error) {
-                                      console.error('Failed to fetch memory:', error);
-                                    }
-                                  }}
-                                >
-                                  👁️
-                                </Button>
-                              </div>
-                            </div>
-                            {conn.matched_terms && conn.matched_terms.length > 0 && (
-                              <p className="text-xs text-gray-400 mb-1">
-                                Matched: {conn.matched_terms.join(', ')}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                        {selectedTask.memory_connections.length > 5 && (
-                          <div className="text-center">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="text-xs text-gray-400 min-h-[44px] px-4"
-                              aria-label={`Show ${selectedTask.memory_connections.length - 5} more memory connections`}
-                            >
-                              +{selectedTask.memory_connections.length - 5} more connections
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Show direct memories from context if available */}
-                    {taskContext && taskContext.direct_memories.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Direct Connections ({taskContext.direct_memories.length})</h5>
-                        {taskContext.direct_memories.slice(0, 3).map((memory, i) => (
-                          <div key={`${memory.id}-${i}`} className="bg-gray-900/50 p-3 rounded-lg mb-2">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-400">
-                                {memory.connection.type} • {Math.round(memory.connection.relevance * 100)}% relevance
-                              </span>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center"
-                                aria-label={`View memory: ${memory.content.substring(0, 50)}...`}
-                              >
-                                👁️
-                              </Button>
-                            </div>
-                            <p className="text-sm text-gray-300 line-clamp-2">
-                              {memory.content.length > 200 ? memory.content.substring(0, 200) + '...' : memory.content}
-                            </p>
-                          </div>
-                        ))}
-                        {taskContext.direct_memories.length > 3 && (
-                          <div className="text-center">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="text-xs text-gray-400 min-h-[44px] px-4"
-                              aria-label={`Show ${taskContext.direct_memories.length - 3} more direct memory connections`}
-                            >
-                              +{taskContext.direct_memories.length - 3} more direct connections
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {taskContext && taskContext.related_memories.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Related Memories ({taskContext.related_memories.length})</h5>
-                        <div className="text-xs text-gray-400 bg-gray-900/30 p-2 rounded">
-                          {taskContext.related_memories.slice(0, 2).map((memory, i) => (
-                            <div key={`${memory.id}-${i}`} className="truncate mb-1">
-                              📄 {memory.content.substring(0, 100)}...
-                            </div>
-                          ))}
-                          {taskContext.related_memories.length > 2 && (
-                            <div className="text-center mt-1">
-                              <span className="text-gray-500">+{taskContext.related_memories.length - 2} more related</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 bg-gray-900/30 rounded-lg">
-                    <div className="text-gray-400 text-sm">No memories linked to this task</div>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="text-xs mt-2"
-                      onClick={() => {
-                        alert('Memory linking is handled automatically by the system. Memory connections are created when tasks are created or updated based on content similarity.')
-                      }}
-                    >
-                      🔗 Link Memories
-                    </Button>
-                  </div>
-                )}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setUseEnhancedDialog(true)}
+                >
+                  Use Enhanced View
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedTask(null)}
+                >
+                  Close
+                </Button>
               </div>
-
-              {/* Subtasks */}
-              {selectedTask.subtasks && selectedTask.subtasks.length > 0 && (
-                <div className="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
-                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                    <span>📝</span>
-                    Subtasks ({selectedTask.subtasks.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedTask.subtasks.map((subtaskId, i) => (
-                      <div key={`${subtaskId}-${i}`} className="flex items-center gap-2 p-2 bg-gray-900/50 rounded border border-gray-600">
-                        <span className="text-gray-400">🔸</span>
-                        <span className="text-gray-300 font-mono text-sm">{subtaskId}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="ml-auto text-xs hover:bg-gray-700"
-                          onClick={() => {
-                            // TODO: Navigate to subtask
-                            console.log('Navigate to subtask:', subtaskId)
-                          }}
-                        >
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
             </div>
           </DialogContent>
         </Dialog>

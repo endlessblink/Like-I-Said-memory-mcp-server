@@ -365,7 +365,34 @@ export class EnhancedHybridTaskManager extends HybridTaskManager {
     
     // Update base fields
     if (Object.keys(baseUpdates).length > 0) {
-      // TODO: Implement base update in parent class
+      // Build update query for base fields
+      const baseFields = [];
+      const baseParams = { id: taskId };
+      
+      if (baseUpdates.title !== undefined) {
+        baseFields.push('title = @title');
+        baseParams.title = baseUpdates.title;
+      }
+      if (baseUpdates.description !== undefined) {
+        baseFields.push('description = @description');
+        baseParams.description = baseUpdates.description;
+      }
+      if (baseUpdates.status !== undefined) {
+        baseFields.push('status = @status');
+        baseParams.status = baseUpdates.status;
+      }
+      if (baseUpdates.priority !== undefined) {
+        baseFields.push('priority = @priority');
+        baseParams.priority = baseUpdates.priority;
+      }
+      
+      if (baseFields.length > 0) {
+        const stmt = this.db.db.prepare(`
+          UPDATE tasks SET ${baseFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = @id
+        `);
+        stmt.run(baseParams);
+      }
     }
     
     // Update enhanced fields

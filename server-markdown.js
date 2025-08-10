@@ -2126,6 +2126,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           remove_memories = []
         } = args;
 
+        // Check if this is a UUID format (V3 system task)
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidPattern.test(task_id)) {
+          // This is a V3 task, route to the V3 update handler
+          return await handleV3Tool('update_hierarchical_task', {
+            task_id,
+            status,
+            title,
+            description
+            // Note: V3 doesn't support add_subtasks, add_memories, remove_memories yet
+          });
+        }
+
+        // V2 task handling (existing code)
         const task = await taskStorage.getTask(task_id);
         if (!task) {
           return {
@@ -3922,6 +3936,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'move_task':
       case 'view_project':
       case 'find_project':
+      case 'update_hierarchical_task':
         return await handleV3Tool(name, args);
 
       default:
