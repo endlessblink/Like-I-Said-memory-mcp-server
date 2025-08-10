@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary'
 import { OfflineDetector } from '@/components/OfflineDetector'
+import { AdvancedSearch as AdvancedSearchComponent } from '@/components/AdvancedSearch'
 import { setupGlobalErrorHandlers, errorReporting } from '@/utils/errorReporting'
 import {
   Dialog,
@@ -45,7 +46,8 @@ const Editor = lazy(() => import('@monaco-editor/react'))
 const TaskManagement = lazy(() => import('@/components/TaskManagement').then(m => ({ default: m.TaskManagement })))
 const TaskEnhancement = lazy(() => import('@/components/TaskEnhancement').then(m => ({ default: m.TaskEnhancement })))
 const AIEnhancement = lazy(() => import('@/components/AIEnhancement').then(m => ({ default: m.AIEnhancement })))
-const AdvancedSearch = lazy(() => import('@/components/AdvancedSearch').then(m => ({ default: m.AdvancedSearch })))
+// Use direct import instead of lazy loading to avoid MIME type issues
+const AdvancedSearch = AdvancedSearchComponent
 const StatisticsDashboard = lazy(() => import('@/components/StatisticsDashboard').then(m => ({ default: m.StatisticsDashboard })))
 const MemoryEditModal = lazy(() => import('@/components/MemoryEditModal').then(m => ({ default: m.MemoryEditModal })))
 const ExportImport = lazy(() => import('@/components/ExportImport').then(m => ({ default: m.ExportImport })))

@@ -14,52 +14,60 @@ export async function getApiPort(): Promise<number> {
     return cachedApiPort;
   }
 
-  // Always try to get the port from the port discovery endpoint first
-  try {
-    const response = await fetch('/api-port', {
-      method: 'GET',
-      signal: AbortSignal.timeout(1000) // 1 second timeout
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.port) {
-        cachedApiPort = data.port;
-        localStorage.setItem('like-i-said-api-port', data.port.toString());
-        console.log(`✅ API server port discovered: ${data.port}`);
-        return data.port;
-      } else if (data.ports) {
-        // If we get a list of ports to try, use them
-        console.log('📋 Got list of ports to try:', data.ports);
-        for (const port of data.ports) {
-          try {
-            const testResponse = await fetch(`http://localhost:${port}/api/status`, {
-              method: 'GET',
-              mode: 'cors',
-              signal: AbortSignal.timeout(500) // 500ms timeout for each port
-            });
-            
-            if (testResponse.ok) {
-              const testData = await testResponse.json();
-              if (testData.server === 'Dashboard Bridge' || testData.message === 'Like-I-Said MCP Server Dashboard API') {
-                cachedApiPort = port;
-                localStorage.setItem('like-i-said-api-port', port.toString());
-                console.log(`✅ API server found on port ${port}`);
-                return port;
+  // Try multiple possible Vite dev server ports for the /api-port endpoint
+  const vitePorts = [8777, 8778, 8779, 8780, 5173, 5174, 5175]; // Common Vite ports
+  
+  for (const vitePort of vitePorts) {
+    try {
+      const response = await fetch(`http://localhost:${vitePort}/api-port`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(800) // 800ms timeout for each port
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.port) {
+          cachedApiPort = data.port;
+          localStorage.setItem('like-i-said-api-port', data.port.toString());
+          console.log(`✅ API server port discovered from Vite on ${vitePort}: ${data.port}`);
+          return data.port;
+        } else if (data.ports) {
+          // If we get a list of ports to try, use them
+          console.log(`📋 Got port list from Vite on ${vitePort}:`, data.ports);
+          for (const port of data.ports) {
+            try {
+              const testResponse = await fetch(`http://localhost:${port}/api/status`, {
+                method: 'GET',
+                mode: 'cors',
+                signal: AbortSignal.timeout(500) // 500ms timeout for each port
+              });
+              
+              if (testResponse.ok) {
+                const testData = await testResponse.json();
+                if (testData.server === 'Dashboard Bridge' || testData.message === 'Like-I-Said MCP Server Dashboard API') {
+                  cachedApiPort = port;
+                  localStorage.setItem('like-i-said-api-port', port.toString());
+                  console.log(`✅ API server found on port ${port}`);
+                  return port;
+                }
               }
+            } catch {
+              // Continue to next port
             }
-          } catch {
-            // Continue to next port
           }
         }
       }
+    } catch (error) {
+      // Continue to next Vite port
+      continue;
     }
-  } catch (error) {
-    console.log('Port discovery endpoint not available, falling back to port scanning');
   }
+  
+  console.log('Port discovery endpoint not available on any Vite port, falling back to direct port scanning');
 
   // Fallback: try common ports in sequence
-  // Updated priority based on Desktop Commander findings
-  const commonPorts = [8776, 3001, 3002, 3008, 3007, 3006, 3005, 3004, 3003];
+  // Put 8776 first as that's the current default from .dashboard-port
+  const commonPorts = [8776, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008];
   
   for (const port of commonPorts) {
     try {
