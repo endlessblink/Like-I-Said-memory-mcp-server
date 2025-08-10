@@ -1,6 +1,12 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@endlessblink|.*\\.mjs$))'
+  ],
   testMatch: [
     '**/tests/**/*.test.js'
   ],
@@ -10,5 +16,6 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  testTimeout: 10000
+  testTimeout: 15000,
+  maxWorkers: 1 // Prevent worker exit issues
 };

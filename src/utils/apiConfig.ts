@@ -59,7 +59,7 @@ export async function getApiPort(): Promise<number> {
 
   // Fallback: try common ports in sequence
   // Updated priority based on Desktop Commander findings
-  const commonPorts = [3001, 3002, 3008, 3007, 3006, 3005, 3004, 3003];
+  const commonPorts = [8776, 3001, 3002, 3008, 3007, 3006, 3005, 3004, 3003];
   
   for (const port of commonPorts) {
     try {
@@ -84,11 +84,11 @@ export async function getApiPort(): Promise<number> {
     }
   }
 
-  // Default to 3001 if no server found
-  console.warn('No API server found, defaulting to port 3001');
-  cachedApiPort = 3001;
-  localStorage.setItem('like-i-said-api-port', '3001');
-  return 3001;
+  // Default to 8776 if no server found
+  console.warn('No API server found, defaulting to port 8776');
+  cachedApiPort = 8776;
+  localStorage.setItem('like-i-said-api-port', '8776');
+  return 8776;
 }
 
 // Get the full API URL

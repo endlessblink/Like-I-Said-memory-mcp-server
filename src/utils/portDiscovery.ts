@@ -43,7 +43,7 @@ async function performDiscovery(): Promise<number> {
   }
 
   // Try common ports in order
-  const portsToTry = [3002, 3001, 3003, 3004, 3005];
+  const portsToTry = [8776, 3002, 3001, 3003, 3004, 3005];
   
   for (const port of portsToTry) {
     try {
@@ -62,8 +62,8 @@ async function performDiscovery(): Promise<number> {
   }
 
   // Fallback to default
-  console.warn('⚠️ Could not discover API port, using default 3002');
-  return 3002;
+  console.warn('⚠️ Could not discover API port, using default 8776');
+  return 8776;
 }
 
 export function resetPortCache() {

@@ -396,6 +396,8 @@ class DashboardBridge {
             ...Array.from({length: 20}, (_, i) => `http://localhost:${3000 + i}`),
             ...Array.from({length: 20}, (_, i) => `http://127.0.0.1:${3000 + i}`),
             'http://localhost:5173', 'http://127.0.0.1:5173',
+            'http://localhost:8777', 'http://127.0.0.1:8777',
+            'http://localhost:8778', 'http://127.0.0.1:8778',
             'http://localhost:5183', 'http://127.0.0.1:5183',
             'http://localhost:8080', 'http://127.0.0.1:8080'
           ];
@@ -3517,7 +3519,7 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
 
 // Start the bridge server with dynamic port detection
 async function startServer() {
-  const preferredPort = parseInt(process.env.PORT || '3001');
+  const preferredPort = parseInt(process.env.PORT || '8776');
   try {
     // Start the server - it will find its own port if needed
     const bridge = new DashboardBridge(preferredPort);

@@ -11,7 +11,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173,
+    port: 8777,
     host: true,
     open: false,  // Don't open browser automatically
     cors: true
