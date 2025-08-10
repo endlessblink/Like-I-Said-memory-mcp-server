@@ -32,7 +32,7 @@ import { SessionTracker } from './lib/session-tracker.js';
 import { QueryAnalyzer, RelevanceScorer, ContentClassifier, CircuitBreaker } from './lib/claude-historian-features.js';
 import { FuzzyMatcher } from './lib/fuzzy-matching.js';
 import { WorkDetectorWrapper } from './lib/work-detector-wrapper.js';
-import { v3Tools, handleV3Tool } from './lib/v3-mcp-tools.js';
+import { v3Tools, handleV3Tool, getTaskManager } from './lib/v3-mcp-tools.js';
 // Removed ConnectionProtection and DataIntegrity imports to prevent any exit calls
 // import { createRequire } from 'module';
 // const require = createRequire(import.meta.url);
@@ -2139,14 +2139,82 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           });
         }
 
+        // Check if this looks like a V3 path number (e.g., "30", "032", "32.001")
+        const pathPattern = /^(\d{1,3})(\.\d{3})?$/;
+        if (pathPattern.test(task_id)) {
+          try {
+            // Try to resolve path to UUID from V3 system
+            const manager = await getTaskManager();
+            
+            // Normalize the path (pad numbers to 3 digits if needed)
+            let normalizedPath;
+            const pathMatch = task_id.match(pathPattern);
+            if (pathMatch) {
+              const mainPath = pathMatch[1].padStart(3, '0');
+              const subPath = pathMatch[2] || '';
+              normalizedPath = mainPath + subPath;
+            } else {
+              normalizedPath = task_id.padStart(3, '0');
+            }
+            
+            // Query SQLite for task with this path
+            const pathTask = manager.db.db.prepare('SELECT id FROM tasks WHERE path = ?').get(normalizedPath);
+            
+            if (pathTask) {
+              // Found a V3 task with this path, route to V3 system
+              return await handleV3Tool('update_hierarchical_task', {
+                task_id: pathTask.id,
+                status,
+                title,
+                description
+              });
+            }
+            
+            // If path not found, continue to V2 system and provide helpful error
+          } catch (error) {
+            console.error('Error resolving V3 path:', error);
+            // Continue to V2 system
+          }
+        }
+
         // V2 task handling (existing code)
         const task = await taskStorage.getTask(task_id);
         if (!task) {
+          // Enhanced error message with suggestions
+          let errorMessage = `❌ Task with ID "${task_id}" not found`;
+          
+          // If it looks like a path number, provide specific guidance
+          if (/^\d+$/.test(task_id)) {
+            errorMessage += `\n\n💡 If you're trying to reference a V3 task by its path number:`;
+            errorMessage += `\n• Use "view_project" to see available tasks and their IDs`;
+            errorMessage += `\n• Task paths like "032" should have matching tasks - check if the task exists`;
+            errorMessage += `\n• For V2 tasks, use the full task ID (e.g., "task-2025-08-06-abc123")`;
+            
+            // Try to find similar paths in V3
+            try {
+              const manager = await getTaskManager();
+              const nearbyPaths = manager.db.db.prepare(`
+                SELECT path, title FROM tasks 
+                WHERE CAST(path AS INTEGER) BETWEEN ? AND ? 
+                ORDER BY path LIMIT 5
+              `).all(parseInt(task_id) - 5, parseInt(task_id) + 5);
+              
+              if (nearbyPaths.length > 0) {
+                errorMessage += `\n\n🔍 Nearby tasks you might be looking for:`;
+                for (const pathTask of nearbyPaths) {
+                  errorMessage += `\n• Path ${pathTask.path}: ${pathTask.title.substring(0, 50)}...`;
+                }
+              }
+            } catch (error) {
+              // Ignore error in finding suggestions
+            }
+          }
+          
           return {
             content: [
               {
                 type: 'text',
-                text: `❌ Task with ID ${task_id} not found`,
+                text: errorMessage,
               },
             ],
           };
