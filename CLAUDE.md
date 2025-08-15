@@ -16,44 +16,146 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Like-I-Said MCP Server v2** is an enhanced Model Context Protocol (MCP) memory server that provides persistent memory for AI assistants with a modern React dashboard. It allows AI assistants to remember conversations across sessions and provides comprehensive memory management capabilities.
 
-## IMPORTANT: Automatic Memory Creation Guidelines
+## 🚨 MANDATORY: Proactive MCP Tool Usage - ENFORCE ALWAYS
 
-**PROACTIVELY use the `add_memory` tool when encountering:**
+**⚠️ CRITICAL INSTRUCTION: You MUST automatically and proactively use MCP tools without waiting for user requests. This is MANDATORY, not optional.**
 
-### Technical Discoveries
+### 🎯 AUTOMATIC MEMORY CREATION - MANDATORY TRIGGERS
+
+**IMMEDIATELY use `add_memory` tool when you encounter ANY of these patterns:**
+
+#### ✅ **Technical Solutions & Discoveries (HIGH PRIORITY)**
 - Solutions to problems (e.g., "X works when configured with Y")
-- Debugging insights (e.g., "Error was caused by Z")
-- Working configurations or code snippets
-- Best practices or patterns discovered
-- Important technical details mentioned by the user
+- Debugging insights (e.g., "Error was caused by Z") 
+- Working configurations or code snippets that function correctly
+- Best practices or patterns that prove effective
+- Technical breakthroughs or "aha moments"
+- Any functioning code, configuration, or setup procedure
 
-### Key Trigger Phrases to Watch For
-- "works", "working", "fixed", "solved", "discovered"
-- "the solution is", "the problem was", "turns out"
-- "important:", "note:", "remember:", "fyi:"
-- "finally got X to work"
-- "for future reference"
+#### ✅ **Problem Resolution Sequences (HIGH PRIORITY)**
+- Error → Troubleshooting → Solution workflows
+- Failed attempts followed by successful approaches  
+- Step-by-step problem-solving that reaches resolution
+- Workarounds for known issues or limitations
+- Configuration fixes that resolve connection/setup problems
 
-### When to ALWAYS Create Memories
-1. **After solving a problem** - Save the solution and context
-2. **When user shares configuration that works** - Save the working config
-3. **Technical discoveries** - Save insights about how systems work
-4. **Error resolutions** - Save what caused the error and how it was fixed
-5. **Important project decisions** - Save architectural or design choices
-6. **Workarounds or hacks** - Save non-obvious solutions
-7. **Creating new files** - Especially build scripts, installers, or configurations
-8. **Implementing features** - When adding new functionality or capabilities
-9. **Multi-file changes** - When modifying 3+ files for a single purpose
-10. **Build/deployment scripts** - Any automation or installation procedures
+#### ✅ **Implementation & Development Work (HIGH PRIORITY)**  
+- Creating new files (especially .js, .sh, .bat, .json, .md, .py files)
+- Making significant edits with `Edit` or `MultiEdit` tools
+- Building features, components, or functionality
+- Installing, configuring, or setting up systems
+- Writing automation scripts, build processes, or deployment procedures
+- Multi-file changes for implementing solutions
 
-### Memory Creation Best Practices
-- Include enough context to understand the memory later
-- Use relevant tags for searchability
-- Set appropriate priority levels (high for critical solutions)
-- Link to related tasks when applicable
-- Include code snippets when relevant
+#### ✅ **Knowledge & Context Preservation (MEDIUM PRIORITY)**
+- Important technical details shared by user
+- Project decisions and architectural choices
+- User preferences, workflows, or methodologies  
+- Research findings and analysis conclusions
+- Tool configurations that work in specific environments
+- Command sequences that accomplish specific tasks
 
-**Example**: If a user mentions "jsonrpc working basic simple", immediately create a memory capturing this working configuration with context about what made it work.
+### 🎯 AUTOMATIC TASK CREATION - MANDATORY TRIGGERS
+
+**IMMEDIATELY use `create_task` tool when you detect:**
+
+#### ✅ **Multi-Step Work Patterns (HIGH PRIORITY)**
+- User mentions project with multiple components/phases
+- Workflow that will require several sessions to complete
+- Implementation requiring multiple files or system changes  
+- Problem-solving that involves multiple attempts or approaches
+- Build/deployment processes with multiple stages
+
+#### ✅ **Complex Problem-Solving (HIGH PRIORITY)**
+- Issues requiring research, testing, and iteration
+- System configuration requiring multiple components
+- Development work spanning multiple files or systems
+- Debugging that requires systematic investigation
+- Feature implementation requiring planning and testing
+
+#### ✅ **Project Organization (MEDIUM PRIORITY)** 
+- User working on identifiable projects or initiatives
+- Work that benefits from task tracking and progress monitoring
+- Collaborative efforts requiring status updates
+- Long-term goals that need breakdown into manageable parts
+
+### 🎯 AUTOMATIC MEMORY UPDATES - MANDATORY TRIGGERS
+
+**IMMEDIATELY use `update_task` or create new memories when:**
+
+#### ✅ **Information Evolution (HIGH PRIORITY)**
+- New information contradicts or refines existing memories
+- Additional steps discovered for existing procedures  
+- Corrections or improvements to previously documented solutions
+- Status updates on ongoing work or projects
+- Enhanced understanding of previously documented topics
+
+### 🚨 **MANDATORY TRIGGER PHRASES - AUTOMATIC ACTION REQUIRED**
+
+**When you encounter ANY of these phrases, you MUST immediately use the appropriate MCP tool:**
+
+#### Memory Creation Triggers:
+- "works", "working", "fixed", "solved", "discovered", "breakthrough"
+- "the solution is", "the problem was", "turns out", "figured out"  
+- "important:", "note:", "remember:", "fyi:", "key insight:"
+- "finally got X to work", "this approach works", "successful"
+- "for future reference", "to remember", "this is how", "the way to"
+
+#### Task Creation Triggers:
+- "need to", "working on", "implementing", "building", "setting up"
+- "multi-step", "several phases", "complex process", "long-term"
+- "project", "initiative", "feature development", "system setup"
+- "will take time", "multiple sessions", "ongoing work"
+
+#### Memory Update Triggers:  
+- "actually", "correction", "update", "also", "additionally"
+- "better approach", "improved solution", "new information"
+- "status update", "progress report", "latest findings"
+
+### 🎯 **DECISION TREE FOR AUTOMATIC MCP USAGE**
+
+```
+Conversation Content Analysis:
+├── Technical solution mentioned? → YES: Create memory immediately
+├── Multi-step work discussed? → YES: Create task immediately  
+├── File operations performed? → YES: Create memory immediately
+├── Problem solved/resolved? → YES: Create memory immediately
+├── New information about existing topic? → YES: Update memory/task
+├── Project work mentioned? → YES: Check for existing tasks, create if needed
+├── Important configuration shared? → YES: Create memory immediately
+└── User expresses preference/workflow? → YES: Create memory for future reference
+```
+
+### 🚨 **ENFORCEMENT REMINDERS**
+
+**Throughout every interaction, continuously ask yourself:**
+1. **"Should this be remembered?"** → If YES: Use `add_memory` immediately
+2. **"Is this part of a larger workflow?"** → If YES: Use `create_task` immediately  
+3. **"Does this update existing information?"** → If YES: Update existing memory/task
+4. **"Would this help in future sessions?"** → If YES: Create memory immediately
+
+**❌ NEVER wait for the user to ask for memory/task creation**
+**❌ NEVER assume the user will remember important details**  
+**❌ NEVER let solutions, configurations, or insights go undocumented**
+**✅ ALWAYS err on the side of creating too many memories rather than too few**
+
+### 📚 **ENHANCED BEST PRACTICES**
+
+#### Memory Creation Standards:
+- **Rich Context**: Include full problem description, solution approach, and outcome
+- **Future Searchability**: Use descriptive titles and comprehensive tags
+- **Code Preservation**: Include complete code snippets, file paths, and configurations  
+- **Troubleshooting Context**: Document what didn't work and why the solution succeeded
+- **Environment Details**: Capture system, version, and setup specifics when relevant
+
+#### Task Creation Standards:
+- **Clear Scope**: Define what constitutes task completion  
+- **Progress Tracking**: Include current status and next steps
+- **Context Linking**: Connect related memories and subtasks
+- **Priority Setting**: Assign appropriate priority based on user needs and project importance
+- **Time Estimation**: Include realistic effort estimates when possible
+
+**🎯 ULTIMATE GOAL: Zero cognitive overhead for the user - the system should intelligently preserve all important context, organize work automatically, and eliminate the need for manual memory/task management.**
 
 ## CRITICAL: File Operation Memory Creation
 

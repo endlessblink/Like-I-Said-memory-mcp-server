@@ -958,8 +958,21 @@ class DashboardBridge {
       const totalPages = Math.ceil(total / limitNum);
       const paginatedMemories = filteredMemories.slice(offset, offset + limitNum);
 
+      // Truncate content for better performance (keep first 500 chars for list view)
+      const { truncate = 'true' } = req.query;
+      const shouldTruncate = truncate === 'true';
+      
+      const optimizedMemories = shouldTruncate ? paginatedMemories.map(memory => ({
+        ...memory,
+        content: memory.content && memory.content.length > 500 
+          ? memory.content.substring(0, 500) + '...' 
+          : memory.content,
+        // Keep all other fields intact
+        truncated: memory.content && memory.content.length > 500
+      })) : paginatedMemories;
+
       res.json({
-        data: paginatedMemories,
+        data: optimizedMemories,
         pagination: {
           page: pageNum,
           limit: limitNum,

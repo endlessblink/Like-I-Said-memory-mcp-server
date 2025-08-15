@@ -34,8 +34,7 @@ import {
   Star,
   Settings,
   FileText,
-  AlertCircle,
-  Loader2
+  AlertCircle
 } from 'lucide-react';
 import { useFilterPresets } from '@/hooks/useFilterPresets';
 import { AdvancedFilters } from '@/types';

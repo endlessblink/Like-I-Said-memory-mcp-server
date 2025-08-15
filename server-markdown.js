@@ -589,10 +589,10 @@ const behavioralAnalyzer = new BehavioralAnalyzer();
 const memoryEnrichment = new MemoryEnrichment(storage, vectorStorage);
 const sessionTracker = new SessionTracker(storage);
 
-// Initialize Universal Work Detector (disabled by default for safety)
+// Initialize Universal Work Detector (now enabled after successful testing)
 const workDetector = new WorkDetectorWrapper({ 
-  enabled: false, // Start disabled for safety
-  debugMode: true,
+  enabled: true, // Enabled after successful testing ✅
+  debugMode: false, // Disabled for production performance
   safeMode: true 
 });
 

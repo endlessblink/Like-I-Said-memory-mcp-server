@@ -221,6 +221,9 @@ function AppContent() {
   const [memories, setMemories] = useState<Memory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(50)
+  const [totalMemories, setTotalMemories] = useState(0)
   const [isCreating, setIsCreating] = useState(false)
   const [isDeleting, setIsDeleting] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState("")
@@ -293,7 +296,7 @@ function AppContent() {
   const loadMemoriesRef = useRef<(isRefresh?: boolean) => Promise<void>>();
 
   // === DATA MANAGEMENT ===
-  const loadMemories = async (isRefresh = false) => {
+  const loadMemories = async (isRefresh = false, pageToLoad = currentPage) => {
     try {
       if (isRefresh) {
         setIsRefreshing(true)
@@ -301,42 +304,37 @@ function AppContent() {
         setIsLoading(true)
       }
       
-      // Load all memories by fetching all pages
-      let allMemories = []
-      let page = 1
-      let hasMore = true
-      
-      while (hasMore) {
-        const response = await apiGet(`/api/memories?page=${page}&limit=100`)
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        
-        const text = await response.text()
-        if (!text.trim()) {
-          break
-        }
-        
-        const data = JSON.parse(text)
-        
-        // Handle both old array format and new paginated format
-        if (Array.isArray(data)) {
-          allMemories = [...allMemories, ...data]
-          hasMore = false // Old format doesn't have pagination
-        } else if (data.data && Array.isArray(data.data)) {
-          allMemories = [...allMemories, ...data.data]
-          hasMore = data.pagination ? data.pagination.hasNext : false
-          page++
-        } else {
-          hasMore = false
-        }
+      // Load single page for better performance
+      const response = await apiGet(`/api/memories?page=${pageToLoad}&limit=${itemsPerPage}`)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       
-      setMemories(allMemories)
+      const text = await response.text()
+      if (!text.trim()) {
+        setMemories([])
+        setTotalMemories(0)
+        return
+      }
+      
+      const data = JSON.parse(text)
+      
+      // Handle both old array format and new paginated format
+      if (Array.isArray(data)) {
+        setMemories(data.slice(0, itemsPerPage))
+        setTotalMemories(data.length)
+      } else if (data.data && Array.isArray(data.data)) {
+        setMemories(data.data)
+        setTotalMemories(data.total || data.data.length)
+      } else {
+        setMemories([])
+        setTotalMemories(0)
+      }
     } catch (error) {
       console.error('Failed to load memories:', error)
       toast.error('Failed to load memories', 'Please check your connection and try again')
       setMemories([])
+      setTotalMemories(0)
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
@@ -347,6 +345,17 @@ function AppContent() {
   useEffect(() => {
     loadMemoriesRef.current = loadMemories;
   }, [loadMemories]);
+
+  // Handle page changes
+  const handlePageChange = useCallback(async (newPage: number) => {
+    setCurrentPage(newPage);
+    await loadMemories(false, newPage);
+  }, [loadMemories]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalMemories / itemsPerPage);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
   // === TASK MANAGEMENT ===
   const loadTasks = async () => {
@@ -418,9 +427,21 @@ function AppContent() {
 
   // === EFFECTS ===
   useEffect(() => {
-    loadMemories()
-    loadTasks()
-    loadSettings()
+    // Clear any cached API port to force rediscovery
+    localStorage.removeItem('like-i-said-api-port')
+    
+    // Load data with proper async handling
+    const initializeApp = async () => {
+      try {
+        await loadMemories()
+        await loadTasks()
+        loadSettings()
+      } catch (error) {
+        console.error('App initialization failed:', error)
+      }
+    }
+    
+    initializeApp()
     // WebSocket is handled by the hook, no manual setup needed
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2202,24 +2223,51 @@ Respond with JSON format:
                         icon="🧠"
                       />
                     ) : (
-                      <div className="grid-responsive">
-                        {sortedAndFiltered.map((memory, index) => (
-                          <div 
-                            key={`card-${memory.id}-${index}`} 
-                            className="animate-fade-in"
-                            style={{ animationDelay: `${index * 0.05}s` }}
-                          >
-                            <MemoryCard
-                              memory={memory}
-                              selected={selectedMemories.has(memory.id)}
-                              onSelect={handleMemorySelect}
-                              onEdit={() => handleEdit(memory.id)}
-                              onDelete={deleteMemory}
-                              isDeleting={isDeleting.has(memory.id)}
-                            />
+                      <>
+                        <div className="grid-responsive">
+                          {sortedAndFiltered.map((memory, index) => (
+                            <div 
+                              key={`card-${memory.id}-${index}`} 
+                              className="animate-fade-in"
+                              style={{ animationDelay: `${index * 0.05}s` }}
+                            >
+                              <MemoryCard
+                                memory={memory}
+                                selected={selectedMemories.has(memory.id)}
+                                onSelect={handleMemorySelect}
+                                onEdit={() => handleEdit(memory.id)}
+                                onDelete={deleteMemory}
+                                isDeleting={isDeleting.has(memory.id)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-2 mt-6">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(currentPage - 1)}
+                              disabled={!hasPrevPage}
+                            >
+                              Previous
+                            </Button>
+                            <span className="text-sm text-muted-foreground px-2">
+                              Page {currentPage} of {totalPages} ({totalMemories} total)
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              disabled={!hasNextPage}
+                            >
+                              Next
+                            </Button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}

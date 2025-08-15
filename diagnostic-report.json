@@ -1,0 +1,74 @@
+{
+  "environment": {
+    "MCP_MODE": "true",
+    "MCP_QUIET": "true",
+    "DEBUG_MCP": "not set",
+    "NODE_ENV": "not set",
+    "MEMORY_DIR": "not set",
+    "TASK_DIR": "not set"
+  },
+  "nodejs": {
+    "version": "v22.17.1",
+    "platform": "linux",
+    "arch": "x64",
+    "execPath": "/home/endlessblink/.nvm/versions/node/v22.17.1/bin/node"
+  },
+  "filesystem": {
+    "Root Directory": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2",
+      "isDirectory": true,
+      "isFile": false,
+      "readable": true,
+      "writable": true
+    },
+    "Server Script": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/server-markdown.js",
+      "isDirectory": false,
+      "isFile": true,
+      "readable": true,
+      "writable": true
+    },
+    "Wrapper Script": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/mcp-server-wrapper.js",
+      "isDirectory": false,
+      "isFile": true,
+      "readable": true,
+      "writable": true
+    },
+    "Memories Directory": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/memories",
+      "isDirectory": true,
+      "isFile": false,
+      "readable": true,
+      "writable": true
+    },
+    "Tasks Directory": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/tasks",
+      "isDirectory": true,
+      "isFile": false,
+      "readable": true,
+      "writable": true
+    },
+    "Package.json": {
+      "exists": true,
+      "path": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/package.json",
+      "isDirectory": false,
+      "isFile": true,
+      "readable": true,
+      "writable": true
+    }
+  },
+  "process": {},
+  "mcp": {
+    "success": true,
+    "response": "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32603,\"message\":\"[\\n  {\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"expected\\\": \\\"object\\\",\\n    \\\"received\\\": \\\"undefined\\\",\\n    \\\"path\\\": [\\n      \\\"params\\\",\\n      \\\"clientInfo\\\"\\n    ],\\n    \\\"message\\\": \\\"Required\\\"\\n  }\\n]\"}}\n"
+  },
+  "recommendations": [
+    "Set MCP_MODE=true to explicitly enable MCP mode"
+  ]
+}
