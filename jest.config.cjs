@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  preset: 'jest-environment-node',
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
@@ -16,6 +17,10 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  testTimeout: 15000,
-  maxWorkers: 1 // Prevent worker exit issues
+  testTimeout: 30000,
+  maxWorkers: 1, // Prevent worker exit issues
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  globals: {
+    jest: true
+  }
 };

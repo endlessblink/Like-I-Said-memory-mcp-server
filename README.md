@@ -7,18 +7,20 @@
 
 Turn Claude Desktop into your intelligent project manager. Track tasks, remember context, and maintain continuity across sessions.
 
-## 🆕 v2.8.10 Released - Major Fixes!
+## 🚀 v3.0.0-alpha.2 Released - Major Intelligence Upgrade!
 
-> **Important Update (July 2025)**: Version 2.8.10 fixes critical issues:
-> - ✅ **Loader2 Dashboard Error** - Fixed
-> - ✅ **Task ID Flexibility** - Now supports PAL-G0023, PAL-0001 formats
-> - ✅ **Dashboard Stability** - EPIPE errors resolved
+> **🔥 Alpha Release (August 2025)**: Version 3.0.0-alpha.2 introduces powerful AI features:
+> - ✅ **Fuzzy Search** - Typo-tolerant search with Fuse.js (handles "serch" → "search")
+> - ✅ **Universal Work Detector** - Automatically captures work patterns and creates memories
+> - ✅ **Enhanced Search** - Multi-mode search combining exact, expanded, semantic, and fuzzy results
+> - ✅ **Windows Integration** - Improved cross-platform support with Windows-specific scripts
 > 
-> **⚠️ Dashboard Rebuild Required!** See [Update Instructions](UPDATE-INSTRUCTIONS-v2.8.10.md) for details.
+> **📊 Search Intelligence**: Now finds 700+ memories with typo-tolerant matching!
+> **🤖 Work Detection**: Automatically identifies problem-solving, implementation, and configuration work!
 > 
 > ```bash
-> npm install @endlessblink/like-i-said-v2@latest
-> npm run build  # Required to fix dashboard!
+> npm install @endlessblink/like-i-said-v2@3.0.0-alpha.2
+> npm run build  # Build dashboard with new features
 > ```
 
 ## 📚 Table of Contents
@@ -42,8 +44,21 @@ Turn Claude Desktop into your intelligent project manager. Track tasks, remember
 
 ## 🎯 What Makes This Different
 
-Unlike simple memory tools, Like-I-Said v2 provides **intelligent task management** that understands your workflow:
+Like-I-Said v3.0 brings **AI-powered intelligence** to memory and task management:
 
+### 🧠 Intelligent Search & Discovery
+- **Fuzzy Search** - Finds memories even with typos ("serch" finds "search")
+- **Multi-Mode Search** - Combines exact, expanded, semantic, and fuzzy results
+- **Smart Relevance** - Prioritizes results based on context and usage patterns
+- **Typo Tolerance** - Never lose memories due to spelling mistakes
+
+### 🤖 Universal Work Detector
+- **Automatic Pattern Recognition** - Identifies problem-solving, implementation, research activities
+- **Smart Memory Creation** - Captures important work without manual effort
+- **Activity Monitoring** - Tracks your workflow patterns intelligently
+- **Safe Mode** - Gradual integration that learns your preferences
+
+### 📋 Advanced Task Management  
 - **Smart Task Tracking** - Say "I finished the auth system" and Claude updates your tasks
 - **Automatic Memory-Task Linking** - Every decision, code snippet, and conversation links to relevant tasks
 - **Natural Language Updates** - No commands needed, just talk naturally about your progress

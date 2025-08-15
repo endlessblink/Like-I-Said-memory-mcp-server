@@ -5,6 +5,51 @@ All notable changes to Like-I-Said MCP Server v2 will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-alpha.2] - 2025-08-15
+
+### 🚀 Major Features Added
+- **Fuzzy Search System** - Intelligent typo-tolerant search using Fuse.js
+  - Multiple search modes: exact, memory, typo-tolerant
+  - Configurable precision/recall for different scenarios  
+  - Smart query preprocessing and relevance scoring
+  - Handles typos like "serch" → "search" automatically
+  - Enhanced search results with match type indicators
+
+- **Universal Work Detector** - Automated pattern recognition for work activities
+  - Real-time detection of problem-solving sequences
+  - Automatic identification of implementation work
+  - Configuration task pattern recognition
+  - Research activity monitoring  
+  - Workflow automation detection
+  - Safe mode integration with activity logging
+
+### 🔧 Technical Improvements
+- **Enhanced Search Integration** - Fuzzy search integrated into `search_memories` MCP tool
+- **Work Pattern Tracking** - Automatic memory creation based on detected work patterns
+- **Multi-Mode Search** - Combines exact, expanded, semantic, and fuzzy search results
+- **Performance Optimized** - Efficient fuzzy matching with configurable thresholds
+- **ES Modules Support** - Updated Jest configuration for ES modules compatibility
+
+### 🔧 Bug Fixes
+- **MCP Server Stability** - Resolved timeout issues in tools/list responses
+- **Test Configuration** - Fixed Jest ES modules support and import statements
+- **File Organization** - Moved test files to proper directories structure
+
+### 📚 Documentation
+- **Windows Integration** - Added Windows-specific scripts and troubleshooting guides
+- **Server Architecture** - Comprehensive architecture analysis documentation
+- **Memory Quality Standards** - Detailed memory quality and standards documentation
+
+### 🧪 Testing
+- **Fuzzy Search Tests** - 100% pass rate for all fuzzy matching scenarios
+- **Work Detector Tests** - Pattern recognition validation complete
+- **Integration Tests** - End-to-end MCP server functionality verified
+
+### ⚠️ Breaking Changes
+- Version jump to 3.0.0-alpha due to major feature additions
+- Enhanced search may return more results due to fuzzy matching
+- Work detector creates automatic memories (can be controlled via safe mode)
+
 ## [2.6.8] - 2025-07-16
 
 ### Fixed

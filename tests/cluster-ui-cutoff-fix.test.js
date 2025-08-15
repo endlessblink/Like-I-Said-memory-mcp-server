@@ -33,8 +33,8 @@ function logSection(title) {
 async function testLineClampUtilities() {
   logSection('Line Clamp CSS Utilities Test')
   
-  const fs = require('fs')
-  const path = require('path')
+  import fs from 'fs'
+  import path from 'path'
   
   try {
     const appCssPath = path.join(process.cwd(), 'src/App.css')
@@ -70,8 +70,8 @@ async function testLineClampUtilities() {
 async function testClusterViewFixes() {
   logSection('MemoryClusterView Fixes Test')
   
-  const fs = require('fs')
-  const path = require('path')
+  import fs from 'fs'
+  import path from 'path'
   
   try {
     const clusterViewPath = path.join(process.cwd(), 'src/components/MemoryClusterView.tsx')
@@ -149,8 +149,8 @@ async function testClusterViewFixes() {
 async function testMemoryCardFixes() {
   logSection('MemoryCard Fixes Test')
   
-  const fs = require('fs')
-  const path = require('path')
+  import fs from 'fs'
+  import path from 'path'
   
   try {
     const memoryCardPath = path.join(process.cwd(), 'src/components/MemoryCard.tsx')
@@ -218,8 +218,8 @@ async function testMemoryCardFixes() {
 async function testFileIntegrity() {
   logSection('File Integrity Test')
   
-  const fs = require('fs')
-  const path = require('path')
+  import fs from 'fs'
+  import path from 'path'
   
   const requiredFiles = [
     'src/components/MemoryClusterView.tsx',

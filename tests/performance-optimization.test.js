@@ -115,8 +115,8 @@ async function testServerSideFiltering() {
 async function testComponentFiles() {
   logSection('Performance Component Tests')
   
-  const fs = require('fs')
-  const path = require('path')
+  import fs from 'fs'
+  import path from 'path'
   
   const requiredFiles = [
     'src/components/VirtualizedMemoryList.tsx',
@@ -146,7 +146,7 @@ async function testComponentFiles() {
 async function testDependencies() {
   logSection('Dependency Tests')
   
-  const fs = require('fs')
+  import fs from 'fs'
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))
   
   const requiredDeps = [
