@@ -1,0 +1,119 @@
+{
+  "enabled": true,
+  "version": "1.0.0",
+  "description": "Proactive MCP tool usage configuration for Like-I-Said Memory Server",
+  "aggressiveness": "high",
+  "enforcement_level": "strict",
+  "auto_triggers": {
+    "file_operations": {
+      "enabled": true,
+      "instant_memory": true,
+      "capture_all_writes": true,
+      "capture_all_edits": true,
+      "include_content": true,
+      "priority": "high"
+    },
+    "solutions": {
+      "enabled": true,
+      "capture_working_code": true,
+      "capture_configurations": true,
+      "capture_fixes": true,
+      "priority": "high"
+    },
+    "errors": {
+      "enabled": true,
+      "capture_stack_traces": true,
+      "capture_resolutions": true,
+      "link_solution_pairs": true,
+      "priority": "high"
+    },
+    "multi_step_work": {
+      "enabled": true,
+      "auto_create_tasks": true,
+      "track_progress": true,
+      "create_hierarchical_tasks": true,
+      "priority": "high"
+    },
+    "session_summaries": {
+      "enabled": true,
+      "interval_minutes": 30,
+      "capture_key_moments": true,
+      "priority": "medium"
+    },
+    "research_patterns": {
+      "enabled": true,
+      "capture_searches": true,
+      "capture_findings": true,
+      "link_related": true,
+      "priority": "medium"
+    }
+  },
+  "thresholds": {
+    "search_repetition": 1,
+    "file_access_frequency": 2,
+    "tool_sequence_length": 2,
+    "session_duration": 900000,
+    "error_resolution_time": 300000,
+    "memory_creation_delay": 1000,
+    "batch_operations_threshold": 3
+  },
+  "capture_patterns": {
+    "instant_triggers": [
+      "Write tool",
+      "Edit tool",
+      "MultiEdit tool",
+      "create_hierarchical_task",
+      "npm install",
+      "git commit",
+      "successful test",
+      "working solution"
+    ],
+    "solution_indicators": [
+      "works",
+      "working",
+      "fixed",
+      "solved",
+      "successful",
+      "connected",
+      "resolved",
+      "breakthrough",
+      "finally"
+    ],
+    "importance_markers": [
+      "critical",
+      "important",
+      "key",
+      "essential",
+      "must",
+      "always",
+      "never",
+      "remember"
+    ]
+  },
+  "memory_defaults": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_link": true,
+    "default_priority": "high",
+    "include_timestamp": true,
+    "include_context": true
+  },
+  "task_defaults": {
+    "auto_subtasks": true,
+    "track_status": true,
+    "link_memories": true,
+    "default_priority": "medium",
+    "estimate_time": false
+  },
+  "monitoring": {
+    "real_time": true,
+    "log_actions": true,
+    "track_metrics": true,
+    "report_interval": 300000
+  },
+  "overrides": {
+    "allow_user_disable": true,
+    "respect_user_preferences": true,
+    "silent_mode_available": false
+  }
+}

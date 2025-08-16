@@ -20,6 +20,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **⚠️ CRITICAL INSTRUCTION: You MUST automatically and proactively use MCP tools without waiting for user requests. This is MANDATORY, not optional.**
 
+### 🔴 ULTRA-HIGH PRIORITY: INSTANT ACTION REQUIRED
+
+**FILE OPERATIONS = INSTANT MEMORY CREATION (NO EXCEPTIONS):**
+- **ANY use of Write tool** → IMMEDIATELY call `add_memory` 
+- **ANY use of Edit/MultiEdit tools** → IMMEDIATELY call `add_memory`
+- **Creating new files** → IMMEDIATELY call both `add_memory` AND `create_task`
+- **Multiple file changes** → IMMEDIATELY call `create_hierarchical_task`
+- **NEVER wait for permission** - Create memory FIRST, always
+
+**ZERO TOLERANCE POLICY:**
+- **Missing a file operation** = CRITICAL FAILURE
+- **Delaying memory creation** = UNACCEPTABLE  
+- **Waiting for user prompt** = VIOLATION OF PROTOCOL
+- **Every solution that works** = INSTANT MEMORY (no delay)
+
 ### 🎯 AUTOMATIC MEMORY CREATION - MANDATORY TRIGGERS
 
 **IMMEDIATELY use `add_memory` tool when you encounter ANY of these patterns:**
@@ -94,12 +109,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **When you encounter ANY of these phrases, you MUST immediately use the appropriate MCP tool:**
 
-#### Memory Creation Triggers:
-- "works", "working", "fixed", "solved", "discovered", "breakthrough"
-- "the solution is", "the problem was", "turns out", "figured out"  
-- "important:", "note:", "remember:", "fyi:", "key insight:"
-- "finally got X to work", "this approach works", "successful"
-- "for future reference", "to remember", "this is how", "the way to"
+#### Memory Creation Triggers (INSTANT ACTION - NO DELAY):
+- "works", "working", "fixed", "solved", "discovered", "breakthrough" → `add_memory` NOW
+- "the solution is", "the problem was", "turns out", "figured out" → `add_memory` NOW
+- "important:", "note:", "remember:", "fyi:", "key insight:" → `add_memory` NOW
+- "finally got X to work", "this approach works", "successful" → `add_memory` NOW
+- "for future reference", "to remember", "this is how", "the way to" → `add_memory` NOW
+- **ANY code that executes successfully** → `add_memory` NOW
+- **ANY configuration that connects** → `add_memory` NOW
+- **ANY error that gets resolved** → `add_memory` NOW
 
 #### Task Creation Triggers:
 - "need to", "working on", "implementing", "building", "setting up"
@@ -157,21 +175,49 @@ Conversation Content Analysis:
 
 **🎯 ULTIMATE GOAL: Zero cognitive overhead for the user - the system should intelligently preserve all important context, organize work automatically, and eliminate the need for manual memory/task management.**
 
-## CRITICAL: File Operation Memory Creation
+### 📡 REAL-TIME MONITORING REQUIREMENTS
 
-**ALWAYS create a memory when you:**
-- Write a new file with `Write` tool (especially .js, .sh, .bat, .json files)
-- Make significant edits with `Edit` or `MultiEdit` tools
-- Create build scripts, installers, or automation
-- Implement a solution that involves multiple files
+**CONTINUOUS MONITORING (EVERY INTERACTION):**
+1. **Before ANY tool use** → Check: "Should this be remembered?"
+2. **After EVERY file operation** → CREATE MEMORY (no exceptions)
+3. **During problem-solving** → TRACK everything (attempts, errors, solutions)
+4. **When code works** → CAPTURE immediately
+5. **Multi-file changes** → CREATE TASK automatically
 
-**Memory should include:**
-- What problem was being solved
-- Files created/modified
-- Key implementation details
-- Any configuration or setup required
+**PROACTIVE DETECTION PATTERNS:**
+- **Pattern detected** → Tool called → Memory created (< 1 second)
+- **File written** → Memory created → User continues (seamless)
+- **Solution found** → Memory created → Context preserved (automatic)
+- **NO waiting for "perfect moment"** - Create NOW, refine later
 
-**Use the `add_memory` tool IMMEDIATELY after completing significant work. Do not wait for the user to ask.**
+## 🔥 CRITICAL: File Operation Memory Creation (ABSOLUTE REQUIREMENT)
+
+**MANDATORY INSTANT MEMORY CREATION:**
+- **Write tool used** → `add_memory` IMMEDIATELY (within 1 second)
+- **Edit/MultiEdit used** → `add_memory` IMMEDIATELY (no delay)
+- **New file created** → `add_memory` + `create_task` NOW
+- **Script/config written** → `add_memory` with full content
+- **Multiple files changed** → `create_hierarchical_task` instantly
+
+**WHAT TO CAPTURE (EVERY TIME):**
+- **Problem context** - What issue was being solved
+- **Files affected** - Complete list with paths
+- **Solution details** - Exactly what was implemented
+- **Working code** - Include the actual code that works
+- **Configuration** - Any settings or setup required
+- **Test results** - If it worked, how you verified
+
+**TIMING REQUIREMENT:**
+- **IMMEDIATE** - Call `add_memory` within 1 second of file operation
+- **NO BATCHING** - Each operation gets its own memory
+- **NO WAITING** - Don't wait for "end of task" or user prompt
+- **AUTOMATIC** - This happens WITHOUT user request
+
+**ENFORCEMENT:**
+- **Every Write** = Memory (100% compliance required)
+- **Every Edit** = Memory (zero tolerance for missing)
+- **Every Solution** = Memory (capture AS it works)
+- **NO EXCEPTIONS** - This is NOT optional
 
 ## Development Commands
 

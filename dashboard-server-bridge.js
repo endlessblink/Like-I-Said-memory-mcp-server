@@ -36,9 +36,7 @@ class DashboardBridge {
     this.port = port;
     this.app = express();
     this.server = http.createServer(this.app);
-    this.wss = new WebSocketServer({ 
-      server: this.server
-    });
+    this.wss = null; // Defer WebSocket initialization to prevent double-bind
     this.clients = new Set();
     
     // Load path settings
@@ -71,7 +69,7 @@ class DashboardBridge {
     );
     
     this.setupExpress();
-    this.setupWebSocket();
+    // setupWebSocket() will be called after server starts listening
     this.setupSafeguards();
     this.setupAutomation();
   }
@@ -376,6 +374,16 @@ class DashboardBridge {
       
       res.status(statusCode).json(errorResponse);
     });
+  }
+
+  initializeWebSocket() {
+    // Create WebSocketServer after HTTP server is listening
+    this.wss = new WebSocketServer({ 
+      server: this.server
+    });
+    
+    // Set up WebSocket event handlers
+    this.setupWebSocket();
   }
 
   setupWebSocket() {
@@ -3250,6 +3258,10 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
       // Update instance port after successful startup
       this.port = result.port;
       
+      // Initialize WebSocket server AFTER HTTP server is successfully listening
+      this.initializeWebSocket();
+      console.log(`🔌 WebSocket server initialized`);
+      
       console.log(`📁 Watching: ${path.resolve(this.memoriesDir)}`);
       console.log(`🤖 Task automation enabled with file change monitoring`);
       
@@ -3274,7 +3286,9 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
     if (this.safeguards) {
       this.safeguards.stopAutoBackup();
     }
-    this.wss.close();
+    if (this.wss) {
+      this.wss.close();
+    }
     this.server.close();
   }
 

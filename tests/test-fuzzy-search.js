@@ -4,7 +4,7 @@
  * Test script for fuzzy search functionality
  */
 
-import { FuzzyMatcher } from './lib/fuzzy-matching.js';
+import { FuzzyMatcher } from '../lib/fuzzy-matching.js';
 
 console.log('🧪 Testing Fuzzy Search Functionality\n');
 
