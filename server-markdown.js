@@ -33,6 +33,9 @@ import { QueryAnalyzer, RelevanceScorer, ContentClassifier, CircuitBreaker } fro
 import { FuzzyMatcher } from './lib/fuzzy-matching.js';
 import { WorkDetectorWrapper } from './lib/work-detector-wrapper.js';
 import { v3Tools, handleV3Tool, getTaskManager } from './lib/v3-mcp-tools.js';
+import { ReflectionEngine } from './lib/reflection-engine.js';
+import { PatternLearner } from './lib/pattern-learner.js';
+import { ProactiveConfigManager } from './lib/proactive-config.js';
 // Removed ConnectionProtection and DataIntegrity imports to prevent any exit calls
 // import { createRequire } from 'module';
 // const require = createRequire(import.meta.url);
@@ -575,33 +578,80 @@ const vectorStorage = {
   rebuildIndex: async () => {}
 };
 
-// Initialize conversation monitor for automatic memory detection
-const conversationMonitor = new ConversationMonitor(storage, vectorStorage);
+// Global variables for advanced components (initialized after startup)
+let conversationMonitor = null;
+let queryIntelligence = null;
+let behavioralAnalyzer = null;
+let memoryEnrichment = null;
+let sessionTracker = null;
+let proactiveConfig = null;
+let workDetector = null;
+let queryAnalyzer = null;
+let relevanceScorer = null;
+let contentClassifier = null;
+let circuitBreaker = null;
+let fuzzyMatcher = null;
+let periodicTasksStarted = false;
 
-// Listen for automatic memory creation events
-conversationMonitor.on('memory-created', (event) => {
-  console.error(`🤖 Auto-captured memory: ${event.memory.id} - ${event.reason}`);
-});
+// Initialize advanced features after successful server startup
+function initializeAdvancedFeatures() {
+  try {
+    console.error('🔧 Initializing advanced features...');
+    
+    // Initialize conversation monitor for automatic memory detection
+    conversationMonitor = new ConversationMonitor(storage, vectorStorage);
+    
+    // Listen for automatic memory creation events
+    conversationMonitor.on('memory-created', (event) => {
+      console.error(`🤖 Auto-captured memory: ${event.memory.id} - ${event.reason}`);
+    });
 
-// Initialize advanced memory systems
-const queryIntelligence = new QueryIntelligence();
-const behavioralAnalyzer = new BehavioralAnalyzer();
-const memoryEnrichment = new MemoryEnrichment(storage, vectorStorage);
-const sessionTracker = new SessionTracker(storage);
+    // Initialize advanced memory systems
+    queryIntelligence = new QueryIntelligence();
+    behavioralAnalyzer = new BehavioralAnalyzer();
+    memoryEnrichment = new MemoryEnrichment(storage, vectorStorage);
+    sessionTracker = new SessionTracker(storage);
 
-// Initialize Universal Work Detector (now enabled after successful testing)
-const workDetector = new WorkDetectorWrapper({ 
-  enabled: true, // Enabled after successful testing ✅
-  debugMode: false, // Disabled for production performance
-  safeMode: true 
-});
+    // Initialize proactive configuration manager
+    proactiveConfig = new ProactiveConfigManager();
+    // Apply config to behavioral analyzer
+    proactiveConfig.applyToBehavioralAnalyzer(behavioralAnalyzer);
 
-// Initialize claude-historian inspired features
-const queryAnalyzer = new QueryAnalyzer();
-const relevanceScorer = new RelevanceScorer();
-const contentClassifier = new ContentClassifier();
-const circuitBreaker = new CircuitBreaker();
-const fuzzyMatcher = new FuzzyMatcher();
+    // Initialize Universal Work Detector (now enabled after successful testing)
+    workDetector = new WorkDetectorWrapper({ 
+      enabled: true, // Enabled after successful testing ✅
+      debugMode: false, // Disabled for production performance
+      safeMode: true 
+    });
+
+    // Initialize claude-historian inspired features
+    queryAnalyzer = new QueryAnalyzer();
+    relevanceScorer = new RelevanceScorer();
+    contentClassifier = new ContentClassifier();
+    circuitBreaker = new CircuitBreaker();
+    fuzzyMatcher = new FuzzyMatcher();
+    
+    // Start periodic tasks after advanced features are ready
+    startPeriodicTasks();
+    
+    console.error('✅ Advanced features initialized successfully');
+  } catch (error) {
+    console.error('⚠️ Warning: Advanced features initialization failed:', error.message);
+    // Create minimal fallback objects to prevent crashes
+    behavioralAnalyzer = { 
+      trackFileAccess: async () => {},
+      trackSearch: async () => {},
+      trackToolUsage: async () => {},
+      trackError: async () => {},
+      getRecommendations: () => [],
+      savePatterns: () => {}
+    };
+    sessionTracker = { 
+      destroy: () => {},
+      generateSessionSummary: async () => null
+    };
+  }
+}
 
 // Initialize task storage and linker with custom directory
 let taskStorage = new TaskStorage(TASK_DIR, storage);
@@ -661,12 +711,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'add_memory',
         description: 'AUTOMATICALLY use when user shares important information, code snippets, decisions, learnings, or context that should be remembered for future sessions. Includes smart categorization and auto-linking.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             content: {
               type: 'string',
               description: 'The memory content to store',
-            },
+              "minLength": 1},
             tags: {
               type: 'array',
               items: { type: 'string' },
@@ -705,6 +756,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'get_memory',
         description: 'Retrieve a memory by ID',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             id: {
@@ -719,16 +771,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'list_memories',
         description: 'List all stored memories or memories from a specific project',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             limit: {
-              type: 'number',
+              type: 'integer',
               description: 'Maximum number of memories to return',
-            },
+              "minimum": 1},
             project: {
               type: 'string',
               description: 'Filter by project name',
-            },
+          "additionalProperties": false},
           },
         },
       },
@@ -736,6 +789,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'delete_memory',
         description: 'Delete a memory by ID',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             id: {
@@ -750,16 +804,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'search_memories',
         description: 'AUTOMATICALLY use when user asks about past work, previous decisions, looking for examples, or needs context from earlier sessions. Provides semantic and keyword-based search.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             query: {
               type: 'string',
               description: 'Search query',
-            },
+              "minLength": 1},
             project: {
               type: 'string',
               description: 'Limit search to specific project',
-            },
+          "additionalProperties": false},
           },
           required: ['query'],
         },
@@ -768,12 +823,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'test_tool',
         description: 'Simple test tool to verify MCP is working',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             message: {
               type: 'string',
               description: 'Test message',
-            },
+              "minLength": 1},
           },
           required: ['message'],
         },
@@ -782,6 +838,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'generate_dropoff',
         description: 'Generate conversation dropoff document for session handoff with context from recent memories, git status, and project info',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             session_summary: {
@@ -800,10 +857,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               default: true,
             },
             recent_memory_count: {
-              type: 'number',
+              type: 'integer',
               description: 'Number of recent memories to include',
               default: 5,
-            },
+              "minimum": 1},
             output_format: {
               type: 'string',
               description: 'Output format: markdown or json',
@@ -822,16 +879,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'create_task',
         description: 'Create a new task with intelligent memory linking. Tasks start in "todo" status. IMPORTANT: After creating a task, remember to update its status to "in_progress" when you begin working on it. Proper state management helps track workflow and productivity.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             title: {
               type: 'string',
               description: 'Task title',
-            },
+              "minLength": 1},
             description: {
               type: 'string',
               description: 'Detailed task description',
-            },
+              "minLength": 1},
             project: {
               type: 'string',
               description: 'Project identifier',
@@ -882,6 +940,7 @@ STATE MANAGEMENT GUIDELINES:
 
 IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't wait for user prompts - update states as work progresses to maintain accurate workflow visibility.`,
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -896,11 +955,11 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
             title: {
               type: 'string',
               description: 'New task title',
-            },
+              "minLength": 1},
             description: {
               type: 'string',
               description: 'New task description',
-            },
+              "minLength": 1},
             add_subtasks: {
               type: 'array',
               items: { type: 'string' },
@@ -924,6 +983,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'list_tasks',
         description: 'List tasks with filtering options. Shows task status distribution and workflow health. Use this to monitor work progress and identify tasks that need status updates.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             project: {
@@ -949,10 +1009,10 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Include subtasks in results',
             },
             limit: {
-              type: 'number',
+              type: 'integer',
               default: 20,
               description: 'Maximum tasks to return',
-            },
+              "minimum": 1},
           },
         },
       },
@@ -960,6 +1020,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_task_context',
         description: 'Get detailed task information including status, relationships, and connected memories. Use this to understand task context and determine if status updates are needed.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -971,7 +1032,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               enum: ['direct', 'deep'],
               default: 'direct',
               description: 'How many levels of connections to traverse',
-            },
+          "additionalProperties": false},
           },
           required: ['task_id'],
         },
@@ -980,6 +1041,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'delete_task',
         description: 'Delete a task and its subtasks',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -994,6 +1056,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'enhance_memory_metadata',
         description: 'Generate optimized title and summary for a memory to improve dashboard card display. Uses intelligent content analysis to create concise, meaningful titles (max 60 chars) and summaries (max 150 chars).',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             memory_id: {
@@ -1003,7 +1066,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
             regenerate: {
               type: 'boolean',
               description: 'Force regeneration even if title/summary already exist',
-            },
+          "additionalProperties": false},
           },
           required: ['memory_id'],
         },
@@ -1012,6 +1075,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_memories',
         description: 'Batch process multiple memories to add optimized titles and summaries. Useful for enhancing existing memories that lack proper metadata for dashboard display.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             project: {
@@ -1023,9 +1087,9 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Filter by category (optional)',
             },
             limit: {
-              type: 'number',
+              type: 'integer',
               description: 'Maximum number of memories to process (default: 50)',
-            },
+              "minimum": 1},
             skip_existing: {
               type: 'boolean',
               description: 'Skip memories that already have titles/summaries (default: true)',
@@ -1037,6 +1101,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'smart_status_update',
         description: 'AUTOMATICALLY use when user mentions status changes in natural language. Intelligently parses natural language to determine intended status changes with validation and automation.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1069,6 +1134,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_task_status_analytics',
         description: 'AUTOMATICALLY use when user asks about task progress, status overview, productivity metrics, or wants analytics. Provides comprehensive status insights and recommendations.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             project: {
@@ -1099,6 +1165,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'validate_task_workflow',
         description: 'Validate a proposed task status change with intelligent suggestions and workflow analysis. Use when you need to check if a status change makes sense.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1128,6 +1195,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_automation_suggestions',
         description: 'Get intelligent automation suggestions for a task based on context analysis. Use when you want to see what automated actions are possible.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1142,6 +1210,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_memories_ollama',
         description: 'Batch process memories using local AI (Ollama) for privacy-focused title/summary generation. Processes large numbers of memories efficiently without external API calls.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             project: {
@@ -1153,9 +1222,9 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Filter by category (optional)',
             },
             limit: {
-              type: 'number',
+              type: 'integer',
               description: 'Maximum number of memories to process (default: 50)',
-            },
+              "minimum": 1},
             skip_existing: {
               type: 'boolean',
               description: 'Skip memories that already have titles/summaries (default: true)',
@@ -1165,9 +1234,9 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Ollama model to use (default: llama3.1:8b)',
             },
             batch_size: {
-              type: 'number',
+              type: 'integer',
               description: 'Number of memories to process in parallel (default: 5)',
-            },
+              "minimum": 1},
           },
         },
       },
@@ -1175,6 +1244,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_tasks_ollama',
         description: 'Batch process tasks using local AI (Ollama) for privacy-focused title/description enhancement. Processes large numbers of tasks efficiently without external API calls.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             project: {
@@ -1190,9 +1260,9 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Filter by task status (optional)',
             },
             limit: {
-              type: 'number',
+              type: 'integer',
               description: 'Maximum number of tasks to process (default: 50)',
-            },
+              "minimum": 1},
             skip_existing: {
               type: 'boolean',
               description: 'Skip tasks that already have enhanced titles/descriptions (default: true)',
@@ -1202,9 +1272,9 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
               description: 'Ollama model to use (default: llama3.1:8b)',
             },
             batch_size: {
-              type: 'number',
+              type: 'integer',
               description: 'Number of tasks to process in parallel (default: 5)',
-            },
+              "minimum": 1},
           },
         },
       },
@@ -1212,19 +1282,22 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'check_ollama_status',
         description: 'Check if Ollama server is running and list available models for local AI processing.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             show_models: {
               type: 'boolean',
               description: 'Whether to list available models (default: true)',
             },
-          },
+
+          "additionalProperties": false},
         },
       },
       {
         name: 'enhance_memory_ollama',
         description: 'Enhance a single memory with local AI (Ollama) for privacy-focused title/summary generation.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             memory_id: {
@@ -1247,19 +1320,22 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'deduplicate_memories',
         description: 'Find and remove duplicate memory files, keeping the newest version of each memory ID. Use this to clean up duplicate memories caused by batch operations.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             preview_only: {
               type: 'boolean',
               description: 'Preview what would be removed without actually deleting files (default: false)',
             },
-          },
+
+          "additionalProperties": false},
         },
       },
       {
         name: 'work_detector_control',
         description: 'Control the Universal Work Detector for automatic memory creation based on work patterns.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             action: {
@@ -1275,6 +1351,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'set_memory_path',
         description: 'Change where memories are stored. Updates the path dynamically without requiring restart.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             path: {
@@ -1289,6 +1366,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'set_task_path',
         description: 'Change where tasks are stored. Updates the path dynamically without requiring restart.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {
             path: {
@@ -1303,8 +1381,133 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_current_paths',
         description: 'Get the current memory and task storage paths.',
         inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           type: 'object',
           properties: {},
+
+          "additionalProperties": false},
+      },
+      // Self-Reflection Engine Tools (v4)
+      {
+        name: 'analyze_performance',
+        description: 'Review server effectiveness metrics including tool usage patterns, memory search accuracy, task completion rates, and work detection performance. Returns structured performance insights.',
+        inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          type: 'object',
+          properties: {
+            period: {
+              type: 'string',
+              description: 'Analysis period: session, daily, weekly, monthly',
+              enum: ['session', 'daily', 'weekly', 'monthly'],
+              default: 'daily',
+            },
+            includeRecommendations: {
+              type: 'boolean',
+              description: 'Include AI-powered improvement recommendations',
+              default: true,
+            },
+            categories: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific categories to analyze: tools, memory, tasks, workDetection',
+              default: ['tools', 'memory', 'tasks', 'workDetection'],
+            },
+          },
+        },
+      },
+      {
+        name: 'suggest_improvements',
+        description: 'Get AI-powered recommendations for optimizing work detection, memory creation, and task management based on usage patterns and performance metrics.',
+        inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          type: 'object',
+          properties: {
+            focus: {
+              type: 'string',
+              description: 'Focus area for improvements',
+              enum: ['all', 'workDetection', 'memory', 'tasks', 'tools'],
+              default: 'all',
+            },
+            confidenceThreshold: {
+              type: 'number',
+              description: 'Minimum confidence for suggestions (0-1)',
+              default: 0.7,
+            },
+            maxSuggestions: {
+              type: 'number',
+              description: 'Maximum number of suggestions to return',
+              default: 10,
+            },
+          },
+        },
+      },
+      {
+        name: 'update_strategies',
+        description: 'Modify detection algorithms and thresholds based on feedback and learned patterns. Allows safe, sandboxed updates to work detection patterns with rollback capability.',
+        inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          type: 'object',
+          properties: {
+            updates: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  pattern: { type: 'string' },
+                  action: { 
+                    type: 'string',
+                    enum: ['updateThreshold', 'addIndicators', 'removeIndicators', 'reset'],
+                  },
+                  value: { type: 'any' },
+                  reason: { type: 'string' },
+                },
+              },
+              description: 'List of strategy updates to apply',
+            },
+            sandbox: {
+              type: 'boolean',
+              description: 'Test changes in sandbox mode first',
+              default: true,
+            },
+            autoRollback: {
+              type: 'boolean',
+              description: 'Automatically rollback if performance degrades',
+              default: true,
+            },
+          },
+          required: ['updates'],
+        },
+      },
+      {
+        name: 'enforce_proactive_memory',
+        description: 'Configure and enforce proactive memory/task creation settings. Control how aggressively Claude creates memories and tasks automatically.',
+        inputSchema: {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['enable', 'disable', 'configure', 'status', 'reset_metrics'],
+              description: 'Action to perform on proactive configuration',
+            },
+            aggressiveness: {
+              type: 'string',
+              enum: ['low', 'medium', 'high'],
+              description: 'How aggressively to create memories/tasks (optional)',
+            },
+            settings: {
+              type: 'object',
+              description: 'Specific settings to configure (optional)',
+              properties: {
+                auto_capture_file_operations: { type: 'boolean' },
+                auto_capture_solutions: { type: 'boolean' },
+                auto_capture_errors: { type: 'boolean' },
+                auto_create_tasks: { type: 'boolean' },
+                auto_session_summaries: { type: 'boolean' },
+              },
+            },
+          },
+          required: ['action'],
         },
       },
       // V3 Hierarchical Tools
@@ -1595,7 +1798,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (memory) {
           const datePrefix = memory.timestamp ? memory.timestamp.split('T')[0] : new Date().toISOString().split('T')[0];
           const filepath = path.join('memories', memory.project || 'default', `${datePrefix}--${memory.id}.md`);
-          await behavioralAnalyzer.trackFileAccess(filepath, 'read');
+          if (behavioralAnalyzer) await behavioralAnalyzer.trackFileAccess(filepath, 'read');
         }
         
         if (!memory) {
@@ -1857,10 +2060,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
         if (combinedResults.length === 0) {
           // Track failed search
-          const behaviorAction = await behavioralAnalyzer.trackSearch(query, [], project);
+          const behaviorAction = behavioralAnalyzer ? await behavioralAnalyzer.trackSearch(query, [], project) : null;
           
           // Use conversation monitor to check if this should be saved
-          const suggestion = await conversationMonitor.processSearchResults(query, [], project);
+          const suggestion = conversationMonitor ? await conversationMonitor.processSearchResults(query, [], project) : { suggestion: false };
           
           if (suggestion.suggestion || behaviorAction?.action === 'create_memory') {
             // Auto-create the memory if it's important enough
@@ -1905,7 +2108,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         // Track successful search
-        await behavioralAnalyzer.trackSearch(query, combinedResults, project);
+        if (behavioralAnalyzer) await behavioralAnalyzer.trackSearch(query, combinedResults, project);
         
         const resultList = combinedResults.slice(0, searchParams.limit || 20).map((memory) => {
           const preview = memory.content.length > 80 ? memory.content.substring(0, 80) + '...' : memory.content;
@@ -3269,6 +3472,144 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
 
+      case 'enforce_proactive_memory': {
+        const { action, aggressiveness, settings } = args;
+        
+        try {
+          switch (action) {
+            case 'enable':
+              proactiveConfig.updateConfig({ enabled: true });
+              if (aggressiveness) {
+                proactiveConfig.setAggressiveness(aggressiveness);
+              }
+              // Re-apply to behavioral analyzer
+              proactiveConfig.applyToBehavioralAnalyzer(behavioralAnalyzer);
+              
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `✅ Proactive memory creation ENABLED!\n\n🚀 Aggressiveness: ${proactiveConfig.getAggressiveness()}\n\n🤖 Claude will now automatically:\n• Create memories for EVERY file operation\n• Capture ALL working solutions instantly\n• Track multi-step work with tasks\n• Generate session summaries\n• Detect and save important patterns\n\n⚡ All actions happen IMMEDIATELY without waiting for user prompts.`,
+                  },
+                ],
+              };
+              
+            case 'disable':
+              proactiveConfig.updateConfig({ enabled: false });
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `⏸️ Proactive memory creation DISABLED.\n\n📊 Manual mode active. Memories and tasks will only be created when explicitly requested.`,
+                  },
+                ],
+              };
+              
+            case 'configure':
+              if (aggressiveness) {
+                proactiveConfig.setAggressiveness(aggressiveness);
+              }
+              if (settings) {
+                const triggers = {};
+                if (settings.auto_capture_file_operations !== undefined) {
+                  triggers.file_operations = { enabled: settings.auto_capture_file_operations };
+                }
+                if (settings.auto_capture_solutions !== undefined) {
+                  triggers.solutions = { enabled: settings.auto_capture_solutions };
+                }
+                if (settings.auto_capture_errors !== undefined) {
+                  triggers.errors = { enabled: settings.auto_capture_errors };
+                }
+                if (settings.auto_create_tasks !== undefined) {
+                  triggers.multi_step_work = { enabled: settings.auto_create_tasks };
+                }
+                if (settings.auto_session_summaries !== undefined) {
+                  triggers.session_summaries = { enabled: settings.auto_session_summaries };
+                }
+                
+                // Update each trigger
+                Object.entries(triggers).forEach(([key, value]) => {
+                  proactiveConfig.updateTrigger(key, value);
+                });
+              }
+              
+              // Re-apply configuration
+              proactiveConfig.applyToBehavioralAnalyzer(behavioralAnalyzer);
+              
+              const status = proactiveConfig.getStatus();
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `⚙️ Proactive configuration updated!\n\n${JSON.stringify(status, null, 2)}`,
+                  },
+                ],
+              };
+              
+            case 'status':
+              const currentStatus = proactiveConfig.getStatus();
+              let statusText = `📊 Proactive Memory Configuration Status\n\n`;
+              statusText += `🔧 Enabled: ${currentStatus.enabled ? '✅ YES' : '❌ NO'}\n`;
+              statusText += `🚀 Aggressiveness: ${currentStatus.aggressiveness.toUpperCase()}\n`;
+              statusText += `📝 Enforcement: ${currentStatus.enforcement_level}\n\n`;
+              
+              statusText += `✨ Active Triggers:\n`;
+              currentStatus.active_triggers.forEach(trigger => {
+                statusText += `• ${trigger.name}: ${trigger.enabled ? '✅' : '❌'} (priority: ${trigger.priority || 'medium'})\n`;
+              });
+              
+              statusText += `\n📈 Metrics:\n`;
+              statusText += `• Memories auto-created: ${currentStatus.metrics.memoriesAutoCreated}\n`;
+              statusText += `• Tasks auto-created: ${currentStatus.metrics.tasksAutoCreated}\n`;
+              statusText += `• Triggers detected: ${currentStatus.metrics.triggersDetected}\n`;
+              
+              if (currentStatus.metrics.lastAction) {
+                const lastTime = new Date(currentStatus.metrics.lastAction.timestamp).toLocaleString();
+                statusText += `\n🕐 Last action: ${currentStatus.metrics.lastAction.type} at ${lastTime}`;
+              }
+              
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: statusText,
+                  },
+                ],
+              };
+              
+            case 'reset_metrics':
+              proactiveConfig.resetMetrics();
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `📊 Metrics reset successfully!\n\nAll counters have been set back to zero.`,
+                  },
+                ],
+              };
+              
+            default:
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ Unknown action: ${action}. Valid actions are: enable, disable, configure, status, reset_metrics`,
+                  },
+                ],
+              };
+          }
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `❌ Error in proactive configuration: ${error.message}`,
+              },
+            ],
+          };
+        }
+      }
+
       case 'set_memory_path': {
         const { path: newPath } = args;
         
@@ -3295,9 +3636,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           // Re-initialize ALL components that depend on storage
           taskMemoryLinker.storage = storage;
           memoryTaskAutomator.storage = storage;
-          conversationMonitor.storage = storage;
-          memoryEnrichment.storage = storage;
-          sessionTracker.storage = storage;
+          if (conversationMonitor) conversationMonitor.storage = storage;
+          if (memoryEnrichment) memoryEnrichment.storage = storage;
+          if (sessionTracker) sessionTracker.storage = storage;
           
           // Ensure the storage is properly initialized
           storage.ensureDirectories();
@@ -4007,6 +4348,168 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'update_hierarchical_task':
         return await handleV3Tool(name, args);
 
+      // Self-Reflection Engine Tools (v4)
+      case 'analyze_performance':
+        const reflectionEngine = new ReflectionEngine();
+        const period = args.period || 'daily';
+        const includeRecommendations = args.includeRecommendations !== false;
+        const categories = args.categories || ['tools', 'memory', 'tasks', 'workDetection'];
+        
+        const report = reflectionEngine.generateReport(period);
+        const metrics = reflectionEngine.getMetrics();
+        
+        const analysis = {
+          period,
+          metrics: {},
+          insights: report.performanceInsights,
+          topTools: report.topTools,
+        };
+        
+        // Include requested categories
+        if (categories.includes('tools')) {
+          analysis.metrics.tools = metrics.tools;
+        }
+        if (categories.includes('memory')) {
+          analysis.metrics.memory = metrics.memory;
+        }
+        if (categories.includes('tasks')) {
+          analysis.metrics.tasks = metrics.tasks;
+        }
+        if (categories.includes('workDetection')) {
+          analysis.metrics.workDetection = metrics.workDetection;
+        }
+        
+        if (includeRecommendations) {
+          analysis.recommendations = report.recommendations;
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `📊 Performance Analysis (${period})\n\n` +
+                  `**Summary:**\n` +
+                  `- Total Operations: ${report.summary.totalOperations}\n` +
+                  `- Tools Used: ${report.summary.toolUsage}\n` +
+                  `- Memory Searches: ${report.summary.memorySearches}\n` +
+                  `- Task Completion Rate: ${report.summary.taskCompletionRate}\n` +
+                  `- Work Detection Accuracy: ${report.summary.workDetectionAccuracy}\n\n` +
+                  `**Top Tools:**\n${report.topTools.map(t => `- ${t.tool}: ${t.usage} uses, ${t.successRate} success`).join('\n')}\n\n` +
+                  `**Insights:** ${report.performanceInsights.length} insights generated\n` +
+                  (includeRecommendations ? `**Recommendations:** ${report.recommendations.length} suggestions available` : '')
+          }]
+        };
+
+      case 'suggest_improvements':
+        const patternLearner = new PatternLearner();
+        const reflectionEngineForSuggestions = new ReflectionEngine();
+        
+        const focus = args.focus || 'all';
+        const confidenceThreshold = args.confidenceThreshold || 0.7;
+        const maxSuggestions = args.maxSuggestions || 10;
+        
+        const improvements = [];
+        const learnedPatterns = patternLearner.applyLearnedPatterns({});
+        const performanceRecommendations = reflectionEngineForSuggestions.generateRecommendations();
+        
+        // Filter by focus area
+        if (focus === 'all' || focus === 'workDetection') {
+          improvements.push(...learnedPatterns.filter(p => p.confidence >= confidenceThreshold));
+        }
+        
+        if (focus === 'all' || focus === 'tools') {
+          improvements.push(...performanceRecommendations
+            .filter(r => r.category === 'tools' && r.confidence >= confidenceThreshold)
+            .map(r => ({
+              category: 'tools',
+              suggestion: r.action,
+              reason: r.reason,
+              confidence: r.confidence
+            })));
+        }
+        
+        // Limit to maxSuggestions
+        const topImprovements = improvements
+          .sort((a, b) => b.confidence - a.confidence)
+          .slice(0, maxSuggestions);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `💡 Improvement Suggestions\n\n` +
+                  `**Focus Area:** ${focus}\n` +
+                  `**Suggestions Found:** ${topImprovements.length}\n\n` +
+                  topImprovements.map((imp, i) => 
+                    `${i + 1}. **${imp.category || imp.pattern}**\n` +
+                    `   Action: ${imp.action || imp.suggestion}\n` +
+                    `   Reason: ${imp.reason}\n` +
+                    `   Confidence: ${(imp.confidence * 100).toFixed(1)}%`
+                  ).join('\n\n')
+          }]
+        };
+
+      case 'update_strategies':
+        const learner = new PatternLearner();
+        const updates = args.updates || [];
+        const sandbox = args.sandbox !== false;
+        const autoRollback = args.autoRollback !== false;
+        
+        const results = [];
+        const originalThresholds = learner.getThresholds();
+        
+        for (const update of updates) {
+          try {
+            if (sandbox) {
+              // Simulate the update without applying
+              results.push({
+                pattern: update.pattern,
+                action: update.action,
+                status: 'simulated',
+                message: `Would ${update.action} for ${update.pattern}`,
+                confidence: originalThresholds[update.pattern]?.confidence || 0.5
+              });
+            } else {
+              // Apply the update
+              if (update.action === 'updateThreshold') {
+                learner.patterns.thresholds[update.pattern].current = update.value;
+              } else if (update.action === 'reset') {
+                learner.resetLearning(update.pattern);
+              }
+              
+              results.push({
+                pattern: update.pattern,
+                action: update.action,
+                status: 'applied',
+                message: `Successfully ${update.action} for ${update.pattern}`
+              });
+            }
+          } catch (error) {
+            results.push({
+              pattern: update.pattern,
+              action: update.action,
+              status: 'failed',
+              message: error.message
+            });
+          }
+        }
+        
+        // Save if not in sandbox mode
+        if (!sandbox) {
+          learner.savePatterns();
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `🔧 Strategy Update Results\n\n` +
+                  `**Mode:** ${sandbox ? 'Sandbox (simulated)' : 'Live (applied)'}\n` +
+                  `**Auto-Rollback:** ${autoRollback ? 'Enabled' : 'Disabled'}\n\n` +
+                  `**Updates:**\n` +
+                  results.map(r => 
+                    `- ${r.pattern}: ${r.status === 'applied' ? '✅' : r.status === 'simulated' ? '🔍' : '❌'} ${r.message}`
+                  ).join('\n')
+          }]
+        };
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
@@ -4016,7 +4519,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     
     // Track tool completion
     const duration = Date.now() - toolStartTime;
-    await behavioralAnalyzer.trackToolUsage(name, args, { success: true, duration });
+    if (behavioralAnalyzer) await behavioralAnalyzer.trackToolUsage(name, args, { success: true, duration });
+    
+    // Track in reflection engine for performance analysis
+    const reflectionEngine = new ReflectionEngine();
+    reflectionEngine.trackToolUsage(name, true, duration);
     
     // Universal Work Detector completion tracking
     const completionDetection = workDetector.trackActivity(name, args, result);
@@ -4052,8 +4559,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       context: { args }
     });
     
-    await behavioralAnalyzer.trackError(error, { tool: name, args });
-    await behavioralAnalyzer.trackToolUsage(name, args, { error: error.message });
+    if (behavioralAnalyzer) await behavioralAnalyzer.trackError(error, { tool: name, args });
+    if (behavioralAnalyzer) await behavioralAnalyzer.trackToolUsage(name, args, { error: error.message });
     
     return {
       content: [
@@ -4067,47 +4574,87 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// Periodic session and behavior checks
-setInterval(async () => {
-  try {
-    // Check for session summary generation
-    const sessionSummary = await sessionTracker.generateSessionSummary();
-    if (sessionSummary) {
-      console.error(`📊 Session summary generated: ${sessionSummary.narrative}`);
+// Start periodic tasks after advanced features are initialized
+function startPeriodicTasks() {
+  if (periodicTasksStarted) return;
+  periodicTasksStarted = true;
+  
+  // Periodic session and behavior checks
+  setInterval(async () => {
+    try {
+      if (sessionTracker) {
+        // Check for session summary generation
+        const sessionSummary = await sessionTracker.generateSessionSummary();
+        if (sessionSummary) {
+          console.error(`📊 Session summary generated: ${sessionSummary.narrative}`);
+        }
+      }
+      
+      if (behavioralAnalyzer) {
+        // Get behavioral recommendations
+        const recommendations = behavioralAnalyzer.getRecommendations();
+        if (recommendations.length > 0) {
+          console.error(`💡 Behavioral insights: ${recommendations.length} recommendations available`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in periodic checks:', error);
     }
-    
-    // Get behavioral recommendations
-    const recommendations = behavioralAnalyzer.getRecommendations();
-    if (recommendations.length > 0) {
-      console.error(`💡 Behavioral insights: ${recommendations.length} recommendations available`);
-    }
-  } catch (error) {
-    console.error('Error in periodic checks:', error);
-  }
-}, 300000); // Every 5 minutes
+  }, 300000); // Every 5 minutes
+}
 
-// Start the server
+// Start the server with timeout protection
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  // NEVER show startup messages in MCP mode
-  // Startup message disabled to prevent MCP protocol corruption
+  try {
+    // Add startup timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Server startup timeout after 10 seconds')), 10000);
+    });
+
+    const startupPromise = (async () => {
+      const transport = new StdioServerTransport();
+      await server.connect(transport);
+      // NEVER show startup messages in MCP mode
+      // Startup message disabled to prevent MCP protocol corruption
+    })();
+
+    await Promise.race([startupPromise, timeoutPromise]);
+    
+    // Initialize complex components after successful startup
+    setTimeout(initializeAdvancedFeatures, 1000);
+    
+  } catch (error) {
+    console.error('❌ Server startup failed:', error.message);
+    process.exit(1);
+  }
 }
 
 main().catch(error => {
-  if (!isMCPMode) console.error('MCP Server error:', error);
-  // Never exit in MCP mode - would break connection
+  console.error('❌ Main function error:', error.message);
+  process.exit(1);
+});
+
+// Error handlers for stability
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught exception:', error.message);
+  if (!isMCPMode) console.error(error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 // Cleanup on exit
 process.on('SIGINT', () => {
-  sessionTracker.destroy();
-  behavioralAnalyzer.savePatterns();
+  if (sessionTracker) sessionTracker.destroy();
+  if (behavioralAnalyzer) behavioralAnalyzer.savePatterns();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  sessionTracker.destroy();
-  behavioralAnalyzer.savePatterns();
+  if (sessionTracker) sessionTracker.destroy();
+  if (behavioralAnalyzer) behavioralAnalyzer.savePatterns();
   process.exit(0);
 });

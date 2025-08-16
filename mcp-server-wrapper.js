@@ -12,7 +12,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Start the actual server (server-markdown.js is in the same root directory)
+// Start the fully fixed server with all 31 tools
 const serverPath = join(__dirname, 'server-markdown.js');
 const child = spawn('node', [serverPath], {
   stdio: 'inherit',
