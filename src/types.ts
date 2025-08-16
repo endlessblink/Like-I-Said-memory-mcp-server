@@ -48,6 +48,68 @@ export type TabType = "dashboard" | "memories" | "projects" | "settings"
 export type MemoryCategory = 'personal' | 'work' | 'code' | 'research' | 'conversations' | 'preferences'
 export type ContentType = 'text' | 'code' | 'structured'
 
+// === REFLECTION TYPES ===
+export interface PerformanceMetrics {
+  tools: {
+    usage: Record<string, number>
+    successRates: Record<string, number>
+    avgExecutionTime: Record<string, number>
+    errorCounts: Record<string, number>
+  }
+  memory: {
+    searchAccuracy: number
+    searchCount: number
+    hitRate: number
+  }
+  system: {
+    uptime: number
+    memoryUsage: number
+    responseTime: number
+  }
+  lastUpdated: string
+}
+
+export interface LearnedPattern {
+  id: string
+  type: 'problem_solving' | 'work_detection' | 'memory_search' | 'task_creation'
+  description: string
+  indicators: string[]
+  confidence: number
+  successRate: number
+  timesTriggered: number
+  created: string
+  lastTriggered: string
+}
+
+export interface PatternThreshold {
+  current: number
+  baseline: number
+  min: number
+  max: number
+  lastAdjusted: string
+  adjustmentReason: string
+}
+
+export interface ReflectionData {
+  patterns: LearnedPattern[]
+  thresholds: Record<string, PatternThreshold>
+  confidence: {
+    overall: number
+    byCategory: Record<string, number>
+  }
+  lastLearning: string
+}
+
+export interface PerformanceReport {
+  period: 'daily' | 'weekly' | 'monthly'
+  startDate: string
+  endDate: string
+  metrics: PerformanceMetrics
+  insights: string[]
+  recommendations: string[]
+  improvementAreas: string[]
+}
+
 // === ADVANCED SEARCH TYPES ===
 export interface AdvancedFilters {
   text?: string

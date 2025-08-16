@@ -63,6 +63,9 @@ const SearchPresets = lazy(() => import('@/components/SearchPresets').then(m => 
 const OnboardingTutorial = lazy(() => import('@/components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })))
 const TutorialLauncher = lazy(() => import('@/components/OnboardingTutorial').then(m => ({ default: m.TutorialLauncher })))
 const PathConfiguration = lazy(() => import('@/components/PathConfiguration').then(m => ({ default: m.PathConfiguration })))
+const PerformanceAnalytics = lazy(() => import('@/components/PerformanceAnalytics').then(m => ({ default: m.PerformanceAnalytics })))
+const PatternLearning = lazy(() => import('@/components/PatternLearning').then(m => ({ default: m.PatternLearning })))
+const SelfImprovement = lazy(() => import('@/components/SelfImprovement').then(m => ({ default: m.SelfImprovement })))
 import { 
   PageLoadingSpinner, 
   RefreshSpinner, 
@@ -239,7 +242,7 @@ function AppContent() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isEditLoading, setIsEditLoading] = useState(false)
-  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "projects" | "relationships" | "ai" | "settings">("memories")
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "memories" | "tasks" | "projects" | "relationships" | "ai" | "settings" | "analytics" | "patterns" | "improvement">("memories")
   const [aiMode, setAiMode] = useState<'memories' | 'tasks'>('memories')
   const [useAdvancedEditor, setUseAdvancedEditor] = useState(false)
   const [useAdvancedEditorCreate, setUseAdvancedEditorCreate] = useState(false)
