@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "like-i-said-v2": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "node",
+        "D:/APPSNospaces/Like-I-said-mcp-server-v2/server.js"
+      ],
+      "cwd": "D:/APPSNospaces/Like-I-said-mcp-server-v2",
+      "env": {
+        "NODE_PATH": "C:/Program Files/nodejs"
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # Like I Said MCP Server Manager
 param([ValidateSet("start", "stop", "restart", "status", "install-startup", "remove-startup")][string]$Action = "start")
 
-$ServerPath = "PATH_TO_YOUR_PROJECT"
+$ServerPath = "D:\MY PROJECTS\AI\LLM\AI Code Gen\my-builds\My MCP\Like-I-said-mcp-server-Share"
 $ServerScript = "$ServerPath\server.js"
 $StartupKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 $StartupName = "LikeISaidMCP"

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(node:*)",
+      "Bash(npm start)",
+      "Bash(npm install:*)",
+      "Bash(npm run migrate:preview:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(timeout 5s npm run start:dashboard)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(npm run debug:cursor:*)",
+      "Bash(npm run configure:auto:*)",
+      "Bash(mv:*)",
+      "Bash(timeout:*)",
+      "Bash(echo)",
+      "Bash(cmd.exe /c \"where node\")",
+      "Bash(cmd.exe:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(if [ -f \"server.js\" ])",
+      "Bash(then echo \"[✓] Source files found\")",
+      "Bash(else echo \"[✗] Source files missing\")",
+      "Bash(fi)"
+    ],
+    "deny": []
+  }
+}

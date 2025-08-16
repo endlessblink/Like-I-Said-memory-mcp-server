@@ -1,0 +1,27 @@
+[
+  {
+    "id": "1750022106524",
+    "content": "Successfully fixed Like-I-Said MCP v2 tools not appearing in Cursor on Windows. Key solution was using cmd.exe wrapper with proper Windows paths and copying the working server.js structure from the original like-i-said-memory version.",
+    "tags": [
+      "cursor",
+      "mcp",
+      "windows",
+      "troubleshooting",
+      "like-i-said-v2"
+    ],
+    "timestamp": "2025-06-15T21:15:06.524Z"
+  },
+  {
+    "id": "1750022137584",
+    "content": "Like-I-Said MCP v2 Windows Fix Details:\n\n1. PROBLEM: Tools not appearing in Cursor despite server working\n2. ROOT CAUSE: Windows process spawning issues + wrong server.js structure\n3. SOLUTION STEPS:\n   - Move project to path without spaces: D:\\APPSNospaces\\Like-I-said-mcp-server-v2\n   - Use cmd.exe wrapper in config: command: cmd, args: [\"/c\", \"node\", \"path/server.js\"]\n   - Copy working server.js from original like-i-said-memory (simpler structure without InitializeRequestSchema)\n   - Install dependencies with npm install\n4. FINAL CONFIG: Use cmd /c wrapper with absolute paths and NODE_PATH env variable\n5. VERIFICATION: Server shows 6 tools (add_memory, get_memory, list_memories, delete_memory, search_memories, test_tool)",
+    "tags": [
+      "cursor",
+      "mcp",
+      "windows",
+      "configuration",
+      "troubleshooting",
+      "detailed-solution"
+    ],
+    "timestamp": "2025-06-15T21:15:37.584Z"
+  }
+]
