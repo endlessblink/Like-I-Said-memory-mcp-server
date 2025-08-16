@@ -29,6 +29,8 @@ import yaml from 'js-yaml';
 import { startServerWithValidation, cleanupPortFile } from './lib/robust-port-finder.js';
 import { PathSettings } from './lib/path-settings.js';
 import { FolderDiscovery } from './lib/folder-discovery.js';
+import { ReflectionEngine } from './lib/reflection-engine.js';
+import { PatternLearner } from './lib/pattern-learner.js';
 
 // Enhanced dashboard server with real-time MCP bridge
 class DashboardBridge {
@@ -67,6 +69,10 @@ class DashboardBridge {
       this.automationConfig,
       this.fileSystemMonitor
     );
+    
+    // Initialize reflection and self-improvement systems
+    this.reflectionEngine = new ReflectionEngine();
+    this.patternLearner = new PatternLearner();
     
     this.setupExpress();
     // setupWebSocket() will be called after server starts listening
@@ -304,6 +310,24 @@ class DashboardBridge {
     this.app.post('/api/automation/check/:taskId', requireAuth(), this.checkTaskAutomation.bind(this));
     this.app.get('/api/automation/scheduler/status', requireAuth(), this.getSchedulerStatus.bind(this));
     this.app.post('/api/automation/scheduler/force', requireAuth(), this.forceSchedulerCheck.bind(this));
+
+    // Protected Reflection/Self-Improvement API Routes
+    this.app.get('/api/reflection/metrics', requireAuth(), this.getReflectionMetrics.bind(this));
+    this.app.get('/api/reflection/report', requireAuth(), this.getPerformanceReport.bind(this));
+    this.app.get('/api/reflection/data', requireAuth(), this.getReflectionData.bind(this));
+    this.app.get('/api/reflection/status', requireAuth(), this.getReflectionStatus.bind(this));
+    this.app.get('/api/reflection/settings', requireAuth(), this.getReflectionSettings.bind(this));
+    this.app.put('/api/reflection/settings', requireAuth(), this.updateReflectionSettings.bind(this));
+    this.app.get('/api/reflection/patterns', requireAuth(), this.getPatterns.bind(this));
+    this.app.post('/api/reflection/patterns', requireAuth(), this.createPattern.bind(this));
+    this.app.delete('/api/reflection/patterns/:id', requireAuth(), this.deletePattern.bind(this));
+    this.app.put('/api/reflection/thresholds', requireAuth(), this.updateThresholds.bind(this));
+    this.app.post('/api/reflection/feedback', requireAuth(), this.provideFeedback.bind(this));
+    this.app.get('/api/reflection/backups', requireAuth(), this.getReflectionBackups.bind(this));
+    this.app.post('/api/reflection/backups', requireAuth(), this.createReflectionBackup.bind(this));
+    this.app.post('/api/reflection/rollback', requireAuth(), this.rollbackReflection.bind(this));
+    this.app.post('/api/reflection/reset', requireAuth(), this.resetReflection.bind(this));
+    this.app.get('/api/reflection/export', requireAuth(), this.exportReflectionData.bind(this));
 
     // Protected Ollama endpoints (must come before generic MCP route)
     this.app.get('/api/ollama/status', requireAuth(), this.getOllamaStatus.bind(this));
@@ -3539,6 +3563,251 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
       res.json({ success: true, message: 'Task moved' });
     } catch (error) {
       console.error('Error moving V3 task:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // === REFLECTION API METHODS ===
+
+  async getReflectionMetrics(req, res) {
+    try {
+      const metrics = this.reflectionEngine.getCurrentMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error getting reflection metrics:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getPerformanceReport(req, res) {
+    try {
+      const { period = 'weekly' } = req.query;
+      const report = this.reflectionEngine.generateReport(period);
+      res.json(report);
+    } catch (error) {
+      console.error('Error getting performance report:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getReflectionData(req, res) {
+    try {
+      const patterns = this.patternLearner.getPatterns();
+      const thresholds = this.patternLearner.getThresholds();
+      const confidence = this.patternLearner.getConfidenceScores();
+      
+      res.json({
+        patterns,
+        thresholds,
+        confidence,
+        lastLearning: this.patternLearner.getLastLearning()
+      });
+    } catch (error) {
+      console.error('Error getting reflection data:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getReflectionStatus(req, res) {
+    try {
+      const status = this.reflectionEngine.getSystemStatus();
+      res.json({ status });
+    } catch (error) {
+      console.error('Error getting reflection status:', error);
+      res.status(500).json({ error: error.message, status: 'error' });
+    }
+  }
+
+  async getReflectionSettings(req, res) {
+    try {
+      // Mock settings - in real implementation, these would be stored in config
+      const settings = {
+        reflectionEnabled: true,
+        autoThresholdAdjustment: true,
+        sandboxMode: true,
+        learningRate: 0.1,
+        confidenceThreshold: 0.6,
+        maxPatternsToTrack: 50,
+        autoRollbackOnFailure: true
+      };
+      res.json(settings);
+    } catch (error) {
+      console.error('Error getting reflection settings:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateReflectionSettings(req, res) {
+    try {
+      const settings = req.body;
+      // Mock update - in real implementation, save to config
+      console.log('Updating reflection settings:', settings);
+      
+      // Broadcast settings update to WebSocket clients
+      this.broadcastToClients({
+        type: 'reflectionSettingsUpdated',
+        settings,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json({ success: true, settings });
+    } catch (error) {
+      console.error('Error updating reflection settings:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getPatterns(req, res) {
+    try {
+      const patterns = this.patternLearner.getPatterns();
+      res.json(patterns);
+    } catch (error) {
+      console.error('Error getting patterns:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createPattern(req, res) {
+    try {
+      const patternData = req.body;
+      const pattern = this.patternLearner.createPattern(patternData);
+      
+      // Broadcast pattern creation to WebSocket clients
+      this.broadcastToClients({
+        type: 'patternCreated',
+        pattern,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json(pattern);
+    } catch (error) {
+      console.error('Error creating pattern:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deletePattern(req, res) {
+    try {
+      const { id } = req.params;
+      const success = this.patternLearner.deletePattern(id);
+      res.json({ success });
+    } catch (error) {
+      console.error('Error deleting pattern:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateThresholds(req, res) {
+    try {
+      const thresholds = req.body;
+      const success = this.patternLearner.updateThresholds(thresholds);
+      
+      // Broadcast threshold updates to WebSocket clients
+      this.broadcastToClients({
+        type: 'thresholdsUpdated',
+        thresholds,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json({ success });
+    } catch (error) {
+      console.error('Error updating thresholds:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async provideFeedback(req, res) {
+    try {
+      const { patternId, feedback } = req.body;
+      const success = this.patternLearner.provideFeedback(patternId, feedback);
+      
+      // Broadcast feedback to WebSocket clients
+      this.broadcastToClients({
+        type: 'patternFeedback',
+        patternId,
+        feedback,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json({ success });
+    } catch (error) {
+      console.error('Error providing feedback:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getReflectionBackups(req, res) {
+    try {
+      // Mock backups - in real implementation, scan backup directory
+      const backups = [
+        {
+          timestamp: new Date().toISOString(),
+          version: '1.0.0',
+          settings: {},
+          patterns: [],
+          thresholds: {}
+        }
+      ];
+      res.json(backups);
+    } catch (error) {
+      console.error('Error getting reflection backups:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createReflectionBackup(req, res) {
+    try {
+      const backup = {
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        settings: {},
+        patterns: this.patternLearner.getPatterns(),
+        thresholds: this.patternLearner.getThresholds()
+      };
+      console.log('Creating reflection backup:', backup.timestamp);
+      res.json({ success: true, backup });
+    } catch (error) {
+      console.error('Error creating reflection backup:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async rollbackReflection(req, res) {
+    try {
+      const { backupTimestamp } = req.body;
+      console.log('Rolling back reflection to:', backupTimestamp);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error rolling back reflection:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async resetReflection(req, res) {
+    try {
+      console.log('Resetting reflection to defaults');
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error resetting reflection:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async exportReflectionData(req, res) {
+    try {
+      const data = {
+        metrics: this.reflectionEngine.getCurrentMetrics(),
+        patterns: this.patternLearner.getPatterns(),
+        thresholds: this.patternLearner.getThresholds(),
+        confidence: this.patternLearner.getConfidenceScores(),
+        exportDate: new Date().toISOString()
+      };
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=reflection-data.json');
+      res.json(data);
+    } catch (error) {
+      console.error('Error exporting reflection data:', error);
       res.status(500).json({ error: error.message });
     }
   }

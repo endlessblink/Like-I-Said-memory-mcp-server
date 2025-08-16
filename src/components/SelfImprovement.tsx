@@ -15,17 +15,8 @@ import {
   DialogFooter,
   DialogDescription
 } from '@/components/ui/dialog'
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+// AlertDialog components not yet implemented
+// Will be added when needed
 import { 
   Settings2, 
   RotateCcw, 
@@ -421,29 +412,29 @@ export function SelfImprovement({ className }: SelfImprovementProps) {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4 border-t">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button variant="outline">
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reset to Defaults
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Reset to Default Settings?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset to Default Settings?</DialogTitle>
+                      <DialogDescription>
                         This will reset all self-improvement settings to their default values.
                         This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleResetToDefaults}>
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => {}}>Cancel</Button>
+                      <Button onClick={handleResetToDefaults}>
                         Reset Settings
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
 
                 <Button onClick={handleSaveSettings} disabled={isSaving}>
                   {isSaving ? (

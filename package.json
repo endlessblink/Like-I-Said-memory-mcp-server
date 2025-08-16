@@ -1,6 +1,6 @@
 {
   "name": "@endlessblink/like-i-said-v2",
-  "version": "3.0.0-alpha.2",
+  "version": "3.0.0",
   "description": "AI-Powered Task Management & Memory for Claude - Intelligent fuzzy search, automatic work detection, and smart task tracking with 33+ tools. Features typo-tolerant search, universal work pattern recognition, and cross-session continuity.",
   "main": "server.js",
   "type": "module",

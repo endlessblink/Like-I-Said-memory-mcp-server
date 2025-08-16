@@ -74,7 +74,7 @@ import {
   MemoryTableSkeleton,
   EmptyState 
 } from '@/components/LoadingStates'
-import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings, Download, FolderOpen } from 'lucide-react'
+import { BarChart3, Brain, ListTodo, Link, Bot, Menu, X, Settings, Download, FolderOpen, Activity, Zap, Settings2 } from 'lucide-react'
 import { Memory, MemoryCategory, ViewMode, AdvancedFilters, SortOptions } from '@/types'
 import { searchMemories, sortMemories } from '@/utils/helpers'
 
@@ -906,6 +906,9 @@ function AppContent() {
     'Ctrl+3': () => setCurrentTab('relationships'),
     'Ctrl+4': () => setCurrentTab('ai'),
     'Ctrl+5': () => setCurrentTab('dashboard'),
+    'Ctrl+6': () => setCurrentTab('analytics'),
+    'Ctrl+7': () => setCurrentTab('patterns'),
+    'Ctrl+8': () => setCurrentTab('improvement'),
     'Ctrl+Shift+C': () => setViewMode('cards'),
     'Ctrl+Shift+T': () => setViewMode('table'),
     'Ctrl+Shift+R': () => setViewMode('tree'),
@@ -1482,6 +1485,9 @@ Respond with JSON format:
                   { id: "projects", label: "Projects", icon: FolderOpen },
                   { id: "relationships", label: "Relationships", shortLabel: "Relations", icon: Link },
                   { id: "ai", label: "AI Enhancement", shortLabel: "AI", icon: Bot },
+                  { id: "analytics", label: "Performance Analytics", shortLabel: "Analytics", icon: Activity },
+                  { id: "patterns", label: "Pattern Learning", shortLabel: "Patterns", icon: Zap },
+                  { id: "improvement", label: "Self-Improvement", shortLabel: "Improve", icon: Settings2 },
                   { id: "settings", label: "Settings", icon: Settings }
                 ].map((tab) => {
                   const IconComponent = tab.icon;
@@ -1744,6 +1750,9 @@ Respond with JSON format:
               <option value="tasks">Tasks</option>
               <option value="relationships">Relationships</option>
               <option value="ai">AI Enhancement</option>
+              <option value="analytics">Performance Analytics</option>
+              <option value="patterns">Pattern Learning</option>
+              <option value="improvement">Self-Improvement</option>
               <option value="settings">Settings</option>
             </select>
             
@@ -1931,6 +1940,9 @@ Respond with JSON format:
                 {currentTab === "v3" && "V3 Hierarchy"}
                 {currentTab === "relationships" && "Relationships"}
                 {currentTab === "ai" && "AI Enhancement"}
+                {currentTab === "analytics" && "Performance Analytics"}
+                {currentTab === "patterns" && "Pattern Learning"}
+                {currentTab === "improvement" && "Self-Improvement"}
                 {currentTab === "settings" && "Settings"}
               </h2>
               {currentTab === "memories" && (
@@ -2067,6 +2079,24 @@ Respond with JSON format:
                   </Suspense>
                 )}
               </div>
+            )}
+
+            {currentTab === "analytics" && (
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <PerformanceAnalytics />
+              </Suspense>
+            )}
+
+            {currentTab === "patterns" && (
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <PatternLearning />
+              </Suspense>
+            )}
+
+            {currentTab === "improvement" && (
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <SelfImprovement />
+              </Suspense>
             )}
 
             {currentTab === "settings" && (
