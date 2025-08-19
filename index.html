@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Like-I-Said MCP Server v2 - Dashboard</title>
+    <script>
+      // Apply critical theme variables immediately to prevent flash of unstyled content
+      (function() {
+        const root = document.documentElement;
+        // Set critical CSS variables for dark theme (default)
+        root.style.setProperty('--background', '222 23% 4%');
+        root.style.setProperty('--foreground', '210 40% 98%');
+        root.style.setProperty('--card', '222 23% 7%');
+        root.style.setProperty('--card-foreground', '210 40% 98%');
+        root.style.setProperty('--muted', '220 20% 12%');
+        root.style.setProperty('--muted-foreground', '220 15% 75%');
+        root.style.setProperty('--border', '220 20% 18%');
+        root.style.setProperty('--input', '220 20% 14%');
+        root.style.setProperty('--ring', '262 73% 60%');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Alpine.js initialization -->
+    <script>
+      // Global Alpine.js configuration
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.Alpine) {
+          // Set Alpine.js prefix to avoid conflicts
+          Alpine.prefix('x-');
+          
+          // Global Alpine.js store for FAB state
+          Alpine.store('fab', {
+            currentTab: 'memories',
+            setCurrentTab(tab) {
+              this.currentTab = tab;
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

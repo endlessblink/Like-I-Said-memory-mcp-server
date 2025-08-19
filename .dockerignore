@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+memories/
+data-backups/
+.claude/
+backup/
+*.log
+.DS_Store
+.vscode
+.idea
+claude_desktop_config.json
+mcp-config.json
+ecosystem.config.json

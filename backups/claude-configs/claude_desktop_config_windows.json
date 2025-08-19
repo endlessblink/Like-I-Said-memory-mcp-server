@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "like-i-said-mcp": {
+      "command": "node",
+      "args": [
+        "D:\\APPSNospaces\\like-i-said-mcp\\mcp-server-wrapper.js"
+      ],
+      "env": {
+        "MEMORY_DIR": "D:\\APPSNospaces\\like-i-said-mcp\\memories",
+        "TASK_DIR": "D:\\APPSNospaces\\like-i-said-mcp\\tasks",
+        "MCP_QUIET": "true"
+      }
+    }
+  }
+}

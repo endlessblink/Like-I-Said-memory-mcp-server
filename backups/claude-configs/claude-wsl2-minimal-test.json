@@ -1,0 +1,80 @@
+{
+  "numStartups": 13,
+  "installMethod": "unknown",
+  "autoUpdates": true,
+  "tipsHistory": {
+    "new-user-warmup": 7,
+    "memory-command": 1,
+    "theme-command": 1,
+    "status-line": 1,
+    "enter-to-steer-in-relatime": 1,
+    "todo-list": 1,
+    "# for memory": 13,
+    "install-github-app": 13,
+    "drag-and-drop-images": 3,
+    "double-esc": 3,
+    "continue": 3,
+    "shift-tab": 3,
+    "custom-agents": 6,
+    "permissions": 11,
+    "custom-commands": 13
+  },
+  "promptQueueUseCount": 8,
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "type": "stdio",
+      "command": "/home/endlessblink/.nvm/versions/node/v22.17.1/bin/node",
+      "args": [
+        "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/server-markdown.js"
+      ],
+      "env": {
+        "MEMORY_DIR": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/memories",
+        "TASK_DIR": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/tasks",
+        "MCP_QUIET": "true",
+        "MCP_MODE": "true",
+        "NODE_ENV": "production"
+      }
+    }
+  },
+  "userID": "90faceaceffbf8a676f5ac31ce42e72ef07a3f438a5f52898a193c9c8371c693",
+  "fallbackAvailableWarningThreshold": 0.5,
+  "projects": {
+    "/mnt/d/MY PROJECTS/AI/LLM/AI Code Gen/my-builds/Web Dev/bina-bekitzur-main": {
+      "allowedTools": [],
+      "history": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 3,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "lastTotalWebSearchRequests": 0
+    }
+  },
+  "cachedChangelog": "# Changelog\n\n## 1.0.82",
+  "changelogLastFetched": 1755356472122,
+  "firstStartTime": "2025-08-16T15:00:54.352Z",
+  "oauthAccount": {
+    "accountUuid": "57b54c1b-b0a6-4b97-8b03-bb58d86dbaec",
+    "emailAddress": "endlessblink@gmail.com",
+    "organizationUuid": "409a2585-3127-4bc4-8b6c-cf1020cfcc8b",
+    "organizationRole": "admin",
+    "workspaceRole": null,
+    "organizationName": "Noam Naumovsky"
+  },
+  "claudeCodeFirstTokenDate": "2025-06-14T14:49:56.718587Z",
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "1.0.83",
+  "lastReleaseNotesSeen": "1.0.83",
+  "subscriptionNoticeCount": 0,
+  "hasAvailableSubscription": false,
+  "s1mAccessCache": {
+    "409a2585-3127-4bc4-8b6c-cf1020cfcc8b": {
+      "hasAccess": false,
+      "timestamp": 1755367593494
+    }
+  },
+  "isQualifiedForDataSharing": false
+}

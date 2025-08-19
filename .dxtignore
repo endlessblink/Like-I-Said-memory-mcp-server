@@ -1,0 +1,89 @@
+# Node.js
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build and distribution
+dist/
+build/
+*.dxt
+dist-dxt/
+dist-dxt-production/
+
+# Test and development
+__tests__/
+test/
+tests/
+scripts/testing/
+scripts/maintenance/debug-*
+*.test.js
+*.spec.js
+coverage/
+
+# Data and backups
+data-backups/
+memories/
+tasks/
+test-validation-unpacked/
+
+# Development tools
+.storybook/
+.claude/
+.vscode/
+.idea/
+
+# Documentation (keep essentials only)
+docs/
+*.md
+!README.md
+!DXT-INSTALLATION-README.md
+
+# Build scripts
+build-dxt-*.js
+build-dxt-*.cjs
+optimize-dxt-*.js
+test-dxt-*.sh
+validate-dxt.js
+
+# Docker and deployment
+docker-compose*.yml
+Dockerfile*
+*.dockerfile
+
+# Assets (keep only necessary ones)
+assets/
+public/
+
+# Config files
+.env*
+.npmrc
+.yarnrc
+postcss.config.js
+tailwind.config.js
+vite.config.ts
+tsconfig*.json
+eslint.config.js
+jest.config.cjs
+
+# Scripts
+*.sh
+*.bat
+*.ps1
+!install-claude-desktop-docker.sh
+
+# GitHub workflows
+.github/
+
+# Temporary files
+*.tmp
+*.temp
+test-*
+temp-*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

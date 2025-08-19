@@ -1,0 +1,32 @@
+/* Theme Reset CSS - Applied before Tailwind */
+/* This ensures proper theme application */
+
+/* Reset any conflicting styles */
+* {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* Ensure root variables are properly scoped */
+:root {
+  /* Color mode aware */
+  color-scheme: dark;
+}
+
+/* Force theme colors on core elements */
+html {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+body {
+  background-color: inherit;
+  color: inherit;
+  min-height: 100vh;
+}
+
+/* Ensure proper inheritance */
+#root {
+  min-height: 100vh;
+  background-color: transparent;
+  color: inherit;
+}

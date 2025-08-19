@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "command": "C:\\pinokio\\bin\\miniconda\\node.exe",
+      "args": [
+        "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\mcp-server-wrapper.js"
+      ],
+      "env": {
+        "MEMORY_DIR": "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\memories",
+        "TASK_DIR": "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\tasks",
+        "MCP_QUIET": "true"
+      }
+    },
+    "ai-liftoff-site": {
+      "command": "node",
+      "args": [
+        "D:/APPSNospaces/Site-Control-MCP/src/server.js"
+      ]
+    }
+  }
+}

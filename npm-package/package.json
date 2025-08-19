@@ -1,0 +1,42 @@
+{
+  "name": "like-i-said-memory-mcp-v2",
+  "version": "1.0.0",
+  "description": "Like-I-Said Memory MCP Server for Claude Code - A persistent memory and task management system",
+  "main": "server-markdown.js",
+  "bin": {
+    "like-i-said-memory-mcp-v2": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node server-markdown.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "claude-code",
+    "memory",
+    "task-management",
+    "ai",
+    "assistant"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "server-markdown.js",
+    "mcp-server-wrapper.js",
+    "README.md",
+    "CLAUDE_CODE_INSTALLATION.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/like-i-said-mcp-server-v2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/like-i-said-mcp-server-v2/issues"
+  },
+  "homepage": "https://github.com/yourusername/like-i-said-mcp-server-v2#readme"
+}

@@ -1,0 +1,18 @@
+=========================================
+Claude Configuration for Windows
+=========================================
+
+For Claude Desktop, add to your config:
+
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "command": "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\start-mcp-windows.bat"
+    }
+  }
+}
+
+For Claude Code CLI:
+claude mcp add like-i-said-memory-v2 -- "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\start-mcp-windows.bat"
+
+Note: Replace the path with your actual installation directory.

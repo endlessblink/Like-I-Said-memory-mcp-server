@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "like-i-said-memory-v2": {
+      "type": "stdio",
+      "command": "/mnt/c/Program Files/nodejs/node.exe",
+      "args": [
+        "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/server-simple.js"
+      ],
+      "env": {
+        "MEMORY_DIR": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/memories",
+        "TASK_DIR": "/mnt/d/APPSNospaces/like-i-said-mcp-server-v2/tasks",
+        "MCP_QUIET": "true"
+      }
+    },
+    "puppeteer": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "puppeteer-mcp-server"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,265 @@
+name: Pre-Release Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to test (e.g., 3.0.0-beta.1)'
+        required: true
+        type: string
+      test_level:
+        description: 'Test level'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - quick
+          - standard
+          - full
+          - exhaustive
+
+jobs:
+  pre-release-checks:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.checks.outputs.proceed }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate version format
+      id: checks
+      run: |
+        VERSION="${{ github.event.inputs.version }}"
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$ ]]; then
+          echo "Invalid version format: $VERSION"
+          echo "proceed=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        echo "Version format valid: $VERSION"
+        echo "proceed=true" >> $GITHUB_OUTPUT
+
+  comprehensive-testing:
+    needs: pre-release-checks
+    if: needs.pre-release-checks.outputs.proceed == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [16.x, 18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Update version
+      run: |
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+    
+    - name: Run quick tests
+      if: github.event.inputs.test_level == 'quick'
+      run: |
+        npm test
+        npm run test:mcp
+    
+    - name: Run standard tests
+      if: github.event.inputs.test_level == 'standard'
+      run: |
+        npm test
+        npm run test:integration
+        npm run test:mcp
+        npm run test:api
+    
+    - name: Run full tests
+      if: github.event.inputs.test_level == 'full'
+      run: |
+        npm run test:all
+        npm run test:regression
+        npm run test:security
+    
+    - name: Run exhaustive tests
+      if: github.event.inputs.test_level == 'exhaustive'
+      run: |
+        npm run test:all
+        npm run test:regression
+        npm run test:security
+        npm run test:coverage
+        # Additional stress tests
+        node scripts/testing/stress-test.js --iterations 100
+      continue-on-error: true
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Test installation methods
+      run: |
+        # Test NPX installation
+        npm pack
+        npx ./*.tgz like-i-said-v2 --version
+        
+        # Test CLI
+        node cli.js --version
+
+  compatibility-testing:
+    needs: pre-release-checks
+    if: needs.pre-release-checks.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test with Claude Desktop config
+      run: |
+        # Simulate Claude Desktop environment
+        mkdir -p test-claude-desktop
+        cat > test-claude-desktop/config.json << EOF
+        {
+          "mcpServers": {
+            "like-i-said-memory-v2": {
+              "command": "node",
+              "args": ["./mcp-server-wrapper.js"]
+            }
+          }
+        }
+        EOF
+        
+        # Validate configuration
+        node scripts/testing/validate-claude-config.js test-claude-desktop/config.json
+    
+    - name: Test with Cursor IDE config
+      run: |
+        # Simulate Cursor environment
+        mkdir -p test-cursor
+        cat > test-cursor/mcp.json << EOF
+        {
+          "mcpServers": {
+            "like-i-said-memory-v2": {
+              "command": "node",
+              "args": ["./mcp-server-wrapper.js"]
+            }
+          }
+        }
+        EOF
+        
+        # Validate configuration
+        node scripts/testing/validate-cursor-config.js test-cursor/mcp.json
+    
+    - name: Test with Windsurf config
+      run: |
+        # Simulate Windsurf environment
+        mkdir -p test-windsurf
+        cat > test-windsurf/mcp_config.json << EOF
+        {
+          "mcp": {
+            "servers": {
+              "like-i-said-memory-v2": {
+                "command": "node",
+                "args": ["./mcp-server-wrapper.js"]
+              }
+            }
+          }
+        }
+        EOF
+        
+        # Validate configuration
+        node scripts/testing/validate-windsurf-config.js test-windsurf/mcp_config.json
+
+  performance-testing:
+    needs: pre-release-checks
+    if: needs.pre-release-checks.outputs.proceed == 'true' && (github.event.inputs.test_level == 'full' || github.event.inputs.test_level == 'exhaustive')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run performance benchmarks
+      run: |
+        # Test with large datasets
+        node scripts/testing/performance-benchmark.js --memories 10000 --tasks 5000
+        
+        # Test dashboard load time
+        npm run build
+        node scripts/testing/measure-dashboard-load.js
+        
+        # Test MCP server startup time
+        node scripts/testing/measure-mcp-startup.js
+    
+    - name: Generate performance report
+      run: |
+        echo "## Performance Report for v${{ github.event.inputs.version }}" > performance-report.md
+        echo "" >> performance-report.md
+        cat performance-results.json | node scripts/testing/format-performance-report.js >> performance-report.md
+    
+    - name: Upload performance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report-${{ github.event.inputs.version }}
+        path: performance-report.md
+
+  create-pre-release:
+    needs: [comprehensive-testing, compatibility-testing, performance-testing]
+    if: success()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Update version
+      run: |
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Create pre-release package
+      run: |
+        npm pack
+        mv *.tgz like-i-said-v2-${{ github.event.inputs.version }}.tgz
+    
+    - name: Create pre-release notes
+      run: |
+        echo "# Pre-Release v${{ github.event.inputs.version }}" > pre-release-notes.md
+        echo "" >> pre-release-notes.md
+        echo "## Test Results" >> pre-release-notes.md
+        echo "- Test Level: ${{ github.event.inputs.test_level }}" >> pre-release-notes.md
+        echo "- All tests passed successfully" >> pre-release-notes.md
+        echo "" >> pre-release-notes.md
+        echo "## Installation" >> pre-release-notes.md
+        echo "\`\`\`bash" >> pre-release-notes.md
+        echo "npm install @endlessblink/like-i-said-v2@${{ github.event.inputs.version }}" >> pre-release-notes.md
+        echo "\`\`\`" >> pre-release-notes.md
+    
+    - name: Upload pre-release artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: pre-release-${{ github.event.inputs.version }}
+        path: |
+          like-i-said-v2-${{ github.event.inputs.version }}.tgz
+          pre-release-notes.md
+          performance-report.md

@@ -1,0 +1,66 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "puppeteer": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@smithery-ai/puppeteer",
+        "--key",
+        "e897d3d5-f1c9-4f3e-83eb-05a0acf23558"
+      ]
+    },
+    "playwright-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@microsoft/playwright-mcp",
+        "--key",
+        "e897d3d5-f1c9-4f3e-83eb-05a0acf23558"
+      ]
+    },
+    "ai-liftoff-site": {
+      "command": "node",
+      "args": [
+        "D:/APPSNospaces/Site-Control-MCP/src/server.js"
+      ]
+    },
+    "like-i-said-memory-v2": {
+      "command": "C:\\pinokio\\bin\\miniconda\\node.exe",
+      "args": [
+        "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\mcp-server-wrapper.js"
+      ],
+      "env": {
+        "MEMORY_DIR": "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\memories",
+        "TASK_DIR": "D:\\APPSNospaces\\like-i-said-mcp-server-v2\\tasks",
+        "MCP_QUIET": "true"
+      }
+    },
+    "desktop-commander": {
+      "command": "npx.cmd",
+      "args": [
+        "@wonderwhy-er/desktop-commander@latest"
+      ]
+    },
+    "rough-cut-mcp": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "D:\\MY PROJECTS\\AI\\LLM\\AI Code Gen\\my-builds\\Video + Motion\\RoughCut\\build\\index.js"
+      ]
+    }
+  }
+}

@@ -1,0 +1,129 @@
+// Cached API port - use localStorage for cross-tab consistency
+let cachedApiPort: number | null = null;
+
+// Get the API base URL dynamically
+export async function getApiPort(): Promise<number> {
+  // Check localStorage first for cross-tab consistency
+  const storedPort = localStorage.getItem('like-i-said-api-port');
+  if (storedPort && !cachedApiPort) {
+    cachedApiPort = parseInt(storedPort);
+  }
+  
+  // Return cached port if available
+  if (cachedApiPort !== null) {
+    return cachedApiPort;
+  }
+
+  // Try multiple possible Vite dev server ports for the /api-port endpoint
+  const vitePorts = [8777, 8778, 8779, 8780, 5173, 5174, 5175]; // Common Vite ports
+  
+  for (const vitePort of vitePorts) {
+    try {
+      const response = await fetch(`http://localhost:${vitePort}/api-port`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(800) // 800ms timeout for each port
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.port) {
+          cachedApiPort = data.port;
+          localStorage.setItem('like-i-said-api-port', data.port.toString());
+          console.log(`✅ API server port discovered from Vite on ${vitePort}: ${data.port}`);
+          return data.port;
+        } else if (data.ports) {
+          // If we get a list of ports to try, use them
+          console.log(`📋 Got port list from Vite on ${vitePort}:`, data.ports);
+          for (const port of data.ports) {
+            try {
+              const testResponse = await fetch(`http://localhost:${port}/api/status`, {
+                method: 'GET',
+                mode: 'cors',
+                signal: AbortSignal.timeout(500) // 500ms timeout for each port
+              });
+              
+              if (testResponse.ok) {
+                const testData = await testResponse.json();
+                if (testData.server === 'Dashboard Bridge' || testData.message === 'Like-I-Said MCP Server Dashboard API') {
+                  cachedApiPort = port;
+                  localStorage.setItem('like-i-said-api-port', port.toString());
+                  console.log(`✅ API server found on port ${port}`);
+                  return port;
+                }
+              }
+            } catch {
+              // Continue to next port
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Continue to next Vite port
+      continue;
+    }
+  }
+  
+  console.log('Port discovery endpoint not available on any Vite port, falling back to direct port scanning');
+
+  // Fallback: try common ports in sequence
+  // Put 8776 first as that's the current default from .dashboard-port
+  const commonPorts = [8776, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008];
+  
+  for (const port of commonPorts) {
+    try {
+      const response = await fetch(`http://localhost:${port}/api/status`, {
+        method: 'GET',
+        mode: 'cors',
+        signal: AbortSignal.timeout(1000) // 1 second timeout
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Only accept servers that identify as Like-I-Said dashboard
+        if (data.server === 'Dashboard Bridge' || data.message === 'Like-I-Said MCP Server Dashboard API') {
+          cachedApiPort = port;
+          localStorage.setItem('like-i-said-api-port', port.toString());
+          console.log(`✅ API server found on port ${port}`);
+          return port;
+        }
+      }
+    } catch {
+      // Continue to next port
+    }
+  }
+
+  // Default to 8776 if no server found
+  console.warn('No API server found, defaulting to port 8776');
+  cachedApiPort = 8776;
+  localStorage.setItem('like-i-said-api-port', '8776');
+  return 8776;
+}
+
+// Get the full API URL
+export async function getApiUrl(path: string): Promise<string> {
+  const port = await getApiPort();
+  // Use window.location.hostname to support network access
+  const host = window.location.hostname;
+  return `http://${host}:${port}${path}`;
+}
+
+// Get WebSocket URL
+export async function getWebSocketUrl(): Promise<string> {
+  const port = await getApiPort();
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  // Use window.location.hostname to support network access
+  const host = window.location.hostname;
+  return `${protocol}//${host}:${port}`;
+}
+
+// Reset cached port (useful for retrying connection)
+export function resetApiPortCache(): void {
+  cachedApiPort = null;
+  localStorage.removeItem('like-i-said-api-port');
+}
+
+// Force clear all caches and rediscover port
+export async function forceRediscoverPort(): Promise<number> {
+  resetApiPortCache();
+  return await getApiPort();
+}

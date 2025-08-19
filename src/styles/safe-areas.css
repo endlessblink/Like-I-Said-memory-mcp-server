@@ -1,0 +1,126 @@
+/* Safe area handling for mobile and desktop */
+:root {
+  /* Fallback values for browsers that don't support env() */
+  --safe-area-inset-top: 0px;
+  --safe-area-inset-right: 0px;
+  --safe-area-inset-bottom: 0px;
+  --safe-area-inset-left: 0px;
+  
+  /* Use env() values when available */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  
+  /* Account for Windows taskbar */
+  --taskbar-height: 48px; /* Increased for Windows 11 */
+  
+  /* Combined safe bottom area */
+  --safe-bottom: max(var(--safe-area-inset-bottom), var(--taskbar-height));
+  
+  /* Navigation heights */
+  --nav-height: 120px; /* Matches the sticky top-[120px] in App.tsx */
+  --nav-height-mobile: 80px;
+}
+
+/* Apply safe areas to fixed bottom elements */
+.fixed-bottom,
+[class*="bottom-0"],
+[class*="bottom-8"] {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Floating action buttons need adjustment */
+[class*="fixed"][class*="bottom-8"] {
+  bottom: calc(2rem + var(--safe-bottom)) !important;
+}
+
+/* Sidebar height calculation with safe area */
+.sidebar-safe,
+[class*="h-\\[calc\\(100vh-120px\\)\\]"] {
+  height: calc(100vh - var(--nav-height) - var(--safe-bottom)) !important;
+}
+
+/* Main content area safe height */
+.content-safe,
+[class*="min-h-\\[calc\\(100vh"] {
+  min-height: calc(100vh - var(--nav-height) - var(--safe-bottom)) !important;
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Mobile navigation safe areas */
+@media (max-width: 768px) {
+  :root {
+    --nav-height: var(--nav-height-mobile);
+  }
+  
+  .mobile-nav,
+  .mobile-bottom-nav {
+    padding-bottom: var(--safe-bottom);
+  }
+}
+
+/* Settings panel specific fix */
+.settings-panel {
+  max-height: calc(100vh - var(--nav-height) - var(--safe-bottom));
+  overflow-y: auto;
+}
+
+/* Ensure scrollable content doesn't go under taskbar */
+.main-content,
+.overflow-y-auto {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Dialog/Modal positioning */
+.dialog-content,
+[role="dialog"] {
+  max-height: calc(100vh - var(--safe-area-inset-top) - var(--safe-bottom) - 2rem);
+}
+
+/* Statistics panel and bottom panels */
+.stats-panel,
+.mt-auto {
+  margin-bottom: var(--safe-bottom);
+}
+
+/* Media player controls */
+.media-controls,
+.player-controls {
+  bottom: var(--safe-bottom);
+}
+
+/* Utility classes for easy application */
+.pb-safe {
+  padding-bottom: var(--safe-bottom) !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px) !important;
+}
+
+.mb-safe {
+  margin-bottom: var(--safe-bottom) !important;
+}
+
+.bottom-safe {
+  bottom: var(--safe-bottom) !important;
+}
+
+.h-screen-safe {
+  height: calc(100vh - var(--safe-bottom)) !important;
+}
+
+.min-h-screen-safe {
+  min-height: calc(100vh - var(--safe-bottom)) !important;
+}
+
+.fab-bottom {
+  bottom: calc(2rem + var(--safe-bottom)) !important;
+}
+
+/* Main content area specific fix */
+#main-content-area {
+  padding-bottom: 48px !important;
+}
+
+#main-content-area .space-section {
+  padding-bottom: 48px !important;
+}
