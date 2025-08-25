@@ -59,7 +59,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'add_memory',
         description: 'Store a new memory',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "content": {
@@ -81,7 +81,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'get_memory',
         description: 'Retrieve a memory by ID',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "id": {
@@ -97,7 +97,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'list_memories',
         description: 'List all stored memories',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "limit": {
@@ -113,7 +113,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'delete_memory',
         description: 'Delete a memory by ID',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "id": {
@@ -129,7 +129,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'search_memories',
         description: 'Search memories by content',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "query": {
@@ -145,7 +145,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'test_tool',
         description: 'Simple test tool to verify MCP is working',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           "type": "object",
           "properties": {
             "message": {

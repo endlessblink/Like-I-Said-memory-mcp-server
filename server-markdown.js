@@ -38,6 +38,7 @@ import { PatternLearner } from './lib/pattern-learner.js';
 import { ProactiveConfigManager } from './lib/proactive-config.js';
 import { layerManager } from './lib/layer-manager.js';
 import { layerMetaTools, handleLayerMetaTool } from './lib/layer-meta-tools.js';
+import { mcpProcessManager } from './lib/mcp-process-manager.js';
 // Removed ConnectionProtection and DataIntegrity imports to prevent any exit calls
 // import { createRequire } from 'module';
 // const require = createRequire(import.meta.url);
@@ -594,6 +595,7 @@ let contentClassifier = null;
 let circuitBreaker = null;
 let fuzzyMatcher = null;
 let periodicTasksStarted = false;
+// Process manager is already initialized as singleton
 
 // Initialize critical components for MCP functionality
 async function initializeCriticalComponents() {
@@ -672,6 +674,16 @@ async function initializeAdvancedFeatures() {
 
     // Initialize proactive configuration manager
     proactiveConfig = new ProactiveConfigManager();
+
+    // Initialize automatic process management
+    console.error('🔧 Initializing process manager...');
+    // mcpProcessManager is already initialized as singleton - just run initial health check
+    const initialHealth = await mcpProcessManager.runHealthCheck();
+    if (initialHealth.healthy) {
+      console.error('   ✅ Process manager initialized successfully');
+    } else {
+      console.error(`   ⚠️ Process issues detected during startup: ${initialHealth.issues?.join(', ') || 'unknown'}`);
+    }
     // Apply config to behavioral analyzer
     proactiveConfig.applyToBehavioralAnalyzer(behavioralAnalyzer);
 
@@ -762,7 +774,7 @@ function generateDynamicTools() {
       name: 'add_memory',
       description: 'AUTOMATICALLY use when user shares important information, code snippets, decisions, learnings, or context that should be remembered for future sessions. Includes smart categorization and auto-linking.',
       inputSchema: {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$schema": "https://json-schema.org/draft-07/schema",
         type: 'object',
         properties: {
           content: { type: 'string', description: 'The memory content to store', minLength: 1 },
@@ -788,7 +800,7 @@ function generateDynamicTools() {
       name: 'search_memories',
       description: 'AUTOMATICALLY use when user asks about past work, previous decisions, looking for examples, or needs context from earlier sessions. Provides semantic and keyword-based search.',
       inputSchema: {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$schema": "https://json-schema.org/draft-07/schema",
         type: 'object',
         properties: {
           query: { type: 'string', description: 'Search query', minLength: 1 },
@@ -805,7 +817,7 @@ function generateDynamicTools() {
       name: 'create_task',
       description: 'Create a new task with intelligent memory linking. Tasks start in "todo" status. IMPORTANT: After creating a task, remember to update its status to "in_progress" when you begin working on it.',
       inputSchema: {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$schema": "https://json-schema.org/draft-07/schema",
         type: 'object',
         properties: {
           title: { type: 'string', description: 'Task title', minLength: 1 },
@@ -858,7 +870,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'add_memory',
         description: 'AUTOMATICALLY use when user shares important information, code snippets, decisions, learnings, or context that should be remembered for future sessions. Includes smart categorization and auto-linking.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             content: {
@@ -905,7 +917,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'get_memory',
         description: 'Retrieve a memory by ID',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             id: {
@@ -921,7 +933,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'list_memories',
         description: 'List all stored memories or memories from a specific project',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             limit: {
@@ -941,7 +953,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'delete_memory',
         description: 'Delete a memory by ID',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             id: {
@@ -957,7 +969,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'search_memories',
         description: 'AUTOMATICALLY use when user asks about past work, previous decisions, looking for examples, or needs context from earlier sessions. Provides semantic and keyword-based search.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             query: {
@@ -977,7 +989,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'test_tool',
         description: 'Simple test tool to verify MCP is working',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             message: {
@@ -993,7 +1005,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'generate_dropoff',
         description: 'Generate conversation dropoff document for session handoff with context from recent memories, git status, and project info',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             session_summary: {
@@ -1035,7 +1047,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'create_task',
         description: 'Create a new task with intelligent memory linking. Tasks start in "todo" status. IMPORTANT: After creating a task, remember to update its status to "in_progress" when you begin working on it. Proper state management helps track workflow and productivity.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             title: {
@@ -1097,7 +1109,7 @@ STATE MANAGEMENT GUIDELINES:
 
 IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't wait for user prompts - update states as work progresses to maintain accurate workflow visibility.`,
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1141,7 +1153,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'list_tasks',
         description: 'List tasks with filtering options. Shows task status distribution and workflow health. Use this to monitor work progress and identify tasks that need status updates.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             project: {
@@ -1179,7 +1191,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_task_context',
         description: 'Get detailed task information including status, relationships, and connected memories. Use this to understand task context and determine if status updates are needed.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1201,7 +1213,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'delete_task',
         description: 'Delete a task and its subtasks',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1217,7 +1229,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'enhance_memory_metadata',
         description: 'Generate optimized title and summary for a memory to improve dashboard card display. Uses intelligent content analysis to create concise, meaningful titles (max 60 chars) and summaries (max 150 chars).',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             memory_id: {
@@ -1237,7 +1249,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_memories',
         description: 'Batch process multiple memories to add optimized titles and summaries. Useful for enhancing existing memories that lack proper metadata for dashboard display.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             project: {
@@ -1264,7 +1276,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'smart_status_update',
         description: 'AUTOMATICALLY use when user mentions status changes in natural language. Intelligently parses natural language to determine intended status changes with validation and automation.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1298,7 +1310,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_task_status_analytics',
         description: 'AUTOMATICALLY use when user asks about task progress, status overview, productivity metrics, or wants analytics. Provides comprehensive status insights and recommendations.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             project: {
@@ -1330,7 +1342,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'validate_task_workflow',
         description: 'Validate a proposed task status change with intelligent suggestions and workflow analysis. Use when you need to check if a status change makes sense.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1362,7 +1374,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_automation_suggestions',
         description: 'Get intelligent automation suggestions for a task based on context analysis. Use when you want to see what automated actions are possible.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             task_id: {
@@ -1378,7 +1390,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_memories_ollama',
         description: 'Batch process memories using local AI (Ollama) for privacy-focused title/summary generation. Processes large numbers of memories efficiently without external API calls.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             project: {
@@ -1413,7 +1425,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'batch_enhance_tasks_ollama',
         description: 'Batch process tasks using local AI (Ollama) for privacy-focused title/description enhancement. Processes large numbers of tasks efficiently without external API calls.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             project: {
@@ -1452,7 +1464,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'check_ollama_status',
         description: 'Check if Ollama server is running and list available models for local AI processing.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             show_models: {
@@ -1467,7 +1479,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'enhance_memory_ollama',
         description: 'Enhance a single memory with local AI (Ollama) for privacy-focused title/summary generation.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             memory_id: {
@@ -1491,7 +1503,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'deduplicate_memories',
         description: 'Find and remove duplicate memory files, keeping the newest version of each memory ID. Use this to clean up duplicate memories caused by batch operations.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             preview_only: {
@@ -1506,7 +1518,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'work_detector_control',
         description: 'Control the Universal Work Detector for automatic memory creation based on work patterns.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             action: {
@@ -1523,7 +1535,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'set_memory_path',
         description: 'Change where memories are stored. Updates the path dynamically without requiring restart.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             path: {
@@ -1539,7 +1551,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'set_task_path',
         description: 'Change where tasks are stored. Updates the path dynamically without requiring restart.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             path: {
@@ -1555,7 +1567,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'get_current_paths',
         description: 'Get the current memory and task storage paths.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {},
           additionalProperties: false
@@ -1566,7 +1578,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'analyze_performance',
         description: 'Review server effectiveness metrics including tool usage patterns, memory search accuracy, task completion rates, and work detection performance. Returns structured performance insights.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             period: {
@@ -1594,7 +1606,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'suggest_improvements',
         description: 'Get AI-powered recommendations for optimizing work detection, memory creation, and task management based on usage patterns and performance metrics.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             focus: {
@@ -1621,7 +1633,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'update_strategies',
         description: 'Modify detection algorithms and thresholds based on feedback and learned patterns. Allows safe, sandboxed updates to work detection patterns with rollback capability.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             updates: {
@@ -1659,7 +1671,7 @@ IMPORTANT: Proactively manage task states throughout the work lifecycle. Don't w
         name: 'enforce_proactive_memory',
         description: 'Configure and enforce proactive memory/task creation settings. Control how aggressively Claude creates memories and tasks automatically.',
         inputSchema: {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$schema": "https://json-schema.org/draft-07/schema",
           type: 'object',
           properties: {
             action: {
@@ -4836,15 +4848,39 @@ function startPeriodicTasks() {
           console.error(`💡 Behavioral insights: ${recommendations.length} recommendations available`);
         }
       }
+
+      // Run automatic process health check and cleanup
+      if (mcpProcessManager) {
+        const healthCheck = await mcpProcessManager.runHealthCheck();
+        if (!healthCheck.healthy && healthCheck.issues) {
+          console.error(`🚨 Process health issues: ${healthCheck.issues.join(', ')}`);
+        }
+      }
+      
     } catch (error) {
       console.error('Error in periodic checks:', error);
     }
-  }, 300000); // Every 5 minutes
+  }, 60000); // Every 1 minute for aggressive process monitoring to prevent API Error 500
 }
 
 // Start the server with timeout protection
 async function main() {
   try {
+    // CRITICAL: Clean up excessive processes BEFORE starting
+    // This prevents API Error 500 by ensuring clean environment
+    console.error('🧹 Pre-startup process cleanup...');
+    try {
+      const preStartupHealth = await mcpProcessManager.runHealthCheck();
+      if (!preStartupHealth.healthy) {
+        console.error(`⚠️ Cleaning up ${preStartupHealth.processCount} processes before startup...`);
+        // Give cleanup time to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (cleanupError) {
+      console.error('⚠️ Pre-startup cleanup warning:', cleanupError.message);
+      // Continue anyway - don't block startup
+    }
+
     // Add startup timeout to prevent hanging
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Server startup timeout after 15 seconds')), 15000);

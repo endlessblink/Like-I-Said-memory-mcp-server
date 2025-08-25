@@ -69,6 +69,10 @@ scripts/platform-config.example.json
 
 # Dashboard port files
 .dashboard-port
+data/.dashboard-port
+
+# TypeScript build info
+tsconfig.tsbuildinfo
 
 # Session management
 session-dropoffs/
