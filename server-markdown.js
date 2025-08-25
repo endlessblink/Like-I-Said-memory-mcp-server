@@ -4849,33 +4849,63 @@ function startPeriodicTasks() {
         }
       }
 
-      // Run automatic process health check and cleanup
+      // Run automatic process health check and cleanup - MORE AGGRESSIVE
       if (mcpProcessManager) {
+        // CRITICAL: Always check for duplicate server-markdown.js instances
+        const processes = await mcpProcessManager.getProcesses();
+        const serverCount = processes.filter(p => p.pattern === 'server-markdown.js').length;
+        
+        if (serverCount > 1) {
+          console.error(`🚨 CRITICAL: ${serverCount} server-markdown.js instances detected - killing duplicates NOW!`);
+          await mcpProcessManager.killAllOtherServers();
+        }
+        
+        // Run general health check with lower thresholds
         const healthCheck = await mcpProcessManager.runHealthCheck();
-        if (!healthCheck.healthy && healthCheck.issues) {
-          console.error(`🚨 Process health issues: ${healthCheck.issues.join(', ')}`);
+        if (!healthCheck.healthy || healthCheck.processCount > 8) {
+          console.error(`⚠️ Process issues: ${healthCheck.processCount} processes, Issues: ${healthCheck.issues?.join(', ') || 'none'}`);
+          
+          // Force emergency cleanup if too many processes
+          if (healthCheck.processCount > 12) {
+            console.error('🚨 EMERGENCY: Too many processes - forcing cleanup!');
+            await mcpProcessManager.emergencyCleanup(healthCheck.processCount);
+          }
         }
       }
       
     } catch (error) {
       console.error('Error in periodic checks:', error);
     }
-  }, 60000); // Every 1 minute for aggressive process monitoring to prevent API Error 500
+  }, 30000); // Every 30 seconds for AGGRESSIVE monitoring to prevent API Error 500
 }
 
 // Start the server with timeout protection
 async function main() {
   try {
-    // CRITICAL: Clean up excessive processes BEFORE starting
-    // This prevents API Error 500 by ensuring clean environment
-    console.error('🧹 Pre-startup process cleanup...');
+    // CRITICAL: ALWAYS kill duplicate server-markdown.js instances on startup
+    // This is the PRIMARY cause of API Error 500
+    console.error('🚨 AGGRESSIVE PRE-STARTUP CLEANUP - Ensuring single instance...');
+    
     try {
+      // Step 1: Kill ALL other server-markdown.js instances IMMEDIATELY
+      const killedServers = await mcpProcessManager.killAllOtherServers();
+      if (killedServers > 0) {
+        console.error(`✅ Killed ${killedServers} duplicate server instances`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for processes to die
+      }
+      
+      // Step 2: Run general health check and cleanup
       const preStartupHealth = await mcpProcessManager.runHealthCheck();
-      if (!preStartupHealth.healthy) {
-        console.error(`⚠️ Cleaning up ${preStartupHealth.processCount} processes before startup...`);
-        // Give cleanup time to complete
+      if (!preStartupHealth.healthy || preStartupHealth.processCount > 5) {
+        console.error(`⚠️ Cleaning up ${preStartupHealth.processCount} total MCP processes...`);
+        // Force cleanup even if "healthy" if too many processes
+        if (preStartupHealth.processCount > 10) {
+          await mcpProcessManager.emergencyCleanup(preStartupHealth.processCount);
+        }
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
+      
+      console.error('✅ Pre-startup cleanup complete - environment is clean');
     } catch (cleanupError) {
       console.error('⚠️ Pre-startup cleanup warning:', cleanupError.message);
       // Continue anyway - don't block startup
