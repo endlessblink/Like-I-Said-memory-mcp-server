@@ -50,6 +50,84 @@ export class HybridTaskManager {
   }
 
   /**
+   * Verify database connection and basic functionality
+   */
+  async verifyConnection() {
+    try {
+      // Test database connectivity with a simple query
+      if (this.db && this.initialized) {
+        // Check if we're using better-sqlite3 or sql.js
+        if (this.db.db && typeof this.db.db.prepare === 'function') {
+          // better-sqlite3
+          const stmt = this.db.db.prepare('SELECT 1 as test');
+          const result = stmt.get();
+          if (result.test !== 1) {
+            throw new Error('Database query verification failed');
+          }
+        } else if (this.db.db && typeof this.db.db.exec === 'function') {
+          // sql.js
+          const result = this.db.db.exec('SELECT 1 as test');
+          if (!result || result.length === 0) {
+            throw new Error('Database query verification failed');
+          }
+        } else if (this.db && typeof this.db.prepare === 'function') {
+          // Direct database instance
+          const stmt = this.db.prepare('SELECT 1 as test');
+          const result = stmt.get();
+          if (result.test !== 1) {
+            throw new Error('Database query verification failed');
+          }
+        }
+        
+        // Test basic task operations
+        const testCount = await this.getTaskCount();
+        if (typeof testCount !== 'number' || testCount < 0) {
+          throw new Error('Task count query failed');
+        }
+        
+        console.log(`[HybridTaskManager] Database verified - ${testCount} tasks found`);
+        return true;
+      } else {
+        throw new Error('Database not initialized');
+      }
+    } catch (error) {
+      throw new Error(`Database verification failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get total task count for verification
+   */
+  async getTaskCount() {
+    try {
+      if (this.db && this.db.db) {
+        // Check database type and use appropriate method
+        if (typeof this.db.db.prepare === 'function') {
+          // better-sqlite3
+          const stmt = this.db.db.prepare('SELECT COUNT(*) as count FROM tasks');
+          const result = stmt.get();
+          return result.count || 0;
+        } else if (typeof this.db.db.exec === 'function') {
+          // sql.js
+          const result = this.db.db.exec('SELECT COUNT(*) as count FROM tasks');
+          return result[0] ? result[0].values[0][0] : 0;
+        }
+      } else if (this.db && typeof this.db.prepare === 'function') {
+        // Direct database instance
+        const stmt = this.db.prepare('SELECT COUNT(*) as count FROM tasks');
+        const result = stmt.get();
+        return result.count || 0;
+      }
+      
+      // Fallback to counting tasks in memory or files
+      return 0;
+    } catch (error) {
+      console.error('[HybridTaskManager] getTaskCount error:', error.message);
+      return 0; // Return 0 instead of throwing to allow verification to continue
+    }
+  }
+
+  /**
    * Set up file system watcher with debouncing
    */
   setupFileWatcher() {
@@ -303,9 +381,10 @@ export class HybridTaskManager {
       updated_at: new Date().toISOString()
     };
     
-    // Calculate materialized path
+    // Calculate materialized path and validate hierarchy
+    let parent = null;
     if (task.parent_id) {
-      const parent = await this.getTask(task.parent_id);
+      parent = await this.getTask(task.parent_id);
       if (!parent) throw new Error(`Parent task ${task.parent_id} not found`);
       
       // Get next path order
@@ -319,8 +398,8 @@ export class HybridTaskManager {
       task.path = String(task.path_order).padStart(3, '0');
     }
     
-    // Validate hierarchy constraints
-    this.validateHierarchy(task);
+    // Validate hierarchy constraints with parent info
+    this.validateHierarchy(task, parent);
     
     // Save to database first
     const stmt = this.db.db.prepare(`
@@ -346,8 +425,10 @@ export class HybridTaskManager {
 
   /**
    * Validate hierarchy constraints
+   * @param {Object} task - The task being validated
+   * @param {Object|null} parent - The parent task (null if no parent)
    */
-  validateHierarchy(task) {
+  validateHierarchy(task, parent = null) {
     const levelOrder = ['master', 'epic', 'task', 'subtask'];
     const levelIndex = levelOrder.indexOf(task.level);
     
@@ -363,16 +444,34 @@ export class HybridTaskManager {
     
     // Validate parent-child level relationship
     if (task.parent_id) {
-      const parent = this.getTask(task.parent_id);
+      if (!parent) {
+        // Parent doesn't exist - provide helpful error
+        throw new Error(
+          `Parent task with ID '${task.parent_id}' not found. ` +
+          `Please verify the parent ID exists or create the parent first using create_project or create_stage.`
+        );
+      }
+      
       if (parent) {
         const parentLevelIndex = levelOrder.indexOf(parent.level);
         
         // Child level must be exactly one level below parent
         if (levelIndex !== parentLevelIndex + 1) {
           const expectedLevel = levelOrder[parentLevelIndex + 1] || 'none';
+          
+          // Provide more helpful context based on what they're trying to do
+          let suggestion = '';
+          if (task.level === 'epic' && !parent.level) {
+            suggestion = ' The parent task may not be properly initialized as a project. Use create_project first.';
+          } else if (task.level === 'epic' && parent.level !== 'master') {
+            suggestion = ' Stages can only be added to projects (master level). Use create_project first.';
+          } else if (task.level === 'task' && parent.level === 'master') {
+            suggestion = ' Tasks cannot be added directly to projects. Create a stage first using create_stage.';
+          }
+          
           throw new Error(
-            `Invalid parent-child relationship: ${parent.level} cannot have ${task.level} as child. ` +
-            `Expected child level: ${expectedLevel}`
+            `Invalid parent-child relationship: ${parent.level || 'undefined'} cannot have ${task.level} as child. ` +
+            `Expected child level: ${expectedLevel}.${suggestion}`
           );
         }
         

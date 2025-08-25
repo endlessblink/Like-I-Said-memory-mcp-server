@@ -219,6 +219,45 @@ Conversation Content Analysis:
 - **Every Solution** = Memory (capture AS it works)
 - **NO EXCEPTIONS** - This is NOT optional
 
+## 📋 REQUIRED: Active Task Management
+
+**Maintain task status throughout work to ensure project visibility and progress tracking.**
+
+### When to Use Task Management Tools
+
+**CREATE tasks when:**
+- User requests implementation, debugging, or multi-step work
+- Work will span multiple files or require several operations
+- You're investigating an issue that may take time to resolve
+- Building a feature or fixing a complex bug
+
+**UPDATE task status when:**
+- **Starting significant work** → Set to `in_progress`
+- **Completing the work** → Set to `done` 
+- **Genuinely blocked** → Set to `blocked` with reason
+- **Switching to different work** → Update status before moving on
+
+### Practical Guidelines
+
+- Create tasks at the start of substantive work (not for trivial queries)
+- Update status at natural transition points in your workflow
+- Use judgment: one-line fixes may not need task tracking
+- Focus on maintaining accuracy of existing tasks over creating many small ones
+
+### Key Principle
+
+**If you're doing work that the user would want to track or that you might need to resume later, it should have a task with current status.**
+
+Examples of work needing tasks:
+- "Fix the authentication bug" 
+- "Add new dashboard component"
+- "Investigate why tests are failing"
+
+Examples that likely don't need tasks:
+- "What's in this file?"
+- "Explain this error"
+- "What command should I run?"
+
 ## Development Commands
 
 ### Essential Commands

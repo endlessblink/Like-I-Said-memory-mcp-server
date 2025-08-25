@@ -288,6 +288,7 @@ function AppContent() {
   const [useAdvancedEditor, setUseAdvancedEditor] = useState(false)
   const [useAdvancedEditorCreate, setUseAdvancedEditorCreate] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [viewMode, setViewMode] = useState<"cards" | "table" | "tree">("cards")
   const [llmProvider, setLlmProvider] = useState<"openai" | "anthropic" | "ollama" | "none">("none")
   const [llmApiKey, setLlmApiKey] = useState("")
   const [apiKeyEditMode, setApiKeyEditMode] = useState(false)
@@ -295,7 +296,6 @@ function AppContent() {
   const [enhancingMemories, setEnhancingMemories] = useState<Set<string>>(new Set())
   const [currentProject, setCurrentProject] = useState("all")
   const [selectedMemories, setSelectedMemories] = useState<Set<string>>(new Set())
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [showBulkTagDialog, setShowBulkTagDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
@@ -969,33 +969,6 @@ function AppContent() {
     }
   }
 
-  const handleBulkDelete = async () => {
-    const memoryIds = Array.from(selectedMemories)
-    setIsBulkDeleting(true)
-    
-    try {
-      const progressId = progress.startBulkOperation(
-        'Deleting Memories',
-        memoryIds,
-        (completed, total) => `Deleting ${completed}/${total} memories...`
-      )
-
-      for (const memoryId of memoryIds) {
-        await deleteMemory(memoryId)
-        progress.updateBulkOperation(progressId, (prev) => prev + 1)
-      }
-      
-      progress.completeBulkOperation(progressId)
-      setSelectedMemories(new Set())
-      toast.success('Memories deleted', `Deleted ${memoryIds.length} memories`)
-    } catch (error) {
-      console.error('Failed to bulk delete memories:', error)
-      toast.error('Failed to delete memories', 'Please try again or check your connection')
-    } finally {
-      setIsBulkDeleting(false)
-    }
-  }
-
   const handleMemorySelect = (memoryId: string) => {
     setSelectedMemories(prev => {
       const newSet = new Set(prev)
@@ -1045,6 +1018,9 @@ function AppContent() {
     'Ctrl+6': () => startTransition(() => setCurrentTab('analytics')),
     'Ctrl+7': () => startTransition(() => setCurrentTab('patterns')),
     'Ctrl+8': () => startTransition(() => setCurrentTab('improvement')),
+    'Ctrl+Shift+C': () => setViewMode('cards'),
+    'Ctrl+Shift+T': () => setViewMode('table'),
+    'Ctrl+Shift+R': () => setViewMode('tree'),
     'Ctrl+A': () => {
       if (currentTab === 'memories') {
         const visibleMemoryIds = filteredMemories.map(m => m.id)
@@ -2114,6 +2090,33 @@ Respond with JSON format:
                 {currentTab === "self-improvement" && selfImprovementTab === "insights" && "AI Insights"}
                 {currentTab === "settings" && "Settings"}
               </h2>
+              {currentTab === "memories" && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
+                  <div className="flex bg-muted/50 backdrop-blur-sm rounded-xl p-1 w-full sm:w-auto border border-border/50">
+                    {[
+                      { id: "cards", label: "Cards" },
+                      { id: "table", label: "Table" },
+                      { id: "tree", label: "Tree" }
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setViewMode(mode.id as any)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          viewMode === mode.id
+                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-foreground shadow-lg"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        }`}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                  <SortControls 
+                    sortOptions={sortOptions}
+                    onSortChange={handleSortChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -2199,7 +2202,7 @@ Respond with JSON format:
                     <AIEnhancement
                       memories={memories}
                       onEnhanceMemory={enhanceMemoryWithLLM}
-                      onEnhanceAll={enhanceAllMemories}
+                    onEnhanceAll={enhanceAllMemories}
                     enhancingMemories={enhancingMemories}
                     isEnhancing={isEnhancing}
                     llmProvider={llmProvider}
@@ -2276,10 +2279,6 @@ Respond with JSON format:
                   memories={memories}
                   onMemoryUpdate={handleEdit}
                   onMemoryDelete={deleteMemory}
-                  selectedMemories={selectedMemories}
-                  onBulkDelete={handleBulkDelete}
-                  isBulkDeleting={isBulkDeleting}
-                  onSelectionClear={() => setSelectedMemories(new Set())}
                   initialView="cards"
                 />
               </Suspense>
@@ -2330,7 +2329,7 @@ Respond with JSON format:
                     <AIEnhancement
                       memories={memories}
                       onEnhanceMemory={enhanceMemoryWithLLM}
-                      onEnhanceAll={enhanceAllMemories}
+                    onEnhanceAll={enhanceAllMemories}
                     enhancingMemories={enhancingMemories}
                     isEnhancing={isEnhancing}
                     llmProvider={llmProvider}
@@ -2401,6 +2400,16 @@ Respond with JSON format:
               <PathConfiguration />
             )}
 
+            {currentTab === "memories" && (
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <EnterpriseMemoryDashboard
+                  memories={memories}
+                  onMemoryUpdate={handleEdit}
+                  onMemoryDelete={deleteMemory}
+                  initialView="cards"
+                />
+              </Suspense>
+            )}
 
             {currentTab === "tasks" && (
               <Suspense fallback={<PageLoadingSpinner />}>

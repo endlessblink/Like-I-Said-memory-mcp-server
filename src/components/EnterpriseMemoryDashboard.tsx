@@ -29,6 +29,10 @@ interface EnterpriseMemoryDashboardProps {
   memories: Memory[];
   onMemoryUpdate?: (memory: Memory) => void;
   onMemoryDelete?: (memoryId: string) => void;
+  selectedMemories?: Set<string>;
+  onBulkDelete?: () => void;
+  isBulkDeleting?: boolean;
+  onSelectionClear?: () => void;
   initialView?: 'cards' | 'list' | 'groups';
 }
 
@@ -36,6 +40,10 @@ export const EnterpriseMemoryDashboard: React.FC<EnterpriseMemoryDashboardProps>
   memories,
   onMemoryUpdate,
   onMemoryDelete,
+  selectedMemories = new Set(),
+  onBulkDelete,
+  isBulkDeleting = false,
+  onSelectionClear,
   initialView = 'cards'
 }) => {
   // Search and filter state
@@ -44,7 +52,6 @@ export const EnterpriseMemoryDashboard: React.FC<EnterpriseMemoryDashboardProps>
   const [priorityWeights, setPriorityWeights] = useState<PriorityFactors>(DEFAULT_PRIORITY_WEIGHTS);
   
   // View and grouping state
-  const [viewMode, setViewMode] = useState<'cards' | 'compact' | 'detailed'>('cards');
   const [currentView, setCurrentView] = useState<'cards' | 'list' | 'groups'>(initialView);
   const [groupBy, setGroupBy] = useState<'none' | 'priority' | 'project' | 'date' | 'semantic' | 'tags'>('none');
   const [sortBy, setSortBy] = useState('priority');
@@ -194,26 +201,15 @@ export const EnterpriseMemoryDashboard: React.FC<EnterpriseMemoryDashboardProps>
 
     return (
       <div key={memory.id} className="relative">
-        {showPriority && priorityScore && (
-          <div className="absolute top-2 right-2 z-10">
-            <PriorityIndicator 
-              score={priorityScore} 
-              size={viewMode === 'compact' ? 'sm' : 'md'}
-              showDetails={viewMode === 'detailed'}
-            />
-          </div>
-        )}
         
         <MemoryCard
           memory={memory}
-          viewMode={viewMode}
-          onUpdate={onMemoryUpdate}
+          onEdit={() => onMemoryUpdate?.(memory)}
           onDelete={onMemoryDelete}
-          showPriority={false} // We handle priority display above
         />
       </div>
     );
-  }, [viewMode, showPriority, priorityWeights, searchQuery, onMemoryUpdate, onMemoryDelete]);
+  }, [showPriority, priorityWeights, searchQuery, onMemoryUpdate, onMemoryDelete]);
 
   return (
     <div className="h-full flex flex-col space-y-4">
@@ -266,57 +262,65 @@ export const EnterpriseMemoryDashboard: React.FC<EnterpriseMemoryDashboardProps>
         </div>
       </div>
 
-      {/* View Controls */}
-      <div className="flex items-center justify-between">
-        <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as any)}>
-          <TabsList className="grid w-fit grid-cols-3">
-            <TabsTrigger value="cards" className="flex items-center gap-2">
-              <LayoutGrid size={16} />
-              Cards
-            </TabsTrigger>
-            <TabsTrigger value="list" className="flex items-center gap-2">
-              <List size={16} />
-              List
-            </TabsTrigger>
-            <TabsTrigger value="groups" className="flex items-center gap-2">
-              <TrendingUp size={16} />
-              Groups
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="flex items-center gap-2">
-          {currentView !== 'groups' && (
+      {/* Bulk Actions Toolbar */}
+      {selectedMemories.size > 0 && (
+        <div className="mb-4 p-3 sm:p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'compact' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('compact')}
-              >
-                Compact
-              </Button>
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('cards')}
-              >
-                Cards
-              </Button>
-              <Button
-                variant={viewMode === 'detailed' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('detailed')}
-              >
-                Detailed
-              </Button>
+              <span className="text-sm font-medium text-blue-300">
+                {selectedMemories.size} memory{selectedMemories.size !== 1 ? 'ies' : ''} selected
+              </span>
+              {onSelectionClear && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onSelectionClear}
+                  className="h-7 text-xs"
+                >
+                  Clear Selection
+                </Button>
+              )}
             </div>
-          )}
+            
+            <div className="flex items-center gap-2">
+              {onBulkDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onBulkDelete}
+                  disabled={isBulkDeleting}
+                  className="border-red-600 text-red-300 hover:bg-red-900/20"
+                >
+                  {isBulkDeleting ? 'Deleting...' : `🗑️ Delete ${selectedMemories.size}`}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
         <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as any)}>
+          {/* View Controls */}
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="flex gap-1">
+              <TabsTrigger value="cards" className="flex items-center gap-2">
+                <LayoutGrid size={16} />
+                Cards
+              </TabsTrigger>
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List size={16} />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="flex items-center gap-2">
+                <TrendingUp size={16} />
+                Groups
+              </TabsTrigger>
+            </TabsList>
+
+          </div>
           <TabsContent value="cards" className="h-full mt-0">
             <div className="h-full">
               {useVirtualScrolling ? (

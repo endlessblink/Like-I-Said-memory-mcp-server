@@ -140,6 +140,7 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
     "react-window": "^1.8.10",
+    "sql.js": "^1.13.0",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
     "ws": "^8.18.2",

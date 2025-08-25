@@ -194,8 +194,8 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border border-gray-600 text-white max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4 border-b border-gray-700 flex-shrink-0">
+      <DialogContent className="card card-glass text-primary max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-4 border-b border-border flex-shrink-0">
           <DialogTitle className="sr-only">Enhanced Task Details: {task.title}</DialogTitle>
           
           {/* Enhanced Header */}
@@ -207,10 +207,10 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
                   <Input
                     value={editedTask.title || ''}
                     onChange={(e) => setEditedTask({...editedTask, title: e.target.value})}
-                    className="text-lg font-semibold bg-gray-700 border-gray-600"
+                    className="text-lg font-semibold bg-input border-border text-primary"
                   />
                 ) : (
-                  <h2 className="text-xl font-semibold text-white truncate">
+                  <h2 className="text-xl font-semibold text-primary truncate">
                     {task.title}
                   </h2>
                 )}
@@ -220,10 +220,10 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
               </div>
               
               {/* Status Bar with Progress */}
-              <div className="flex items-center gap-4 text-sm text-gray-300">
+              <div className="flex items-center gap-4 text-sm text-secondary">
                 <div className="flex items-center gap-2">
                   <span>Progress:</span>
-                  <div className="w-20 bg-gray-700 rounded-full h-2">
+                  <div className="w-20 bg-background-subtle rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${calculateTaskProgress()}%` }}
@@ -244,7 +244,7 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
             <div className="flex items-center gap-2 flex-shrink-0">
               {isEditing ? (
                 <>
-                  <Button size="sm" onClick={handleSaveTask} className="bg-green-600 hover:bg-green-700"><Save className="w-4 h-4 mr-1" />Save</Button>
+                  <Button size="sm" onClick={handleSaveTask} className="bg-success hover:bg-success/80 text-success-foreground"><Save className="w-4 h-4 mr-1" />Save</Button>
                   <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
                     <X className="w-4 h-4 mr-1" />
                     Cancel
@@ -253,7 +253,7 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
               ) : (
                 <>
                   <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}><Edit3 className="w-4 h-4 mr-1" />Edit</Button>
-                  <Button size="sm" variant="outline" onClick={handleDeleteTask} className="text-red-400 hover:text-red-300">
+                  <Button size="sm" variant="outline" onClick={handleDeleteTask} className="text-error hover:text-error/80 border-error hover:border-error/80">
                     <X className="w-4 h-4 mr-1" />
                     Delete
                   </Button>
@@ -268,9 +268,11 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
 
           {/* Quick Info Pills */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Badge className={`px-3 py-1 text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-600 text-red-100' : 
-              task.priority === 'high' ? 'bg-orange-600 text-orange-100' :
-              task.priority === 'medium' ? 'bg-blue-600 text-blue-100' : 'bg-gray-600 text-gray-100'}`}>
+            <Badge className={`px-3 py-1 text-xs font-medium ${
+              task.priority === 'urgent' ? 'badge-error' : 
+              task.priority === 'high' ? 'badge-warning' :
+              task.priority === 'medium' ? 'badge-info' : 'badge-secondary'
+            }`}>
               {getPriorityIcon(task.priority)}
               <span className="ml-1">{task.priority.toUpperCase()}</span>
             </Badge>
@@ -293,7 +295,7 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
             </Badge>
             
             {task.memory_connections && task.memory_connections.length > 0 && (
-              <Badge variant="outline" className="px-3 py-1 text-xs text-purple-400 border-purple-600">
+              <Badge variant="outline" className="px-3 py-1 text-xs text-primary border-primary">
                 <Brain className="w-3 h-3 mr-1" />
                 {task.memory_connections.length} memories
               </Badge>
@@ -304,21 +306,21 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
         {/* Enhanced Tabbed Content */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-6 bg-gray-900/50 p-1 mb-4">
-              <TabsTrigger value="overview" className="text-xs"><FileText className="w-4 h-4 mr-1" />Overview</TabsTrigger>
-              <TabsTrigger value="memories" className="text-xs"><Brain className="w-4 h-4 mr-1" />Memories</TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs"><Activity className="w-4 h-4 mr-1" />Activity</TabsTrigger>
-              <TabsTrigger value="related" className="text-xs"><GitBranch className="w-4 h-4 mr-1" />Related</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-xs"><TrendingUp className="w-4 h-4 mr-1" />Analytics</TabsTrigger>
-              <TabsTrigger value="timeline" className="text-xs"><History className="w-4 h-4 mr-1" />Timeline</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-6 nav-tabs p-1 mb-4">
+              <TabsTrigger value="overview" className="nav-tab text-xs"><FileText className="w-4 h-4 mr-1" />Overview</TabsTrigger>
+              <TabsTrigger value="memories" className="nav-tab text-xs"><Brain className="w-4 h-4 mr-1" />Memories</TabsTrigger>
+              <TabsTrigger value="activity" className="nav-tab text-xs"><Activity className="w-4 h-4 mr-1" />Activity</TabsTrigger>
+              <TabsTrigger value="related" className="nav-tab text-xs"><GitBranch className="w-4 h-4 mr-1" />Related</TabsTrigger>
+              <TabsTrigger value="analytics" className="nav-tab text-xs"><TrendingUp className="w-4 h-4 mr-1" />Analytics</TabsTrigger>
+              <TabsTrigger value="timeline" className="nav-tab text-xs"><History className="w-4 h-4 mr-1" />Timeline</TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto">
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6 mt-0">
                 {/* Task Description */}
-                <div className="bg-gray-900/30 p-5 rounded-lg border border-gray-700">
-                  <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="card card-glass-subtle card-padding">
+                  <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Task Description
                   </h4>
@@ -328,7 +330,7 @@ const EnhancedTaskDetailDialog: React.FC<EnhancedTaskDetailDialogProps> = ({
                       value={editedTask.description || ''}
                       onChange={(e) => setEditedTask({...editedTask, description: e.target.value})}
                       placeholder="Add a detailed description of this task..."
-                      className="min-h-[120px] bg-gray-700 border-gray-600 text-white resize-none"
+                      className="min-h-[120px] bg-input border-border text-primary resize-none"
                     />
                   ) : task.description ? (
                     <div className="prose prose-sm max-w-none">
