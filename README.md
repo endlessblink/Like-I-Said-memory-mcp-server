@@ -7,20 +7,26 @@
 
 Turn Claude Desktop into your intelligent project manager. Track tasks, remember context, and maintain continuity across sessions.
 
-## 🚀 v3.0.0-alpha.2 Released - Major Intelligence Upgrade!
+## 🚀 v3.0.0 Released - Socket Architecture & Intelligence Upgrade!
 
-> **🔥 Alpha Release (August 2025)**: Version 3.0.0-alpha.2 introduces powerful AI features:
+> **🔥 Major Release (August 2025)**: Version 3.0.0 solves duplicate process issues and adds AI features:
+> - 🆕 **Socket-Based Architecture** - HTTP/SSE mode prevents duplicate processes (fixes API Error 500!)
 > - ✅ **Fuzzy Search** - Typo-tolerant search with Fuse.js (handles "serch" → "search")
 > - ✅ **Universal Work Detector** - Automatically captures work patterns and creates memories
 > - ✅ **Enhanced Search** - Multi-mode search combining exact, expanded, semantic, and fuzzy results
 > - ✅ **Windows Integration** - Improved cross-platform support with Windows-specific scripts
 > 
+> **🔒 No More Duplicates**: Port binding ensures only ONE instance can run!
 > **📊 Search Intelligence**: Now finds 700+ memories with typo-tolerant matching!
 > **🤖 Work Detection**: Automatically identifies problem-solving, implementation, and configuration work!
 > 
 > ```bash
-> npm install @endlessblink/like-i-said-v2@3.0.0-alpha.2
-> npm run build  # Build dashboard with new features
+> # New HTTP mode (prevents duplicates!)
+> export MCP_TRANSPORT=http
+> node server-markdown.js
+> 
+> # Or classic stdio mode
+> npm install @endlessblink/like-i-said-v2@3.0.0
 > ```
 
 ## 📚 Table of Contents

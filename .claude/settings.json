@@ -1,4 +1,12 @@
 {
   "mcpServers": {
+    "like-i-said-unified": {
+      "command": "node",
+      "args": ["server-unified.js"],
+      "env": { 
+        "MCP_MODE": "full",
+        "MCP_QUIET": "true"
+      }
     }
   }
+}

@@ -39,6 +39,24 @@ Guidance for Claude Code when working with the Like-I-Said MCP Server v2 reposit
 - **Update status**: `in_progress` when starting, `done` when complete, `blocked` if stuck
 - **Skip tasks for**: Simple queries, explanations, single-line fixes
 
+## 🚨 CRITICAL DEVELOPMENT RULES
+
+### NEVER Add Demo/Placeholder Data
+**ABSOLUTELY NEVER add static, demo, placeholder, or test data to the database during development!**
+- ❌ NO demo users
+- ❌ NO placeholder content
+- ❌ NO static test data
+- ❌ NO hardcoded example data
+- ❌ NO pre-populated fields with fake data
+
+**Why:** Demo data ruins the entire debug and testing cycle, making it impossible to test real functionality.
+
+**Instead:**
+- ✅ Use real user interactions for testing
+- ✅ Create data through actual application flow
+- ✅ Test with empty/clean database states
+- ✅ Use environment-specific test databases if needed
+
 ## Development Commands
 
 ```bash
@@ -49,11 +67,17 @@ npm run start:dashboard  # API only
 
 # Production
 npm run build            # Build frontend
-npm start                # Start MCP server
+npm start                # Start unified MCP server
+
+# Server Modes (Environment Variables)
+MCP_MODE=minimal node server-unified.js    # 11 core tools only
+MCP_MODE=ai node server-unified.js         # 17 tools (core + AI)
+MCP_MODE=full node server-unified.js       # All 31 tools (default)
 
 # Testing
 npm test                 # Run tests
 npm run test:mcp         # Test MCP server
+node test-unified-server.js  # Test all modes and functionality
 
 # Installation
 claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
@@ -62,16 +86,44 @@ npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install  # Alternative
 
 ## Architecture
 
+### 🚀 Unified MCP Server (v2.5)
+
+**Problem Solved**: Consolidates functionality from multiple servers into one configurable system while maintaining API Error 500 safety.
+
+**Solution**: Single server with plugin architecture and configurable modes for different use cases.
+
 ### Core Components
 
-1. **MCP Server** (`server-markdown.js`) - 12 tools, markdown storage, auto-linking
-2. **API Server** (`dashboard-server-bridge.js`) - REST API, WebSocket, port 3001
-3. **React Dashboard** (`src/App.tsx`) - TypeScript UI, real-time updates
+1. **Unified Server** (`server-unified.js`) - Single configurable MCP server with 31 tools
+2. **Plugin System** - Modular architecture with lazy loading for optional features
+3. **Dashboard API** (`dashboard-server-bridge.js`) - REST API, WebSocket, port 3001
+4. **React Dashboard** (`src/App.tsx`) - TypeScript UI, real-time updates
+
+### Server Modes
+
+**Minimal Mode** (`MCP_MODE=minimal`): 11 core tools
+- Memory: add_memory, get_memory, list_memories, search_memories, delete_memory
+- Tasks: create_task, update_task, list_tasks, get_task_context, delete_task 
+- Utility: test_tool
+
+**AI Mode** (`MCP_MODE=ai`): 17 tools (core + AI)
+- All minimal tools plus Ollama integration, performance analysis, dropoff generation
+
+**Full Mode** (`MCP_MODE=full`): All 31 tools
+- Complete functionality including deduplication, analytics, automation, path management
 
 ### Data Flow
 ```
-MCP Client → MCP Server → File System ← API Bridge → React Dashboard
+MCP Client → Unified Server → Plugin System → File System ← API Bridge → React Dashboard
 ```
+
+### Why This Architecture Works
+
+✅ **Complete Functionality Parity** - All 31 tools from original server available
+✅ **Configurable** - Choose minimal/ai/full based on needs  
+✅ **Plugin Architecture** - Lazy loading prevents startup issues
+✅ **API Error 500 Safe** - No process.exit() calls, graceful error handling
+✅ **Single Source of Truth** - No more confusion about which server to use
 
 ### Storage Schemas
 
@@ -112,8 +164,11 @@ parent_task, subtasks, memory_connections
 ## File Structure
 
 ```
-├── server-markdown.js       # Main MCP server
+├── server-unified.js       # Main unified MCP server (configurable modes)
 ├── dashboard-server-bridge.js # API server
+├── plugins/                # Plugin system
+│   ├── ai-tools-complete.js    # AI tools (6 tools)
+│   └── advanced-features.js    # Advanced tools (14 tools)
 ├── cli.js                  # NPX installer
 ├── lib/                    # Core libraries
 ├── src/                    # React dashboard
@@ -133,16 +188,32 @@ Features: JWT auth, role-based access, session management, account lockout
 
 ## Installation
 
-### Quick Install
-```bash
-# Claude Code users
-claude mcp add like-i-said-memory-v2 -- npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2
+### 🚀 Proxy Installation (Recommended for WSL2/Claude Code)
 
-# Alternative with auto-config
-npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
+**Step 1: Start Dashboard Server (once)**
+```bash
+cd /path/to/like-i-said-mcp
+node dashboard-server-bridge.js &
+# Dashboard runs on port 8776-8777
 ```
 
-### Manual IDE Configuration
+**Step 2: Configure Claude Code** (`~/.claude/mcp_settings.json`):
+```json
+{
+  "mcpServers": {
+    "like-i-said-mcp": {
+      "command": "node",
+      "args": ["/path/to/like-i-said-mcp/server-markdown-proxy.js"]
+    }
+  }
+}
+```
+
+**Step 3: Restart Claude Code**
+
+That's it! The proxy will connect to the dashboard automatically.
+
+### Alternative: Direct Server Mode (if not using WSL2)
 
 **Cursor** (`~/.cursor/mcp.json`) / **Windsurf** (`~/.codeium/windsurf/mcp_config.json`):
 ```json
@@ -150,19 +221,30 @@ npx -p @endlessblink/like-i-said-v2@latest like-i-said-v2 install
   "mcpServers": {
     "like-i-said-memory-v2": {
       "command": "node",
-      "args": ["/absolute/path/to/mcp-server-wrapper.js"],
+      "args": ["/absolute/path/to/server-markdown.js"],
       "env": { "MCP_QUIET": "true" }
     }
   }
 }
 ```
 
+### Migration Script (for existing users)
+
+```bash
+# Automated migration to proxy architecture
+./migrate-to-proxy.sh
+```
+
 ## Key Features
 
+- **API Error 500 Fixed**: Proxy architecture eliminates duplicate process issues permanently
+- **WSL2 Safe**: No aggressive process killing that crashes other MCP servers
 - **Auto-linking**: Tasks and memories connect based on content similarity
 - **Data Protection**: Automatic backups, integrity checks, concurrent operation safety
 - **Real-time Updates**: WebSocket for dashboard, file watching with chokidar
 - **Project Organization**: Memories and tasks organized by project context
+- **Lightweight**: 271-line proxy vs 5000+ line monolithic server
+- **Multiple Clients**: Safe concurrent connections from multiple Claude Code windows
 
 ## 🔧 MCP Hierarchy Error Prevention (CRITICAL)
 
@@ -223,7 +305,7 @@ node scripts/safe-mcp-workflow.js validate "Project Name"
 ## File Organization
 
 ### Root Directory - ONLY These Files
-- **Entry points**: `server.js`, `server-markdown.js`, `cli.js`, `dashboard-server-bridge.js`
+- **Entry points**: `server-unified.js`, `cli.js`, `dashboard-server-bridge.js`
 - **Config**: `package.json`, `vite.config.ts`, `tsconfig.json`, build configs
 - **Project**: `README.md`, `CLAUDE.md`, `.gitignore`
 
@@ -243,6 +325,8 @@ node scripts/safe-mcp-workflow.js validate "Project Name"
 
 ## Current Status
 
-**Version 2.3.7** - Stable MCP server with 12 tools, React dashboard, task-memory auto-linking, real-time updates.
+**Version 2.5** - Unified MCP server with complete functionality restoration while maintaining API Error 500 safety.
 
-**Active Development**: Performance optimizations, advanced analytics.
+**Production Ready**: All 31 tools from original server consolidated into single configurable server with plugin architecture.
+
+**Key Achievement**: Complete functionality parity with original server while eliminating confusion of multiple server files. Plugin system with lazy loading ensures reliable startup across all modes.

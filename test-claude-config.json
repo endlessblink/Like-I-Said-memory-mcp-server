@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "like-i-said-unified-test": {
+      "command": "node",
+      "args": ["/mnt/d/APPSNospaces/like-i-said-mcp/server-unified.js"],
+      "env": { 
+        "MCP_MODE": "minimal",
+        "MCP_QUIET": "true"
+      }
+    }
+  }
+}
