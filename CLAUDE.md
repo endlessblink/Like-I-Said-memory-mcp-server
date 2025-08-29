@@ -57,6 +57,42 @@ Guidance for Claude Code when working with the Like-I-Said MCP Server v2 reposit
 - ✅ Test with empty/clean database states
 - ✅ Use environment-specific test databases if needed
 
+## 🔧 Claude Code WSL2 Configuration (CRITICAL)
+
+**For Claude Code users on WSL2, update this EXACT file location:**
+
+### **File**: `/home/endlessblink/.claude.json`
+### **Section**: `mcpServers` → `like-i-said`
+
+**BEFORE (Old Configuration):**
+```json
+"like-i-said": {
+  "type": "stdio",
+  "command": "node",
+  "args": ["/mnt/d/APPSNospaces/like-i-said-mcp/server-minimal.js"],
+  "env": {"MCP_MODE": "true"}
+}
+```
+
+**AFTER (Unified Server - All 31 Tools):**
+```json
+"like-i-said": {
+  "type": "stdio", 
+  "command": "node",
+  "args": ["/mnt/d/APPSNospaces/like-i-said-mcp/server-unified.js"],
+  "env": {"MCP_MODE": "full"}
+}
+```
+
+### **Quick Update Command:**
+```bash
+jq '.mcpServers."like-i-said".args[0] = "/mnt/d/APPSNospaces/like-i-said-mcp/server-unified.js" | .mcpServers."like-i-said".env.MCP_MODE = "full"' ~/.claude.json > /tmp/claude_updated.json && mv /tmp/claude_updated.json ~/.claude.json
+```
+
+**⚠️ IMPORTANT**: Restart Claude Code after making this change!
+
+---
+
 ## Development Commands
 
 ```bash
