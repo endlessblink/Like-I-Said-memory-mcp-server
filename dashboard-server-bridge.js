@@ -13,6 +13,7 @@ import { spawn } from 'child_process';
 import { MemoryFormat } from './lib/memory-format.js';
 import { TaskStorage } from './lib/task-storage.js';
 import { MemoryStorageWrapper } from './lib/memory-storage-wrapper.js';
+import { UnifiedMemoryStorage, UnifiedTaskStorage } from './lib/unified-storage-adapter.js';
 import { SystemSafeguards } from './lib/system-safeguards.js';
 import { FileSystemMonitor } from './lib/file-system-monitor.js';
 import { ContentAnalyzer } from './lib/content-analyzer.js';
@@ -51,8 +52,12 @@ class DashboardBridge {
     this.memoriesDir = paths.memories;
     this.tasksDir = paths.tasks;
     
-    this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
-    this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
+    this.memoryStorage = new UnifiedMemoryStorage(this.memoriesDir);
+    this.taskStorage = new UnifiedTaskStorage(this.tasksDir);
+    
+    // Initialize unified storage systems
+    this.initPromise = this.initializeStorage();
+    
     this.safeguards = new SystemSafeguards();
     this.contentAnalyzer = new ContentAnalyzer();
     
@@ -547,6 +552,18 @@ class DashboardBridge {
     this.wss.on('close', () => {
       clearInterval(pingInterval);
     });
+  }
+
+  async initializeStorage() {
+    try {
+      console.log('📁 Initializing unified storage for dashboard...');
+      await this.memoryStorage.initialize();
+      await this.taskStorage.initialize();
+      console.log('✅ Dashboard unified storage initialized');
+    } catch (error) {
+      console.error('❌ Failed to initialize dashboard unified storage:', error.message);
+      throw error;
+    }
   }
 
   async setupFileWatcher() {
@@ -1466,8 +1483,8 @@ class DashboardBridge {
       this.tasksDir = updateResult.tasks.path;
       
       // Update storage instances
-      this.memoryStorage = new MemoryStorageWrapper(this.memoriesDir);
-      this.taskStorage = new TaskStorage(this.tasksDir, this.memoryStorage);
+      this.memoryStorage = new UnifiedMemoryStorage(this.memoriesDir);
+      this.taskStorage = new UnifiedTaskStorage(this.tasksDir);
       
       // Log the storage status
       const memories = await this.memoryStorage.listMemories();
@@ -3272,6 +3289,9 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
   }
 
   async start() {
+    // Initialize unified storage first
+    await this.initPromise;
+    
     // Initialize async components
     await this.setupFileWatcher();
     

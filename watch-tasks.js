@@ -162,68 +162,33 @@ async function loadTasks() {
     // Look for tasks in the project's own task directory
     const localTasksDir = path.join(currentProjectDir, 'tasks');
     
-    // Universal approach: Try local first, then central system
-    if (fs.existsSync(localTasksDir)) {
-      // LOCAL TASK MODE: Use the same logic as working local monitor
-      console.log(`🔍 Reading local tasks from: ${localTasksDir}`);
-      
-      let allTasks = [];
-      const subDirs = fs.readdirSync(localTasksDir, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
-      
-      for (const subDir of subDirs) {
-        const tasksFile = path.join(localTasksDir, subDir, 'tasks.json');
-        if (fs.existsSync(tasksFile)) {
-          try {
-            const tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf8'));
-            const tasks = Array.isArray(tasksData) ? tasksData : [tasksData];
-            allTasks.push(...tasks);
-          } catch (error) {
-            console.error(`Warning: Could not read ${tasksFile}:`, error.message);
-          }
-        }
-      }
-      
-      // Filter tasks (same as local monitor)
-      let filteredTasks = allTasks.filter(task => task.status !== 'done');
-      if (config.filter === 'active') {
-        filteredTasks = filteredTasks.filter(task => ['todo', 'in_progress'].includes(task.status));
-      } else if (config.filter && config.filter !== 'active') {
-        filteredTasks = filteredTasks.filter(task => task.status === config.filter);
-      }
-      
-      // Apply sorting for optimal productivity viewing
-      const sortedTasks = sortTasks(filteredTasks, config.sort);
-      
-      connectionStatus = 'connected';
-      return formatTasksForLiveMonitor(sortedTasks, { filter: config.filter, project: projectName });
-      
-    } else {
-      // CENTRAL MCP MODE: Fall back to Like-I-Said system
-      const { TaskStorage } = await import('./lib/task-storage.js').catch(e => {
-        throw new Error(`Failed to import task storage: ${e.message}`);
-      });
-      
-      const taskStorage = new TaskStorage();
-      const filterArgs = {
-        project: config.project,
-        ...(config.filter !== 'active' && { status: config.filter })
-      };
-      
-      let taskData = await taskStorage.listTasks(filterArgs);
-      let tasks = Array.isArray(taskData) ? taskData : (taskData?.tasks || []);
-      
-      if (config.filter === 'active') {
-        tasks = tasks.filter(task => ['todo', 'in_progress'].includes(task.status));
-      }
-      
-      // Apply sorting for central tasks too
-      const sortedTasks = sortTasks(tasks, config.sort);
-      
-      connectionStatus = 'connected';
-      return formatTasksForLiveMonitor(sortedTasks, { filter: config.filter, project: config.project });
+    // UNIVERSAL MODE: Always use consolidated Like-I-Said MCP system
+    console.log(`🔍 Connecting to consolidated Like-I-Said MCP system`);
+    console.log(`📁 Project filter: ${config.project}`);
+    
+    const { TaskStorage } = await import('./lib/task-storage.js').catch(e => {
+      throw new Error(`Failed to import task storage: ${e.message}`);
+    });
+    
+    const taskStorage = new TaskStorage();
+    const filterArgs = {
+      project: config.project,
+      ...(config.filter !== 'active' && { status: config.filter })
+    };
+    
+    let taskData = await taskStorage.listTasks(filterArgs);
+    let tasks = Array.isArray(taskData) ? taskData : (taskData?.tasks || []);
+    
+    // Apply active filter if needed
+    if (config.filter === 'active') {
+      tasks = tasks.filter(task => ['todo', 'in_progress'].includes(task.status));
     }
+    
+    // Apply optimal sorting
+    const sortedTasks = sortTasks(tasks, config.sort);
+    
+    connectionStatus = 'connected';
+    return formatTasksForLiveMonitor(sortedTasks, { filter: config.filter, project: config.project });
     
   } catch (error) {
     connectionStatus = 'error';
