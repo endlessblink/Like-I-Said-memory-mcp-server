@@ -351,7 +351,8 @@ class DashboardBridge {
     this.app.post('/api/quality/validate/:id', requireAuth(), this.validateMemoryQuality.bind(this));
     
     // Protected MCP Tool Routes - MUST come after specific routes to avoid conflicts
-    this.app.post('/api/mcp-tools/:toolName', requireAuth(), this.callMcpTool.bind(this));
+    this.app.get('/api/mcp-tools/list-tools', this.listMcpTools.bind(this)); // No auth for proxy
+    this.app.post('/api/mcp-tools/:toolName', this.callMcpToolDirect.bind(this)); // No auth for proxy
 
     // Settings Management Routes (partially protected)
     this.app.get('/api/settings', this.getSettings.bind(this)); // Public - to check auth status
@@ -3860,6 +3861,544 @@ ${diagnostics.recommendations.map(r => `   • ${r}`).join('\n')}
     } catch (error) {
       console.error('Error exporting reflection data:', error);
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * List available MCP tools for proxy server
+   * Direct execution without spawning new processes
+   */
+  async listMcpTools(req, res) {
+    try {
+      // Return the same tool definitions that the MCP server would provide
+      const tools = [
+        {
+          name: 'add_memory',
+          description: 'AUTOMATICALLY use when user shares important information, code snippets, decisions, learnings, or context that should be remembered for future sessions. Includes smart categorization and auto-linking.',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'The memory content to store', minLength: 1 },
+              tags: { type: 'array', items: { type: 'string' }, description: 'Optional tags for the memory' },
+              category: { type: 'string', description: 'Memory category (personal, work, code, research, conversations, preferences)' },
+              project: { type: 'string', description: 'Project name to organize memory files' },
+              priority: { type: 'string', description: 'Priority level (low, medium, high)' },
+              status: { type: 'string', description: 'Memory status (active, archived, reference)' },
+              related_memories: { type: 'array', items: { type: 'string' }, description: 'IDs of related memories for cross-referencing' },
+              language: { type: 'string', description: 'Programming language for code content' }
+            },
+            required: ['content'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'get_memory',
+          description: 'Retrieve a memory by ID',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'The memory ID to retrieve' }
+            },
+            required: ['id'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'list_memories',
+          description: 'List all stored memories or memories from a specific project',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              limit: { type: 'integer', description: 'Maximum number of memories to return', minimum: 1 },
+              project: { type: 'string', description: 'Filter by project name' }
+            },
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'delete_memory',
+          description: 'Delete a memory by ID',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'The memory ID to delete' }
+            },
+            required: ['id'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'search_memories',
+          description: 'AUTOMATICALLY use when user asks about past work, previous decisions, looking for examples, or needs context from earlier sessions. Provides semantic and keyword-based search.',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query', minLength: 1 },
+              project: { type: 'string', description: 'Limit search to specific project' }
+            },
+            required: ['query'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'test_tool',
+          description: 'Simple test tool to verify MCP is working',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              message: { type: 'string', description: 'Test message', minLength: 1 }
+            },
+            required: ['message'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'create_task',
+          description: 'Create a new task with intelligent memory linking. Tasks start in "todo" status.',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Task title', minLength: 1 },
+              description: { type: 'string', description: 'Detailed task description', minLength: 1 },
+              project: { type: 'string', description: 'Project identifier' },
+              category: { type: 'string', description: 'Task category' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Task priority' },
+              status: { type: 'string', enum: ['todo', 'in_progress', 'done', 'blocked'], description: 'Task status' },
+              tags: { type: 'array', items: { type: 'string' }, description: 'Task tags' },
+              parent_task: { type: 'string', description: 'Parent task ID for subtasks' },
+              depends_on: { type: 'array', items: { type: 'string' }, description: 'Task IDs this task depends on' },
+              blocks: { type: 'array', items: { type: 'string' }, description: 'Task IDs blocked by this task' },
+              memory_connections: { type: 'array', items: { type: 'string' }, description: 'Related memory IDs' }
+            },
+            required: ['title', 'description'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'update_task',
+          description: 'Update existing task status or details. Use this to track progress on tasks.',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Task ID to update' },
+              status: { type: 'string', enum: ['todo', 'in_progress', 'done', 'blocked'], description: 'New task status' },
+              description: { type: 'string', description: 'Updated task description' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Updated priority' },
+              completion_notes: { type: 'string', description: 'Notes about task completion' }
+            },
+            required: ['id'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'list_tasks',
+          description: 'List tasks with optional filtering',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              project: { type: 'string', description: 'Filter by project' },
+              status: { type: 'string', enum: ['todo', 'in_progress', 'done', 'blocked'], description: 'Filter by status' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Filter by priority' },
+              include_subtasks: { type: 'boolean', description: 'Include subtasks in response', default: true },
+              limit: { type: 'integer', description: 'Maximum number of tasks to return', minimum: 1 }
+            },
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'get_task_context',
+          description: 'Get full context for a task including related memories and subtasks',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Task ID to get context for' },
+              include_memories: { type: 'boolean', description: 'Include related memories', default: true },
+              include_subtasks: { type: 'boolean', description: 'Include subtasks', default: true },
+              include_dependencies: { type: 'boolean', description: 'Include dependency information', default: true }
+            },
+            required: ['id'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'delete_task',
+          description: 'Delete a task',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Task ID to delete' }
+            },
+            required: ['id'],
+            additionalProperties: false
+          }
+        },
+        {
+          name: 'generate_dropoff',
+          description: 'Generate conversation dropoff document for session handoff',
+          inputSchema: {
+            "$schema": "https://json-schema.org/draft-07/schema",
+            type: 'object',
+            properties: {
+              session_summary: { type: 'string', description: 'Brief summary of work done in this session', default: 'Session work completed' },
+              include_recent_memories: { type: 'boolean', description: 'Include recent memories in the dropoff', default: true },
+              include_git_status: { type: 'boolean', description: 'Include git status and recent commits', default: true },
+              recent_memory_count: { type: 'integer', description: 'Number of recent memories to include', default: 5, minimum: 1 },
+              output_format: { type: 'string', description: 'Output format: markdown or json', enum: ['markdown', 'json'], default: 'markdown' },
+              output_path: { type: 'string', description: 'Custom output directory path', default: null }
+            },
+            additionalProperties: false
+          }
+        }
+      ];
+      
+      res.json({ tools });
+    } catch (error) {
+      console.error('[Dashboard] Error listing MCP tools:', error);
+      res.status(500).json({ 
+        isError: true, 
+        content: [{ type: 'text', text: `Failed to list tools: ${error.message}` }] 
+      });
+    }
+  }
+
+  /**
+   * Execute MCP tool directly without spawning process
+   * Uses existing storage instances for state management
+   */
+  async callMcpToolDirect(req, res) {
+    const { toolName } = req.params;
+    const args = req.body || {};
+    
+    try {
+      console.log(`[Dashboard] Executing MCP tool directly: ${toolName}`);
+      
+      let result;
+      
+      // Execute tools using existing storage instances
+      switch (toolName) {
+        // Memory tools
+        case 'add_memory': {
+          // Use the memory format module directly
+          const { MemoryFormat } = await import('./lib/memory-format.js');
+          const fs = await import('fs');
+          const path = await import('path');
+          
+          // Simple category detection inline
+          const detectCategory = (content) => {
+            const lowerContent = content.toLowerCase();
+            if (lowerContent.includes('function') || lowerContent.includes('class') || lowerContent.includes('const')) return 'code';
+            if (lowerContent.includes('research') || lowerContent.includes('study')) return 'research';
+            if (lowerContent.includes('task') || lowerContent.includes('todo')) return 'work';
+            if (lowerContent.includes('note') || lowerContent.includes('idea')) return 'notes';
+            return 'general';
+          };
+          
+          // Simple complexity detection inline  
+          const detectComplexity = (memory) => {
+            const contentLength = memory.content.length;
+            const hasCode = /```|function|class|const|let|var/.test(memory.content);
+            const hasTags = memory.tags && memory.tags.length > 0;
+            
+            if (contentLength > 2000 || (hasCode && contentLength > 500)) return 4;
+            if (contentLength > 1000 || hasCode) return 3;
+            if (contentLength > 500 || hasTags) return 2;
+            return 1;
+          };
+          
+          // Create memory object with proper structure
+          const memory = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            content: args.content,
+            tags: args.tags || [],
+            category: args.category || detectCategory(args.content),
+            project: args.project || 'default',
+            priority: args.priority || 'medium',
+            status: args.status || 'active',
+            related_memories: args.related_memories || [],
+            language: args.language,
+            timestamp: new Date().toISOString(),
+            access_count: 0,
+            last_accessed: new Date().toISOString()
+          };
+          
+          // Add complexity
+          memory.complexity = detectComplexity(memory);
+          
+          // Format as markdown using the correct method name
+          const markdownContent = MemoryFormat.generateMarkdownContent(memory);
+          
+          // Save to file
+          const projectDir = path.join(this.memoriesDir, memory.project || 'default');
+          if (!fs.existsSync(projectDir)) {
+            fs.mkdirSync(projectDir, { recursive: true });
+          }
+          
+          const filename = `memory-${memory.id}.md`;
+          const filepath = path.join(projectDir, filename);
+          fs.writeFileSync(filepath, markdownContent, 'utf8');
+          
+          // Auto-link with tasks
+          if (this.taskMemoryLinker && memory && memory.id) {
+            await this.taskMemoryLinker.analyzeAndLink(memory.id);
+          }
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `Memory saved successfully with ID: ${memory.id}\n` +
+                    `Category: ${memory.category}\n` +
+                    `Complexity: L${memory.complexity}\n` +
+                    `Project: ${memory.project}`
+            }]
+          };
+          break;
+        }
+        
+        case 'get_memory': {
+          // Use the memory storage wrapper to get memory
+          const memories = await this.memoryStorage.listMemories();
+          const memory = memories.find(m => m.id === args.id);
+          if (!memory) {
+            throw new Error(`Memory not found: ${args.id}`);
+          }
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(memory, null, 2)
+            }]
+          };
+          break;
+        }
+        
+        case 'list_memories': {
+          const memories = await this.memoryStorage.listMemories(args.limit, args.project);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(memories, null, 2)
+            }]
+          };
+          break;
+        }
+        
+        case 'delete_memory': {
+          // Find and delete the memory file
+          const fs = await import('fs');
+          const path = await import('path');
+          const memories = await this.memoryStorage.listMemories();
+          const memory = memories.find(m => m.id === args.id);
+          
+          if (memory) {
+            const projectDir = path.join(this.memoriesDir, memory.project || 'default');
+            const filename = `memory-${memory.id}.md`;
+            const filepath = path.join(projectDir, filename);
+            if (fs.existsSync(filepath)) {
+              fs.unlinkSync(filepath);
+            }
+          }
+          result = {
+            content: [{
+              type: 'text',
+              text: `Memory ${args.id} deleted successfully`
+            }]
+          };
+          break;
+        }
+        
+        case 'search_memories': {
+          // Search memories using the memory storage wrapper
+          const memories = await this.memoryStorage.listMemories();
+          const query = args.query.toLowerCase();
+          const results = memories.filter(m => {
+            if (args.project && m.project !== args.project) return false;
+            return m.content.toLowerCase().includes(query) ||
+                   (m.tags && m.tags.some(t => t.toLowerCase().includes(query)));
+          });
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(results, null, 2)
+            }]
+          };
+          break;
+        }
+        
+        // Task tools
+        case 'create_task': {
+          // Create task using the same method as the dashboard
+          const newTask = {
+            title: args.title,
+            description: args.description,
+            project: args.project || 'default',
+            category: args.category || 'task',
+            priority: args.priority || 'medium',
+            status: args.status || 'todo',
+            tags: args.tags || [],
+            parent_task: args.parent_task,
+            depends_on: args.depends_on || [],
+            blocks: args.blocks || [],
+            memory_connections: args.memory_connections || []
+          };
+          
+          const task = await this.taskStorage.saveTask(newTask);
+          
+          // Auto-link with memories
+          if (this.taskMemoryLinker && task && task.id) {
+            await this.taskMemoryLinker.analyzeAndLinkTask(task.id);
+          }
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `Task created successfully!\n` +
+                    `ID: ${task.id}\n` +
+                    `Serial: ${task.serial || task.id.substring(0,8)}\n` +
+                    `Title: ${task.title}\n` +
+                    `Status: ${task.status}\n` +
+                    `Priority: ${task.priority}`
+            }]
+          };
+          break;
+        }
+        
+        case 'update_task': {
+          const task = await this.taskStorage.updateTask(args.id, {
+            status: args.status,
+            description: args.description,
+            priority: args.priority,
+            completion_notes: args.completion_notes
+          });
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `Task ${task.serial} updated successfully.\n` +
+                    `Status: ${task.status}\n` +
+                    (args.completion_notes ? `Completion notes: ${args.completion_notes}` : '')
+            }]
+          };
+          break;
+        }
+        
+        case 'list_tasks': {
+          const tasks = await this.taskStorage.listTasks({
+            project: args.project,
+            status: args.status,
+            priority: args.priority,
+            include_subtasks: args.include_subtasks !== false,
+            limit: args.limit
+          });
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(tasks, null, 2)
+            }]
+          };
+          break;
+        }
+        
+        case 'get_task_context': {
+          const context = await this.taskStorage.getTaskContext(args.id, {
+            include_memories: args.include_memories !== false,
+            include_subtasks: args.include_subtasks !== false,
+            include_dependencies: args.include_dependencies !== false
+          });
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(context, null, 2)
+            }]
+          };
+          break;
+        }
+        
+        case 'delete_task': {
+          await this.taskStorage.deleteTask(args.id);
+          result = {
+            content: [{
+              type: 'text',
+              text: `Task ${args.id} deleted successfully`
+            }]
+          };
+          break;
+        }
+        
+        // Special tools
+        case 'test_tool': {
+          result = {
+            content: [{
+              type: 'text',
+              text: `✅ MCP Proxy is working!\nMessage received: ${args.message}\nTimestamp: ${new Date().toISOString()}`
+            }]
+          };
+          break;
+        }
+        
+        case 'generate_dropoff': {
+          // Import the dropoff generator module
+          const { DropoffGenerator } = await import('./lib/dropoff-generator.js');
+          const dropoffGenerator = new DropoffGenerator();
+          
+          const dropoffContent = await dropoffGenerator.generateDropoff({
+            sessionSummary: args.session_summary || 'Session work completed',
+            includeRecentMemories: args.include_recent_memories !== false,
+            includeGitStatus: args.include_git_status !== false,
+            recentMemoryCount: args.recent_memory_count || 5,
+            outputFormat: args.output_format || 'markdown'
+          });
+          
+          // Save the dropoff to a file
+          const fs = await import('fs');
+          const path = await import('path');
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `SESSION-DROPOFF-${timestamp}.md`;
+          const outputDir = args.output_path || '.';
+          const filepath = path.join(outputDir, filename);
+          
+          if (args.output_format === 'markdown' || !args.output_format) {
+            fs.writeFileSync(filepath, dropoffContent, 'utf8');
+          }
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: args.output_format === 'json' 
+                ? `Session dropoff generated (JSON format):\n\n${dropoffContent}`
+                : `Session dropoff generated successfully!\n\nFile: ${filename}\nLocation: ${filepath}\n\nContent Preview:\n\n${dropoffContent.substring(0, 500)}${dropoffContent.length > 500 ? '...' : ''}`
+            }]
+          };
+          break;
+        }
+        
+        default:
+          throw new Error(`Unknown tool: ${toolName}`);
+      }
+      
+      // Return result in MCP format
+      res.json(result);
+      
+    } catch (error) {
+      console.error(`[Dashboard] Error executing tool ${toolName}:`, error);
+      res.status(500).json({
+        isError: true,
+        content: [{
+          type: 'text',
+          text: `Tool execution failed: ${error.message}`
+        }]
+      });
     }
   }
 }

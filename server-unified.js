@@ -20,17 +20,26 @@ import fs from 'fs';
 import path from 'path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import express from 'express';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import { spawn } from 'child_process';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { fileURLToPath } from 'url';
+import { formatTasksForTerminal } from './lib/terminal-formatter.js';
+import { UnifiedMemoryStorage, UnifiedTaskStorage } from './lib/unified-storage-adapter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
 const CONFIG = {
   mode: process.env.MCP_MODE || 'minimal', // minimal, ai, full
+  transport: process.env.MCP_TRANSPORT || 'stdio', // stdio, http
+  dashboard: process.env.MCP_DASHBOARD === 'true' || process.env.MCP_TRANSPORT === 'http',
+  port: parseInt(process.env.PORT) || 8776,
   plugins: {
     'ai-tools': process.env.MCP_AI_TOOLS === 'true' || ['ai', 'full'].includes(process.env.MCP_MODE),
     'advanced-features': process.env.MCP_ADVANCED === 'true' || process.env.MCP_MODE === 'full'
@@ -452,18 +461,80 @@ class PluginManager {
   }
 }
 
+// Dashboard integration for HTTP mode
+async function startDashboard(port, logger) {
+  if (!CONFIG.dashboard) return null;
+  
+  logger.info(`Starting integrated dashboard on port ${port}...`);
+  
+  // Start dashboard server bridge as child process
+  const dashboardProcess = spawn('node', ['dashboard-server-bridge.js'], {
+    env: { ...process.env, PORT: port.toString() },
+    stdio: 'pipe'
+  });
+  
+  dashboardProcess.stdout.on('data', (data) => {
+    logger.info(`Dashboard: ${data.toString().trim()}`);
+  });
+  
+  dashboardProcess.stderr.on('data', (data) => {
+    logger.warn(`Dashboard Error: ${data.toString().trim()}`);
+  });
+  
+  return dashboardProcess;
+}
+
+// Port availability checker
+async function isPortAvailable(port) {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once('error', () => resolve(false));
+    server.once('listening', () => {
+      server.close();
+      resolve(true);
+    });
+    server.listen(port, '0.0.0.0');
+  });
+}
+
+// Process cleanup to prevent duplicates
+async function killExistingProcesses(logger) {
+  try {
+    const { execSync } = await import('child_process');
+    
+    // Kill any existing server-unified.js processes (except current)
+    try {
+      execSync(`pkill -f "server-unified.js" || true`, { stdio: 'ignore' });
+      execSync(`pkill -f "dashboard-server-bridge.js" || true`, { stdio: 'ignore' });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      logger.info('Cleaned up existing processes');
+    } catch (error) {
+      // Ignore errors - processes might not exist
+    }
+  } catch (error) {
+    logger.warn('Process cleanup failed:', error.message);
+  }
+}
+
 // Initialize unified server
 async function startUnifiedServer() {
   const logger = new SimpleLogger(CONFIG.logging);
   
   if (CONFIG.startup_message) {
-    logger.info(`Like-I-Said MCP Server starting in ${CONFIG.mode} mode...`);
+    logger.info(`Like-I-Said MCP Server starting in ${CONFIG.mode} mode (${CONFIG.transport} transport)...`);
   }
+  
+  // Prevent duplicate processes
+  await killExistingProcesses(logger);
 
-  // Setup services
+  // Setup services with Unified Storage
   const services = new ServiceRegistry();
-  const memoryStorage = new MinimalStorage();
-  const taskStorage = new MinimalTaskStorage();
+  const memoryStorage = new UnifiedMemoryStorage();
+  const taskStorage = new UnifiedTaskStorage();
+  
+  // Initialize unified storage systems
+  await memoryStorage.initialize();
+  await taskStorage.initialize();
   
   services.register('memory-storage', memoryStorage);
   services.register('task-storage', taskStorage);
@@ -576,13 +647,23 @@ async function startUnifiedServer() {
     },
     {
       name: 'list_tasks',
-      description: 'List all tasks with optional filters',
+      description: 'List all tasks with optional filters and formatting options',
       inputSchema: {
         type: 'object',
         properties: {
           status: { type: 'string' },
           project: { type: 'string' },
-          priority: { type: 'string' }
+          priority: { type: 'string' },
+          format: { 
+            type: 'string', 
+            enum: ['json', 'terminal'],
+            description: 'Output format - json for API use, terminal for human-readable display'
+          },
+          filter: { 
+            type: 'string', 
+            enum: ['active', 'todo', 'in_progress', 'done', 'blocked'],
+            description: 'Quick filter - active shows todo and in_progress tasks'
+          }
         }
       }
     },
@@ -682,7 +763,24 @@ async function startUnifiedServer() {
           result = await taskStorage.updateTask(args.id, args);
           break;
         case 'list_tasks':
-          result = await taskStorage.listTasks(args);
+          // Get raw task data
+          const taskData = await taskStorage.listTasks(args);
+          
+          // Handle terminal formatting
+          if (args.format === 'terminal') {
+            const formattingOptions = {
+              filter: args.filter || (args.status === 'active' ? 'active' : args.status),
+              showProject: true,
+              showId: true,
+              showSummary: true
+            };
+            
+            // If taskData is an object with tasks array, extract tasks
+            const tasks = Array.isArray(taskData) ? taskData : (taskData.tasks || []);
+            result = formatTasksForTerminal(tasks, formattingOptions);
+          } else {
+            result = taskData;
+          }
           break;
         case 'get_task_context':
           result = await taskStorage.getTaskContext(args.id, args.depth);
@@ -728,14 +826,35 @@ async function startUnifiedServer() {
     }
   });
 
-  // Start server
+  // Start dashboard if requested
+  let dashboardProcess = null;
+  if (CONFIG.dashboard) {
+    // Check port availability
+    if (!(await isPortAvailable(CONFIG.port))) {
+      logger.warn(`Port ${CONFIG.port} is busy. Dashboard will not start.`);
+    } else {
+      dashboardProcess = await startDashboard(CONFIG.port, logger);
+    }
+  }
+
+  // Start MCP server
   const transport = new StdioServerTransport();
   await server.connect(transport);
   
   if (CONFIG.startup_message) {
-    logger.info(`Server started successfully in ${CONFIG.mode} mode`);
+    logger.info(`MCP Server started successfully in ${CONFIG.mode} mode`);
     logger.info(`Plugins loaded: ${pluginManager.getAllPlugins().length}`);
+    if (dashboardProcess) {
+      logger.info(`Dashboard available at: http://localhost:${CONFIG.port}`);
+    }
   }
+  
+  // Handle graceful shutdown of dashboard
+  process.on('exit', () => {
+    if (dashboardProcess) {
+      dashboardProcess.kill();
+    }
+  });
 }
 
 // Handle errors gracefully - no process.exit()

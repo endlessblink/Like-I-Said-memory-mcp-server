@@ -39,6 +39,40 @@ Guidance for Claude Code when working with the Like-I-Said MCP Server v2 reposit
 - **Update status**: `in_progress` when starting, `done` when complete, `blocked` if stuck
 - **Skip tasks for**: Simple queries, explanations, single-line fixes
 
+## 🚨 CRITICAL SINGLE SERVER ARCHITECTURE
+
+### ⚠️ ONLY ONE SERVER AT A TIME
+**ABSOLUTE RULE: Only `server-unified.js` should be running. Never run multiple MCP servers simultaneously.**
+
+- ✅ **USE**: `server-unified.js` - The ONLY server file
+- ❌ **NEVER USE**: `server.js`, `server-markdown.js`, `server-minimal.js` (deleted)
+- ❌ **NEVER RUN**: Multiple instances of any server
+- ❌ **NEVER RUN**: `dashboard-server-bridge.js` separately
+
+### Startup Commands (Choose ONE)
+```bash
+# MCP only (STDIO transport for Claude Code)
+MCP_MODE=full node server-unified.js
+
+# MCP + Dashboard (HTTP transport)
+MCP_TRANSPORT=http MCP_MODE=full node server-unified.js
+
+# Quick dashboard launch
+npm run dashboard:unified
+```
+
+### Process Management Guardrails
+- **Before starting**: Server automatically kills existing instances
+- **Port binding**: Server checks port availability before dashboard startup
+- **Single point of truth**: All MCP tools AND dashboard served from unified server
+- **No conflicts**: Built-in duplicate process prevention
+
+### Why This Architecture
+✅ **MCP Best Practice 2025**: Single server per service eliminates conflicts  
+✅ **Resource efficiency**: No duplicate processes or port conflicts  
+✅ **Data consistency**: Single source of truth for all operations  
+✅ **Simplified debugging**: One process to monitor instead of multiple  
+
 ## 🚨 CRITICAL DEVELOPMENT RULES
 
 ### NEVER Add Demo/Placeholder Data

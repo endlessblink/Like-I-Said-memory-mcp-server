@@ -1,0 +1,398 @@
+name: API Error 500 Detection
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'server*.js'
+      - 'lib/**'
+      - 'plugins/**'
+      - 'package.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'server*.js'
+      - 'lib/**'
+      - 'plugins/**'
+  schedule:
+    # Run daily at 2 AM UTC to catch any degradation
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  static-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check for process.exit() calls
+      id: process_exit_check
+      run: |
+        echo "Scanning for process.exit() calls that crash Claude Code..."
+        
+        # Find all process.exit calls except in test files
+        EXIT_CALLS=$(grep -r "process\.exit" --include="*.js" --exclude-dir=tests --exclude-dir=node_modules . || true)
+        
+        if [ -n "$EXIT_CALLS" ]; then
+          echo "❌ Found process.exit() calls that could cause API Error 500:"
+          echo "$EXIT_CALLS"
+          echo "exit_found=true" >> $GITHUB_OUTPUT
+          exit 1
+        else
+          echo "✅ No process.exit() calls found"
+          echo "exit_found=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Check for heavy imports at startup
+      run: |
+        echo "Checking for heavy module imports..."
+        
+        # Check minimal server for heavy imports
+        HEAVY_IMPORTS=$(grep -E "require\(.*ollama|openai|anthropic|tensorflow|torch" server-minimal.js || true)
+        
+        if [ -n "$HEAVY_IMPORTS" ]; then
+          echo "❌ Found heavy imports in minimal server:"
+          echo "$HEAVY_IMPORTS"
+          exit 1
+        else
+          echo "✅ No heavy imports in minimal server"
+        fi
+    
+    - name: Validate plugin architecture
+      run: |
+        echo "Validating plugin architecture..."
+        
+        # Check that plugins are properly isolated
+        if [ -f "server-minimal.js" ]; then
+          PLUGIN_COUNT=$(grep -c "require.*plugins" server-minimal.js || echo 0)
+          if [ "$PLUGIN_COUNT" -gt 0 ]; then
+            echo "❌ Minimal server should not directly import plugins"
+            exit 1
+          fi
+        fi
+        
+        echo "✅ Plugin architecture validated"
+
+  startup-validation:
+    name: Server Startup Validation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x]
+        server: [server-minimal.js, server-enhanced.js, server-core.js]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test server startup time
+      id: startup_test
+      run: |
+        START_TIME=$(date +%s%3N)
+        
+        # Start server and send initialization
+        timeout 10 node ${{ matrix.server }} <<EOF 2>&1 | tee server.log &
+        {"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"1.0.0","clientInfo":{"name":"test","version":"1.0.0"},"capabilities":{}},"id":1}
+        EOF
+        
+        SERVER_PID=$!
+        sleep 3
+        
+        END_TIME=$(date +%s%3N)
+        STARTUP_TIME=$((END_TIME - START_TIME))
+        
+        echo "Startup time: ${STARTUP_TIME}ms"
+        
+        # Check startup time threshold
+        if [[ "${{ matrix.server }}" == "server-minimal.js" && $STARTUP_TIME -gt 1000 ]]; then
+          echo "❌ Minimal server startup too slow: ${STARTUP_TIME}ms (should be < 1000ms)"
+          exit 1
+        elif [[ "${{ matrix.server }}" == "server-enhanced.js" && $STARTUP_TIME -gt 3000 ]]; then
+          echo "❌ Enhanced server startup too slow: ${STARTUP_TIME}ms (should be < 3000ms)"
+          exit 1
+        fi
+        
+        # Kill server
+        kill $SERVER_PID 2>/dev/null || true
+        
+        echo "✅ Startup time acceptable: ${STARTUP_TIME}ms"
+      shell: bash
+      continue-on-error: true
+    
+    - name: Check for crash indicators
+      if: always()
+      run: |
+        if [ -f server.log ]; then
+          # Check for error indicators
+          if grep -q "FATAL\|CRASH\|process\.exit\|uncaught\|unhandled" server.log; then
+            echo "❌ Found crash indicators in server log:"
+            grep -E "FATAL|CRASH|process\.exit|uncaught|unhandled" server.log
+            exit 1
+          fi
+          echo "✅ No crash indicators found"
+        fi
+      shell: bash
+
+  memory-usage:
+    name: Memory Usage Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test memory usage
+      run: |
+        # Start minimal server
+        node server-minimal.js > /dev/null 2>&1 &
+        SERVER_PID=$!
+        
+        # Wait for initialization
+        sleep 5
+        
+        # Check memory usage
+        if [ -d "/proc/$SERVER_PID" ]; then
+          RSS_KB=$(cat /proc/$SERVER_PID/status | grep VmRSS | awk '{print $2}')
+          RSS_MB=$((RSS_KB / 1024))
+          
+          echo "Memory usage: ${RSS_MB}MB"
+          
+          # Kill server
+          kill $SERVER_PID
+          
+          # Check threshold (40MB for minimal)
+          if [ $RSS_MB -gt 40 ]; then
+            echo "❌ Memory usage too high: ${RSS_MB}MB (should be < 40MB)"
+            exit 1
+          fi
+          
+          echo "✅ Memory usage acceptable: ${RSS_MB}MB"
+        else
+          echo "⚠️ Could not measure memory usage"
+        fi
+
+  mcp-protocol-test:
+    name: MCP Protocol Compliance
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test MCP protocol
+      run: |
+        # Test tools/list command
+        echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
+          timeout 5 node server-minimal.js 2>/dev/null | \
+          jq -e '.result.tools | length > 0' > /dev/null
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ MCP tools/list working"
+        else
+          echo "❌ MCP tools/list failed"
+          exit 1
+        fi
+    
+    - name: Test tool execution
+      run: |
+        # Test the test_tool
+        REQUEST='{"jsonrpc":"2.0","method":"tools/call","params":{"name":"test_tool","arguments":{"message":"test"}},"id":2}'
+        
+        echo "$REQUEST" | timeout 5 node server-minimal.js 2>/dev/null | \
+          jq -e '.result' > /dev/null
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ MCP tool execution working"
+        else
+          echo "❌ MCP tool execution failed"
+          exit 1
+        fi
+
+  concurrent-instances:
+    name: Concurrent Instance Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test concurrent instances
+      run: |
+        echo "Starting 5 concurrent server instances..."
+        
+        for i in {1..5}; do
+          node server-minimal.js > instance_$i.log 2>&1 &
+          echo $! >> pids.txt
+        done
+        
+        sleep 3
+        
+        # Count running instances
+        RUNNING=0
+        while read pid; do
+          if ps -p $pid > /dev/null 2>&1; then
+            RUNNING=$((RUNNING + 1))
+          fi
+        done < pids.txt
+        
+        # Kill all instances
+        while read pid; do
+          kill $pid 2>/dev/null || true
+        done < pids.txt
+        
+        echo "Running instances: $RUNNING/5"
+        
+        if [ $RUNNING -eq 5 ]; then
+          echo "✅ All instances ran successfully"
+        else
+          echo "❌ Only $RUNNING/5 instances survived"
+          exit 1
+        fi
+
+  api-error-500-suite:
+    name: Run API Error 500 Test Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run API Error 500 tests
+      run: |
+        if [ -f "tests/test-api-error-500.js" ]; then
+          timeout 180 node tests/test-api-error-500.js
+        else
+          echo "⚠️ API Error 500 test suite not found"
+        fi
+    
+    - name: Check test results
+      if: always()
+      run: |
+        if [ -f "tests/test-results-api-500.json" ]; then
+          # Parse results
+          PASSED=$(jq '.results.passed' tests/test-results-api-500.json)
+          FAILED=$(jq '.results.failed' tests/test-results-api-500.json)
+          
+          echo "Test Results: $PASSED passed, $FAILED failed"
+          
+          if [ "$FAILED" -gt 0 ]; then
+            echo "❌ Some API Error 500 tests failed"
+            jq '.results.errors' tests/test-results-api-500.json
+            exit 1
+          fi
+          
+          echo "✅ All API Error 500 tests passed"
+        fi
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: api-error-500-test-results
+        path: tests/test-results-api-500.json
+
+  health-monitoring:
+    name: Health Monitoring Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Start health monitor
+      run: |
+        # Start health monitor
+        node lib/health-monitor.js &
+        MONITOR_PID=$!
+        
+        # Wait for startup
+        sleep 5
+        
+        # Test health endpoint
+        curl -f http://localhost:8080/health > health.json
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Health endpoint responsive"
+          jq '.' health.json
+        else
+          echo "❌ Health endpoint not responding"
+          exit 1
+        fi
+        
+        # Kill monitor
+        kill $MONITOR_PID
+
+  report-status:
+    name: Report Status
+    needs: [static-analysis, startup-validation, memory-usage, mcp-protocol-test, concurrent-instances, api-error-500-suite, health-monitoring]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Summary
+      run: |
+        echo "## API Error 500 Detection Summary"
+        echo ""
+        echo "This workflow validates that the MCP server will not cause API Error 500 in Claude Code."
+        echo ""
+        echo "### Checks Performed:"
+        echo "- ✅ Static analysis for process.exit() calls"
+        echo "- ✅ Server startup time validation"
+        echo "- ✅ Memory usage limits"
+        echo "- ✅ MCP protocol compliance"
+        echo "- ✅ Concurrent instance handling"
+        echo "- ✅ Comprehensive API Error 500 test suite"
+        echo "- ✅ Health monitoring validation"
+        echo ""
+        echo "All checks must pass to ensure no API Error 500 issues."

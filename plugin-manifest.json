@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-08-27T19:13:03.787Z",
+  "plugins": {
+    "ai-tools": {
+      "name": "ai-tools",
+      "version": "1.0.0",
+      "description": null,
+      "category": "custom",
+      "path": "plugins/ai-tools.js",
+      "dependencies": [],
+      "provides": [],
+      "requires": [],
+      "optional": [],
+      "enabled": true
+    },
+    "analytics-tools": {
+      "name": "analytics-tools",
+      "version": "1.0.0",
+      "description": null,
+      "category": "custom",
+      "path": "plugins/analytics-tools.js",
+      "dependencies": [],
+      "provides": [],
+      "requires": [],
+      "optional": [],
+      "enabled": true
+    },
+    "memory-tools": {
+      "name": "memory-tools",
+      "version": "1.0.0",
+      "description": null,
+      "category": "custom",
+      "path": "plugins/memory-tools.js",
+      "dependencies": [],
+      "provides": [],
+      "requires": [],
+      "optional": [],
+      "enabled": true
+    },
+    "task-tools": {
+      "name": "task-tools",
+      "version": "1.0.0",
+      "description": null,
+      "category": "custom",
+      "path": "plugins/task-tools.js",
+      "dependencies": [],
+      "provides": [],
+      "requires": [],
+      "optional": [],
+      "enabled": true
+    }
+  },
+  "categories": {
+    "core": [],
+    "tools": [],
+    "storage": [],
+    "ai": [],
+    "analytics": [],
+    "custom": [
+      "ai-tools",
+      "analytics-tools",
+      "memory-tools",
+      "task-tools"
+    ]
+  },
+  "loadOrder": [
+    "ai-tools",
+    "analytics-tools",
+    "memory-tools",
+    "task-tools"
+  ]
+}

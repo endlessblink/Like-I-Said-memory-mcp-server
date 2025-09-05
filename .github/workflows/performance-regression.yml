@@ -1,0 +1,503 @@
+name: Performance Regression Detection
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 4 AM UTC
+    - cron: '0 4 * * *'
+
+jobs:
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Create benchmark script
+      run: |
+        cat > benchmark.js << 'EOF'
+        const { spawn } = require('child_process');
+        const fs = require('fs');
+        
+        class PerformanceBenchmark {
+          constructor() {
+            this.results = {
+              timestamp: new Date().toISOString(),
+              benchmarks: {}
+            };
+          }
+          
+          async measureStartupTime(serverPath) {
+            const startTime = process.hrtime.bigint();
+            
+            const server = spawn('node', [serverPath], {
+              stdio: ['pipe', 'pipe', 'pipe']
+            });
+            
+            return new Promise((resolve) => {
+              let output = '';
+              
+              server.stdout.on('data', (data) => {
+                output += data.toString();
+                
+                // Check if server is ready
+                if (output.includes('started') || output.includes('ready')) {
+                  const endTime = process.hrtime.bigint();
+                  const duration = Number(endTime - startTime) / 1000000; // Convert to ms
+                  
+                  server.kill();
+                  resolve(duration);
+                }
+              });
+              
+              // Timeout after 10 seconds
+              setTimeout(() => {
+                server.kill();
+                resolve(-1);
+              }, 10000);
+              
+              // Send initialization
+              const init = {
+                jsonrpc: '2.0',
+                method: 'initialize',
+                params: {
+                  protocolVersion: '1.0.0',
+                  clientInfo: { name: 'benchmark', version: '1.0.0' },
+                  capabilities: {}
+                },
+                id: 1
+              };
+              
+              server.stdin.write(JSON.stringify(init) + '\n');
+            });
+          }
+          
+          async measureMemoryUsage(serverPath) {
+            const server = spawn('node', [serverPath], {
+              stdio: ['pipe', 'pipe', 'pipe']
+            });
+            
+            // Wait for startup
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            let memoryMB = 0;
+            
+            if (server.pid && fs.existsSync(`/proc/${server.pid}/status`)) {
+              const status = fs.readFileSync(`/proc/${server.pid}/status`, 'utf8');
+              const vmRss = status.match(/VmRSS:\s+(\d+)/);
+              if (vmRss) {
+                memoryMB = parseInt(vmRss[1]) / 1024;
+              }
+            }
+            
+            server.kill();
+            return memoryMB;
+          }
+          
+          async measureResponseTime(serverPath) {
+            const server = spawn('node', [serverPath], {
+              stdio: ['pipe', 'pipe', 'pipe']
+            });
+            
+            // Wait for startup
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const times = [];
+            
+            // Measure response time for 10 requests
+            for (let i = 0; i < 10; i++) {
+              const startTime = process.hrtime.bigint();
+              
+              const request = {
+                jsonrpc: '2.0',
+                method: 'tools/list',
+                id: i + 1
+              };
+              
+              server.stdin.write(JSON.stringify(request) + '\n');
+              
+              await new Promise((resolve) => {
+                const handler = (data) => {
+                  const response = data.toString();
+                  if (response.includes(`"id":${i + 1}`)) {
+                    const endTime = process.hrtime.bigint();
+                    const duration = Number(endTime - startTime) / 1000000; // ms
+                    times.push(duration);
+                    server.stdout.removeListener('data', handler);
+                    resolve();
+                  }
+                };
+                server.stdout.on('data', handler);
+                
+                // Timeout
+                setTimeout(resolve, 1000);
+              });
+            }
+            
+            server.kill();
+            
+            // Calculate average response time
+            const avg = times.reduce((a, b) => a + b, 0) / times.length;
+            return avg;
+          }
+          
+          async runBenchmarks() {
+            const servers = ['server-minimal.js', 'server-enhanced.js', 'server-core.js'];
+            
+            for (const server of servers) {
+              if (!fs.existsSync(server)) continue;
+              
+              console.log(`Benchmarking ${server}...`);
+              
+              const startupTime = await this.measureStartupTime(server);
+              const memoryUsage = await this.measureMemoryUsage(server);
+              const responseTime = await this.measureResponseTime(server);
+              
+              this.results.benchmarks[server] = {
+                startupTime,
+                memoryUsage,
+                responseTime
+              };
+              
+              console.log(`  Startup: ${startupTime.toFixed(2)}ms`);
+              console.log(`  Memory: ${memoryUsage.toFixed(2)}MB`);
+              console.log(`  Response: ${responseTime.toFixed(2)}ms`);
+            }
+            
+            // Save results
+            fs.writeFileSync('benchmark-results.json', JSON.stringify(this.results, null, 2));
+            
+            return this.results;
+          }
+        }
+        
+        const benchmark = new PerformanceBenchmark();
+        benchmark.runBenchmarks().then(() => {
+          console.log('Benchmarks completed');
+        }).catch(console.error);
+        EOF
+        
+        node benchmark.js
+    
+    - name: Load baseline
+      id: baseline
+      run: |
+        # Download baseline from previous run or use defaults
+        if [ -f .github/performance-baseline.json ]; then
+          cp .github/performance-baseline.json baseline.json
+        else
+          # Create default baseline
+          cat > baseline.json << 'EOF'
+        {
+          "server-minimal.js": {
+            "startupTime": 500,
+            "memoryUsage": 40,
+            "responseTime": 10
+          },
+          "server-enhanced.js": {
+            "startupTime": 1000,
+            "memoryUsage": 70,
+            "responseTime": 15
+          },
+          "server-core.js": {
+            "startupTime": 750,
+            "memoryUsage": 50,
+            "responseTime": 12
+          }
+        }
+        EOF
+        fi
+    
+    - name: Compare with baseline
+      id: compare
+      run: |
+        cat > compare.js << 'EOF'
+        const fs = require('fs');
+        
+        const baseline = JSON.parse(fs.readFileSync('baseline.json', 'utf8'));
+        const current = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+        
+        let hasRegression = false;
+        const report = [];
+        
+        for (const [server, metrics] of Object.entries(current.benchmarks)) {
+          if (!baseline[server]) continue;
+          
+          const base = baseline[server];
+          const curr = metrics;
+          
+          // Calculate percentage changes
+          const startupChange = ((curr.startupTime - base.startupTime) / base.startupTime) * 100;
+          const memoryChange = ((curr.memoryUsage - base.memoryUsage) / base.memoryUsage) * 100;
+          const responseChange = ((curr.responseTime - base.responseTime) / base.responseTime) * 100;
+          
+          report.push(`### ${server}`);
+          report.push(`- Startup: ${curr.startupTime.toFixed(2)}ms (${startupChange > 0 ? '+' : ''}${startupChange.toFixed(1)}%)`);
+          report.push(`- Memory: ${curr.memoryUsage.toFixed(2)}MB (${memoryChange > 0 ? '+' : ''}${memoryChange.toFixed(1)}%)`);
+          report.push(`- Response: ${curr.responseTime.toFixed(2)}ms (${responseChange > 0 ? '+' : ''}${responseChange.toFixed(1)}%)`);
+          
+          // Check for regressions (>20% increase)
+          if (startupChange > 20) {
+            report.push(`  ⚠️ Startup time regression detected`);
+            hasRegression = true;
+          }
+          if (memoryChange > 20) {
+            report.push(`  ⚠️ Memory usage regression detected`);
+            hasRegression = true;
+          }
+          if (responseChange > 20) {
+            report.push(`  ⚠️ Response time regression detected`);
+            hasRegression = true;
+          }
+          
+          report.push('');
+        }
+        
+        console.log(report.join('\n'));
+        
+        if (hasRegression) {
+          console.log('::error::Performance regression detected');
+          process.exit(1);
+        }
+        EOF
+        
+        node compare.js
+    
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: benchmark-results.json
+    
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+          
+          let comment = '## Performance Benchmark Results\n\n';
+          
+          for (const [server, metrics] of Object.entries(results.benchmarks)) {
+            comment += `### ${server}\n`;
+            comment += `- **Startup Time:** ${metrics.startupTime.toFixed(2)}ms\n`;
+            comment += `- **Memory Usage:** ${metrics.memoryUsage.toFixed(2)}MB\n`;
+            comment += `- **Response Time:** ${metrics.responseTime.toFixed(2)}ms\n\n`;
+          }
+          
+          comment += '*Thresholds:*\n';
+          comment += '- server-minimal.js: <500ms startup, <40MB memory\n';
+          comment += '- server-enhanced.js: <1000ms startup, <70MB memory\n';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  critical-metrics:
+    name: Critical Performance Metrics
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check critical thresholds
+      run: |
+        # Test minimal server critical metrics
+        echo "Testing critical performance thresholds..."
+        
+        # Startup time must be < 1 second
+        START=$(date +%s%3N)
+        timeout 2 node server-minimal.js < /dev/null > /dev/null 2>&1 &
+        PID=$!
+        sleep 1
+        END=$(date +%s%3N)
+        STARTUP=$((END - START))
+        
+        if [ $STARTUP -gt 1000 ]; then
+          echo "❌ Critical: Startup time ${STARTUP}ms exceeds 1000ms threshold"
+          exit 1
+        fi
+        echo "✅ Startup time: ${STARTUP}ms"
+        
+        # Memory must be < 50MB
+        if [ -f /proc/$PID/status ]; then
+          RSS_KB=$(cat /proc/$PID/status | grep VmRSS | awk '{print $2}')
+          RSS_MB=$((RSS_KB / 1024))
+          
+          if [ $RSS_MB -gt 50 ]; then
+            echo "❌ Critical: Memory usage ${RSS_MB}MB exceeds 50MB threshold"
+            kill $PID
+            exit 1
+          fi
+          echo "✅ Memory usage: ${RSS_MB}MB"
+        fi
+        
+        kill $PID 2>/dev/null || true
+        
+        echo "✅ All critical thresholds passed"
+
+  historical-tracking:
+    name: Track Historical Performance
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Generate performance history
+      run: |
+        # Create or append to performance history
+        cat > track-performance.js << 'EOF'
+        const { execSync } = require('child_process');
+        const fs = require('fs');
+        
+        // Get git commit info
+        const commit = execSync('git rev-parse HEAD').toString().trim();
+        const date = new Date().toISOString();
+        const branch = execSync('git branch --show-current').toString().trim();
+        
+        // Run benchmarks
+        const { spawn } = require('child_process');
+        
+        async function measureServer(serverPath) {
+          const server = spawn('node', [serverPath]);
+          await new Promise(r => setTimeout(r, 2000));
+          
+          let memory = 0;
+          if (server.pid && fs.existsSync(`/proc/${server.pid}/status`)) {
+            const status = fs.readFileSync(`/proc/${server.pid}/status`, 'utf8');
+            const vmRss = status.match(/VmRSS:\s+(\d+)/);
+            if (vmRss) memory = parseInt(vmRss[1]) / 1024;
+          }
+          
+          server.kill();
+          return memory;
+        }
+        
+        async function track() {
+          const memory = await measureServer('server-minimal.js');
+          
+          const entry = {
+            commit: commit.substring(0, 7),
+            date,
+            branch,
+            metrics: {
+              memoryMB: memory
+            }
+          };
+          
+          // Load existing history
+          let history = [];
+          if (fs.existsSync('performance-history.json')) {
+            history = JSON.parse(fs.readFileSync('performance-history.json', 'utf8'));
+          }
+          
+          // Add new entry
+          history.push(entry);
+          
+          // Keep last 100 entries
+          if (history.length > 100) {
+            history = history.slice(-100);
+          }
+          
+          // Save updated history
+          fs.writeFileSync('performance-history.json', JSON.stringify(history, null, 2));
+          
+          // Generate trend report
+          if (history.length > 5) {
+            const recent = history.slice(-5);
+            const avgMemory = recent.reduce((sum, e) => sum + e.metrics.memoryMB, 0) / recent.length;
+            
+            console.log('## Recent Performance Trend');
+            console.log(`Average memory (last 5 commits): ${avgMemory.toFixed(2)}MB`);
+            
+            // Check for trend
+            const firstMemory = recent[0].metrics.memoryMB;
+            const lastMemory = recent[recent.length - 1].metrics.memoryMB;
+            const trend = lastMemory - firstMemory;
+            
+            if (trend > 5) {
+              console.log('⚠️ Memory usage trending upward');
+            } else if (trend < -5) {
+              console.log('✅ Memory usage trending downward');
+            } else {
+              console.log('→ Memory usage stable');
+            }
+          }
+        }
+        
+        track().catch(console.error);
+        EOF
+        
+        node track-performance.js
+    
+    - name: Upload performance history
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-history
+        path: performance-history.json
+        retention-days: 90
+
+  summary:
+    name: Performance Summary
+    needs: [benchmark, critical-metrics]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Report
+      run: |
+        echo "## Performance Regression Detection Summary"
+        echo ""
+        echo "This workflow ensures the MCP server maintains acceptable performance characteristics:"
+        echo ""
+        echo "### Critical Thresholds (server-minimal.js)"
+        echo "- **Startup Time:** < 500ms (prevents API Error 500)"
+        echo "- **Memory Usage:** < 40MB (prevents resource exhaustion)"
+        echo "- **Response Time:** < 10ms (ensures responsiveness)"
+        echo ""
+        echo "### What We Track"
+        echo "- Startup performance across all server variants"
+        echo "- Memory consumption under load"
+        echo "- Response time consistency"
+        echo "- Historical performance trends"
+        echo ""
+        echo "Any regression > 20% will fail the build to prevent performance degradation."

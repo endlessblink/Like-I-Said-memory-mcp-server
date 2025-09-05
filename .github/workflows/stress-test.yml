@@ -1,0 +1,400 @@
+name: Stress Testing
+
+on:
+  schedule:
+    # Run weekly on Sunday at 3 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Test duration in seconds'
+        required: false
+        default: '300'
+      concurrency:
+        description: 'Number of concurrent connections'
+        required: false
+        default: '100'
+
+jobs:
+  load-test:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -g artillery
+    
+    - name: Create load test configuration
+      run: |
+        cat > load-test.yml << 'EOF'
+        config:
+          target: "stdio"
+          processor: "./load-test-processor.js"
+          phases:
+            - duration: ${{ github.event.inputs.duration || 300 }}
+              arrivalRate: 10
+              rampTo: ${{ github.event.inputs.concurrency || 100 }}
+        scenarios:
+          - name: "MCP Protocol Load Test"
+            engine: "nodejs"
+            flow:
+              - function: "sendMCPRequest"
+        EOF
+        
+        cat > load-test-processor.js << 'EOF'
+        const { spawn } = require('child_process');
+        
+        module.exports = {
+          sendMCPRequest: async (context, events, done) => {
+            const server = spawn('node', ['server-minimal.js']);
+            
+            const requests = [
+              {
+                jsonrpc: '2.0',
+                method: 'initialize',
+                params: {
+                  protocolVersion: '1.0.0',
+                  clientInfo: { name: 'stress-test', version: '1.0.0' },
+                  capabilities: {}
+                },
+                id: 1
+              },
+              {
+                jsonrpc: '2.0',
+                method: 'tools/list',
+                id: 2
+              },
+              {
+                jsonrpc: '2.0',
+                method: 'tools/call',
+                params: {
+                  name: 'test_tool',
+                  arguments: { message: 'stress test' }
+                },
+                id: 3
+              }
+            ];
+            
+            for (const req of requests) {
+              server.stdin.write(JSON.stringify(req) + '\n');
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            server.kill();
+            done();
+          }
+        };
+        EOF
+    
+    - name: Run load test
+      continue-on-error: true
+      run: |
+        echo "Starting load test with ${{ github.event.inputs.concurrency || 100 }} concurrent connections..."
+        
+        # Start server for load testing
+        node server-minimal.js > server.log 2>&1 &
+        SERVER_PID=$!
+        
+        # Give server time to start
+        sleep 2
+        
+        # Monitor memory during test
+        (while kill -0 $SERVER_PID 2>/dev/null; do
+          ps -o pid,vsz,rss,comm -p $SERVER_PID >> memory.log
+          sleep 5
+        done) &
+        MONITOR_PID=$!
+        
+        # Run the load test
+        timeout ${{ github.event.inputs.duration || 300 }} bash -c "
+          for i in {1..${{ github.event.inputs.concurrency || 100 }}}; do
+            (
+              echo '{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"id\":1}' | node server-minimal.js > /dev/null 2>&1
+            ) &
+          done
+          wait
+        "
+        
+        # Stop monitoring
+        kill $MONITOR_PID 2>/dev/null || true
+        kill $SERVER_PID 2>/dev/null || true
+        
+        echo "Load test completed"
+    
+    - name: Analyze results
+      if: always()
+      run: |
+        if [ -f memory.log ]; then
+          echo "## Memory Usage During Load Test"
+          echo "Peak memory usage:"
+          sort -k3 -n memory.log | tail -1
+          
+          # Check for memory leaks
+          INITIAL_MEM=$(head -1 memory.log | awk '{print $3}')
+          FINAL_MEM=$(tail -1 memory.log | awk '{print $3}')
+          INCREASE=$((FINAL_MEM - INITIAL_MEM))
+          
+          echo "Memory increase: ${INCREASE}KB"
+          
+          if [ $INCREASE -gt 100000 ]; then
+            echo "⚠️ Significant memory increase detected (>100MB)"
+          fi
+        fi
+        
+        if [ -f server.log ]; then
+          echo "## Server Errors During Load Test"
+          grep -i "error\|crash\|fatal" server.log || echo "No errors found"
+        fi
+
+  memory-leak-test:
+    name: Memory Leak Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run extended memory test
+      run: |
+        cat > memory-leak-test.js << 'EOF'
+        const { spawn } = require('child_process');
+        const fs = require('fs');
+        
+        async function testMemoryLeak() {
+          console.log('Starting memory leak test...');
+          
+          const server = spawn('node', ['--expose-gc', 'server-minimal.js']);
+          const memoryReadings = [];
+          
+          // Send requests for 10 minutes
+          const duration = 10 * 60 * 1000; // 10 minutes
+          const interval = 100; // 100ms between requests
+          const startTime = Date.now();
+          
+          let requestId = 1;
+          
+          const sendRequest = () => {
+            const requests = [
+              { jsonrpc: '2.0', method: 'tools/list', id: requestId++ },
+              {
+                jsonrpc: '2.0',
+                method: 'tools/call',
+                params: {
+                  name: 'add_memory',
+                  arguments: {
+                    content: `Test memory ${requestId}`,
+                    project: 'stress-test'
+                  }
+                },
+                id: requestId++
+              }
+            ];
+            
+            for (const req of requests) {
+              server.stdin.write(JSON.stringify(req) + '\n');
+            }
+          };
+          
+          // Send requests continuously
+          const requestInterval = setInterval(sendRequest, interval);
+          
+          // Monitor memory every 10 seconds
+          const monitorInterval = setInterval(() => {
+            if (server.pid) {
+              try {
+                const status = fs.readFileSync(`/proc/${server.pid}/status`, 'utf8');
+                const vmRss = status.match(/VmRSS:\s+(\d+)/);
+                if (vmRss) {
+                  const memoryMB = parseInt(vmRss[1]) / 1024;
+                  memoryReadings.push({
+                    time: Date.now() - startTime,
+                    memory: memoryMB
+                  });
+                  console.log(`Memory: ${memoryMB.toFixed(2)}MB`);
+                }
+              } catch (e) {
+                // Process might have ended
+              }
+            }
+          }, 10000);
+          
+          // Stop after duration
+          setTimeout(() => {
+            clearInterval(requestInterval);
+            clearInterval(monitorInterval);
+            server.kill();
+            
+            // Analyze readings
+            if (memoryReadings.length > 0) {
+              const initial = memoryReadings[0].memory;
+              const final = memoryReadings[memoryReadings.length - 1].memory;
+              const increase = final - initial;
+              const increasePercent = (increase / initial) * 100;
+              
+              console.log('\n=== Memory Leak Test Results ===');
+              console.log(`Initial memory: ${initial.toFixed(2)}MB`);
+              console.log(`Final memory: ${final.toFixed(2)}MB`);
+              console.log(`Increase: ${increase.toFixed(2)}MB (${increasePercent.toFixed(1)}%)`);
+              
+              if (increasePercent > 50) {
+                console.error('❌ Potential memory leak detected (>50% increase)');
+                process.exit(1);
+              } else {
+                console.log('✅ No significant memory leak detected');
+              }
+            }
+          }, duration);
+        }
+        
+        testMemoryLeak().catch(console.error);
+        EOF
+        
+        node memory-leak-test.js
+
+  crash-recovery:
+    name: Crash Recovery Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test crash recovery
+      run: |
+        echo "Testing server crash recovery..."
+        
+        # Function to start server
+        start_server() {
+          node server-minimal.js > server_$1.log 2>&1 &
+          echo $!
+        }
+        
+        # Start initial server
+        PID1=$(start_server 1)
+        sleep 2
+        
+        # Force kill to simulate crash
+        kill -9 $PID1
+        echo "Simulated crash of PID $PID1"
+        
+        # Immediately start new instance
+        PID2=$(start_server 2)
+        sleep 2
+        
+        # Test if new instance works
+        echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | \
+          timeout 5 node server-minimal.js 2>/dev/null | \
+          jq -e '.result.tools | length > 0' > /dev/null
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Server recovered successfully after crash"
+        else
+          echo "❌ Server failed to recover after crash"
+          exit 1
+        fi
+        
+        kill $PID2 2>/dev/null || true
+
+  resource-exhaustion:
+    name: Resource Exhaustion Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Test with limited resources
+      run: |
+        # Test with memory limit
+        echo "Testing with memory limit..."
+        
+        # Limit to 50MB heap
+        node --max-old-space-size=50 server-minimal.js > limited.log 2>&1 &
+        PID=$!
+        
+        sleep 2
+        
+        # Try to send large payload
+        LARGE_CONTENT=$(python3 -c "print('x' * 1000000)")  # 1MB string
+        
+        REQUEST=$(cat << EOF
+        {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "add_memory",
+            "arguments": {
+              "content": "$LARGE_CONTENT"
+            }
+          },
+          "id": 1
+        }
+        EOF
+        )
+        
+        echo "$REQUEST" | timeout 10 node server-minimal.js 2>/dev/null
+        
+        # Check if server survived
+        if ps -p $PID > /dev/null 2>&1; then
+          echo "✅ Server survived resource constraints"
+          kill $PID
+        else
+          echo "⚠️ Server crashed under resource constraints"
+          cat limited.log
+        fi
+
+  report:
+    name: Stress Test Report
+    needs: [load-test, memory-leak-test, crash-recovery, resource-exhaustion]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Generate report
+      run: |
+        echo "## Stress Test Summary"
+        echo ""
+        echo "### Tests Performed:"
+        echo "- Load testing with high concurrency"
+        echo "- Memory leak detection over extended runs"
+        echo "- Crash recovery validation"
+        echo "- Resource exhaustion handling"
+        echo ""
+        echo "These stress tests ensure the MCP server remains stable under extreme conditions."
+        echo "Any failures indicate potential issues that could lead to API Error 500 in production."

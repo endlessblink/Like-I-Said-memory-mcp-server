@@ -1,0 +1,61 @@
+{
+  "server": {
+    "name": "like-i-said-mcp",
+    "version": "3.0.0",
+    "description": "Like-I-Said Memory & Task Management MCP Server"
+  },
+  "plugins": {
+    "core": [
+      "memory-tools",
+      "task-tools"
+    ],
+    "optional": {
+      "ai-tools": false,
+      "analytics-tools": true
+    },
+    "custom": []
+  },
+  "logging": {
+    "level": "info",
+    "file": false,
+    "directory": "logs",
+    "maxFiles": 7,
+    "maxSize": "10MB"
+  },
+  "storage": {
+    "memoriesDir": "memories",
+    "tasksDir": "tasks",
+    "backupDir": "backups",
+    "enableBackups": true,
+    "backupInterval": 86400000
+  },
+  "performance": {
+    "maxToolExecutionTime": 30000,
+    "requestTimeout": 60000,
+    "maxConcurrentRequests": 10,
+    "enableMetrics": true,
+    "metricsInterval": 300000
+  },
+  "security": {
+    "enableAuth": false,
+    "rateLimit": {
+      "enabled": true,
+      "maxRequests": 100,
+      "windowMs": 60000
+    },
+    "allowedOrigins": ["*"],
+    "maxPayloadSize": "10MB"
+  },
+  "health": {
+    "enabled": true,
+    "port": 8080,
+    "path": "/health",
+    "checkInterval": 30000
+  },
+  "deployment": {
+    "environment": "production",
+    "autoRestart": true,
+    "gracefulShutdownTimeout": 10000,
+    "processManager": "native"
+  }
+}

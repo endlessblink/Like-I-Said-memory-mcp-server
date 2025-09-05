@@ -1067,6 +1067,183 @@ services:
   log('  docker-compose up -d', 'yellow');
 }
 
+// Get available project names from task directories
+async function getAvailableProjects() {
+  const tasksDir = path.join(__dirname, 'tasks');
+  if (!fs.existsSync(tasksDir)) {
+    return [];
+  }
+  
+  try {
+    const dirs = fs.readdirSync(tasksDir, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name)
+      .filter(name => name !== 'default'); // Exclude default directory
+    return dirs;
+  } catch (error) {
+    return [];
+  }
+}
+
+// Fuzzy match project name to available projects
+function findBestProjectMatch(targetName, availableProjects) {
+  // Exact match first
+  if (availableProjects.includes(targetName)) {
+    return { match: targetName, confidence: 1.0 };
+  }
+  
+  // Normalize names for comparison (remove special chars, lowercase)
+  const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalizedTarget = normalize(targetName);
+  
+  let bestMatch = null;
+  let bestScore = 0;
+  
+  for (const project of availableProjects) {
+    const normalizedProject = normalize(project);
+    
+    // Check if target is contained in project name
+    if (normalizedProject.includes(normalizedTarget)) {
+      const score = normalizedTarget.length / normalizedProject.length;
+      if (score > bestScore) {
+        bestMatch = project;
+        bestScore = score;
+      }
+    }
+    
+    // Check if project is contained in target
+    if (normalizedTarget.includes(normalizedProject)) {
+      const score = normalizedProject.length / normalizedTarget.length;
+      if (score > bestScore) {
+        bestMatch = project;
+        bestScore = score;
+      }
+    }
+  }
+  
+  // Only return matches with reasonable confidence
+  if (bestScore > 0.3) {
+    return { match: bestMatch, confidence: bestScore };
+  }
+  
+  return null;
+}
+
+// Simple task watch - auto-detects project and starts monitoring
+async function startSimpleWatch() {
+  const { spawn } = await import('child_process');
+  const currentDir = process.cwd();
+  const directoryName = path.basename(currentDir);
+  
+  // Check for --list-projects flag
+  if (process.argv.includes('--list-projects')) {
+    console.log('📋 Available projects in Like-I-Said MCP:');
+    const projects = await getAvailableProjects();
+    if (projects.length === 0) {
+      console.log('   No projects found');
+    } else {
+      projects.forEach(project => console.log(`   • ${project}`));
+    }
+    console.log(`\n💡 Use: npx @endlessblink/like-i-said-mcp watch --project=PROJECT_NAME`);
+    return;
+  }
+  
+  // Parse watch-specific arguments
+  const watchArgs = [];
+  const args = process.argv.slice(3); // Skip 'node', 'cli.js', 'watch'
+  
+  // Auto-detect project if not specified
+  let hasProjectArg = false;
+  let specifiedProject = null;
+  
+  for (const arg of args) {
+    if (arg.startsWith('--project=')) {
+      hasProjectArg = true;
+      specifiedProject = arg.split('=')[1];
+    }
+    watchArgs.push(arg);
+  }
+  
+  // Smart project detection - check for local tasks first
+  let finalProject = directoryName;
+  
+  if (!hasProjectArg) {
+    // Check if project has local task directory
+    const localTasksDir = path.join(currentDir, 'tasks');
+    
+    if (fs.existsSync(localTasksDir)) {
+      // Project has local tasks - use actual directory name
+      finalProject = directoryName;
+      console.log('🎯 Local task detection:');
+      console.log(`   Directory: "${directoryName}" has local tasks`);
+      console.log(`   → Using project name: "${finalProject}"`);
+    } else {
+      // No local tasks - try central system matching
+      const availableProjects = await getAvailableProjects();
+      const match = findBestProjectMatch(directoryName, availableProjects);
+      
+      if (match) {
+        finalProject = match.match;
+        console.log('🎯 Smart project matching:');
+        console.log(`   Directory: "${directoryName}"`);
+        console.log(`   → Matched: "${finalProject}" (${Math.round(match.confidence * 100)}% confidence)`);
+      } else {
+        console.log('⚠️  Project auto-detection:');
+        console.log(`   Directory: "${directoryName}" - no matching project found`);
+        console.log('📋 Available projects:');
+        if (availableProjects.length === 0) {
+          console.log('   No projects found in Like-I-Said MCP');
+        } else {
+          availableProjects.slice(0, 5).forEach(project => console.log(`   • ${project}`));
+          if (availableProjects.length > 5) {
+            console.log(`   ... and ${availableProjects.length - 5} more`);
+          }
+        }
+        console.log(`\n💡 Continuing with "${directoryName}" (may show no tasks)`);
+        console.log(`   Use: npx @endlessblink/like-i-said-mcp watch --project=PROJECT_NAME`);
+        console.log(`   Or: npx @endlessblink/like-i-said-mcp watch --list-projects`);
+      }
+    }
+    
+    watchArgs.push(`--project=${finalProject}`);
+  } else {
+    finalProject = specifiedProject;
+  }
+  
+  // Default to active filter for better UX
+  const hasFilterArg = args.some(arg => arg.startsWith('--filter='));
+  if (!hasFilterArg) {
+    watchArgs.push('--filter=active');
+  }
+  
+  console.log('🔥 Starting Simple Task Monitor...');
+  console.log(`📁 Project: ${finalProject}`);
+  console.log(`📍 Directory: ${currentDir}`);
+  
+  // Path to the watch script
+  const watchScriptPath = path.join(__dirname, 'watch-tasks.js');
+  
+  // Spawn the watch script with correct working directory
+  const child = spawn('node', [watchScriptPath, ...watchArgs], {
+    stdio: 'inherit',
+    cwd: __dirname,
+    env: {
+      ...process.env,
+      ORIGINAL_CWD: currentDir // Pass the original working directory
+    }
+  });
+  
+  // Handle exit
+  child.on('exit', (code) => {
+    process.exit(code);
+  });
+  
+  child.on('error', (error) => {
+    console.error('❌ Failed to start task monitor:', error.message);
+    process.exit(1);
+  });
+}
+
 // Handle commands
 async function handleCommand() {
   const command = process.argv[2];
@@ -1091,6 +1268,9 @@ async function handleCommand() {
         break;
       case 'dashboard':
         await startDashboard();
+        break;
+      case 'watch':
+        await startSimpleWatch();
         break;
       case 'migrate':
         const { migrateFromJson } = await import('./migrate.js');

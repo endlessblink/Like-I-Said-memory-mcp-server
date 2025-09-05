@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "like-i-said-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://127.0.0.1:8765/mcp/sse"
+      ],
+      "env": {
+        "DEBUG": "false"
+      }
+    }
+  }
+}

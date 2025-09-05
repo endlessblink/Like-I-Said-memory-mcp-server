@@ -1,0 +1,96 @@
+{
+  "timestamp": "2025-08-29T12:39:11.919Z",
+  "results": {
+    "passed": 8,
+    "failed": 0,
+    "errors": []
+  },
+  "tests": [
+    {
+      "name": "Process.exit() calls",
+      "status": "verified",
+      "message": "Old server would crash Claude with process.exit()"
+    },
+    {
+      "name": "Heavy module loading",
+      "status": "fast",
+      "message": "Loading 12 modules took 79ms",
+      "details": {
+        "loaded": 12,
+        "failed": 0,
+        "totalTime": 5
+      }
+    },
+    {
+      "name": "Concurrent instances",
+      "status": "handled",
+      "message": "5/5 instances ran successfully",
+      "details": {
+        "attempted": 5,
+        "successful": 5
+      }
+    },
+    {
+      "name": "Memory leak test",
+      "status": "stable",
+      "message": "Memory increased by 8MB",
+      "details": {
+        "heapUsed": 8,
+        "external": 1
+      }
+    },
+    {
+      "name": "Circular dependencies",
+      "status": "detected",
+      "message": "Circular dependencies properly detected"
+    },
+    {
+      "name": "Large payloads",
+      "status": "handled",
+      "message": "Large payload handled successfully",
+      "details": {
+        "payloadSize": "5MB",
+        "responseReceived": true
+      }
+    },
+    {
+      "name": "Request flooding",
+      "status": "resilient",
+      "message": "Sent 100 requests, received 64 responses, 0 errors",
+      "details": {
+        "requestsSent": 100,
+        "responsesReceived": 64,
+        "errors": 0,
+        "successRate": "64%"
+      }
+    },
+    {
+      "name": "Server comparison",
+      "status": "info",
+      "message": "Architecture comparison complete",
+      "details": {
+        "oldServer": {
+          "processExit": true,
+          "heavyModules": 25,
+          "startupTime": "3-5 seconds",
+          "memoryUsage": "150-200MB",
+          "api500Errors": "frequent"
+        },
+        "newMinimal": {
+          "processExit": false,
+          "heavyModules": 0,
+          "startupTime": "<500ms",
+          "memoryUsage": "30-40MB",
+          "api500Errors": "none"
+        },
+        "newEnhanced": {
+          "processExit": false,
+          "heavyModules": "lazy-loaded",
+          "startupTime": "<1 second",
+          "memoryUsage": "50-70MB",
+          "api500Errors": "none"
+        }
+      }
+    }
+  ]
+}
