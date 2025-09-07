@@ -1222,8 +1222,8 @@ async function startSimpleWatch() {
   console.log(`📁 Project: ${finalProject}`);
   console.log(`📍 Directory: ${currentDir}`);
   
-  // Path to the working monitor script
-  const watchScriptPath = path.join(__dirname, 'simple-task-watch.js');
+  // Path to the working monitor script  
+  const watchScriptPath = path.join(__dirname, 'scripts/utilities/simple-task-watch.js');
   
   // Spawn the watch script with correct working directory and project
   const child = spawn('node', [watchScriptPath, `--project=${finalProject}`, ...watchArgs], {

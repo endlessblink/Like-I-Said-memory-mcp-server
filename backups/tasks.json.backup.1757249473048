@@ -1,0 +1,12 @@
+[
+  {
+    "id": "TASK-31265",
+    "title": "Add Half-Hour Calendar Precision with Proper Visual Feedback",
+    "description": "Implement 30-minute time slots (36 slots total from 6 AM-11 PM), add visual distinction between full hours (:00) and half hours (:30), update time block creation to support decimal hours (6.5, 7.0, 7.5), modify current time calculations for 30px slot height, ensure resize and drag work with half-hour precision",
+    "status": "in_progress",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T12:35:10.927Z",
+    "updated": "2025-09-07T12:35:36.258Z"
+  }
+]

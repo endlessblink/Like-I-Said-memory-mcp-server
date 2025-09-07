@@ -1,0 +1,11 @@
+[
+  {
+    "id": "TASK-50490",
+    "title": "Fix GitHub animation blank rendering in Remotion Studio",
+    "description": "GitHub showcase animation showing transparent/blank preview instead of rendered components. Created simplified test version to diagnose issue. Need to verify basic React rendering works, then gradually restore full animation complexity with Remotion-compatible CSS.",
+    "status": "in_progress",
+    "priority": "high",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-07T12:34:27.173Z"
+  }
+]

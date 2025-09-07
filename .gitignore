@@ -92,13 +92,31 @@ docs/reports/*-report*.md
 docs/reports/*-consolidation*.md
 *-dry-run*.md
 *consolidation-report*.md
+*-consolidation-report*.md
 true-consolidation-report*.md
+final-*-report*.md
+working-*-report*.md
+complete-*-report*.md
 
 # Complete backup directories  
 COMPLETE-BACKUP-*/
 complete-task-backups/
+complete-task-*-backups/
 emergency-backups/
 restoration-backups/
+final-*-backups/
+working-*-backups/
+FINAL-CLEANUP-BACKUP/
+archive/
+
+# Prevent future root clutter from utility scripts
+*-cleanup.js
+*-consolidation.js
+*-discovery.js
+*-deduplication.js
+analyze-*.js
+convert-*.js
+aggressive-*.js
 
 # Keep essential files
 !README.md

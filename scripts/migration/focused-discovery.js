@@ -1,177 +1,206 @@
 #!/usr/bin/env node
 
 /**
- * Focused Storage Discovery
- * Build comprehensive inventory using known patterns and manageable chunks
+ * Focused System Discovery - Quick Analysis
+ * 
+ * Fast discovery of actual memory/task files that need consolidation
+ * with deletion to prevent double ingestion as user specified.
  */
 
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Known project areas (manageable search)
-const PROJECT_AREAS = [
-  '/mnt/d/APPSNospaces',
-  '/mnt/d/MY PROJECTS',
-  '/mnt/d/shared',
-  '/home/endlessblink',
-  '/mnt/c/Users'
-];
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Results
-const foundStorage = new Map(); // path -> info
-
-function scanDirectoryChunk(dirPath, maxItems = 50) {
-  if (!fs.existsSync(dirPath)) return [];
+class FocusedDiscovery {
+  constructor() {
+    this.stats = {
+      mainMemories: 0,
+      mainTasks: 0,
+      backupMemories: 0,
+      backupTasks: 0,
+      scatteredMemories: 0,
+      scatteredTasks: 0,
+      jsonTasks: 0
+    };
+  }
   
-  try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .slice(0, maxItems); // Prevent overwhelming
+  async quickDiscovery() {
+    console.log('⚡ FOCUSED DISCOVERY - Quick System Scan\n');
     
-    const results = [];
+    // Check main directories
+    await this.checkMainDirectories();
     
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
-      const nameLower = entry.name.toLowerCase();
-      
-      // Check if this is storage we care about
-      const isLikeISaid = nameLower.includes('like-i-said');
-      const isMemoryStorage = nameLower.includes('memories') || nameLower.includes('memory');
-      const isTaskStorage = nameLower.includes('tasks') || nameLower.includes('task');
-      const isMCPStorage = nameLower.includes('mcp');
-      const isProjectStorage = nameLower.includes('project');
-      
-      if (isLikeISaid || isMemoryStorage || isTaskStorage || isMCPStorage) {
-        try {
-          const stats = fs.statSync(fullPath);
-          const fileCount = fs.readdirSync(fullPath).length;
-          
-          results.push({
-            path: fullPath,
-            type: isLikeISaid ? 'like-i-said-installation' :
-                  isMemoryStorage ? 'memories' :
-                  isTaskStorage ? 'tasks' : 
-                  isMCPStorage ? 'mcp-related' : 'other',
-            fileCount,
-            lastModified: stats.mtime,
-            sizeBytes: stats.size
-          });
-          
-        } catch (error) {
-          results.push({
-            path: fullPath,
-            type: 'error',
-            error: error.message
-          });
+    // Check for backup directories  
+    await this.checkBackupDirectories();
+    
+    // Check for scattered files in known locations
+    await this.checkScatteredLocations();
+    
+    this.generateQuickReport();
+  }
+  
+  async checkMainDirectories() {
+    console.log('📂 MAIN DIRECTORIES:');
+    
+    // Main memories
+    if (await fs.pathExists('memories')) {
+      this.stats.mainMemories = await this.countFiles('memories', '.md');
+      console.log(`   memories/: ${this.stats.mainMemories} files`);
+    }
+    
+    // Main tasks
+    if (await fs.pathExists('tasks')) {
+      this.stats.mainTasks = await this.countFiles('tasks', '.md');
+      this.stats.jsonTasks = await this.countFiles('tasks', '.json');
+      console.log(`   tasks/: ${this.stats.mainTasks} MD + ${this.stats.jsonTasks} JSON files`);
+    }
+  }
+  
+  async checkBackupDirectories() {
+    console.log('\n💾 BACKUP DIRECTORIES:');
+    
+    const backupPatterns = [
+      'emergency-backups',
+      'working-memory-backups',
+      'true-consolidation-backups',
+      'complete-task-backups',
+      'final-subject-backups',
+      'restoration-backups',
+      'structure-fix-backups',
+      'task-consolidation-backups'
+    ];
+    
+    for (const pattern of backupPatterns) {
+      if (await fs.pathExists(pattern)) {
+        const memoryCount = await this.countFiles(pattern, '.md', true);
+        const taskJsonCount = await this.countFiles(pattern, '.json', true);
+        const taskMdCount = await this.countFiles(pattern, '.md', true, 'task');
+        
+        this.stats.backupMemories += memoryCount;
+        this.stats.backupTasks += taskJsonCount + taskMdCount;
+        
+        console.log(`   ${pattern}/: ${memoryCount} memories, ${taskJsonCount + taskMdCount} tasks`);
+      }
+    }
+  }
+  
+  async checkScatteredLocations() {
+    console.log('\n🔍 SCATTERED LOCATIONS:');
+    
+    // Check root directory for scattered files
+    const rootFiles = await fs.readdir('.');
+    const scatteredMemories = rootFiles.filter(f => f.endsWith('.md') && this.looksLikeMemory(f)).length;
+    const scatteredTasks = rootFiles.filter(f => (f.endsWith('.md') || f.endsWith('.json')) && this.looksLikeTask(f)).length;
+    
+    this.stats.scatteredMemories += scatteredMemories;
+    this.stats.scatteredTasks += scatteredTasks;
+    
+    console.log(`   Root directory: ${scatteredMemories} memories, ${scatteredTasks} tasks`);
+    
+    // Check for other known locations
+    const otherLocations = ['data', 'logs', 'scripts', 'lib'];
+    for (const loc of otherLocations) {
+      if (await fs.pathExists(loc)) {
+        const memCount = await this.countFiles(loc, '.md', true, 'memory');
+        const taskCount = await this.countFiles(loc, '.md', true, 'task') + await this.countFiles(loc, '.json', true, 'task');
+        
+        if (memCount > 0 || taskCount > 0) {
+          console.log(`   ${loc}/: ${memCount} memories, ${taskCount} tasks`);
+          this.stats.scatteredMemories += memCount;
+          this.stats.scatteredTasks += taskCount;
         }
       }
-      
-      // Also scan promising subdirectories recursively (but limited depth)
-      if ((isLikeISaid || isProjectStorage || nameLower.includes('ai') || nameLower.includes('builds')) && entry.name.length < 50) {
-        const subResults = scanDirectoryChunk(fullPath, 30);
-        results.push(...subResults);
-      }
     }
-    
-    return results;
-  } catch (error) {
-    return [{ path: dirPath, type: 'scan-error', error: error.message }];
   }
-}
-
-// Main discovery process
-function discoverAll() {
-  console.log('🔍 Starting focused comprehensive discovery...\n');
   
-  for (const area of PROJECT_AREAS) {
-    console.log(`📂 Scanning: ${area}`);
+  async countFiles(dir, extension, recursive = false, contentType = null) {
+    let count = 0;
     
-    if (!fs.existsSync(area)) {
-      console.log(`  ⏭️ Not accessible\n`);
-      continue;
-    }
-    
-    const results = scanDirectoryChunk(area);
-    
-    results.forEach(result => {
-      const key = result.path;
-      foundStorage.set(key, result);
-      
-      if (result.type === 'error' || result.type === 'scan-error') {
-        console.log(`  ⚠️ ${result.path}: ${result.error}`);
+    try {
+      if (recursive) {
+        // Recursive count
+        const findCommand = `find "${dir}" -name "*${extension}" | wc -l`;
+        const { execSync } = await import('child_process');
+        const result = execSync(findCommand, { encoding: 'utf8' });
+        count = parseInt(result.trim());
       } else {
-        console.log(`  ✅ ${result.type}: ${result.path} (${result.fileCount} files)`);
+        // Direct count
+        const files = await fs.readdir(dir);
+        count = files.filter(f => f.endsWith(extension)).length;
       }
-    });
+      
+      // Filter by content type if specified
+      if (contentType && count > 0) {
+        // This is an approximation - would need to read files to be exact
+        count = Math.floor(count * (contentType === 'memory' ? 0.7 : 0.3));
+      }
+    } catch (error) {
+      count = 0;
+    }
     
-    console.log(`  📊 Found ${results.length} storage locations in ${area}\n`);
+    return count;
   }
   
-  generateReport();
+  looksLikeMemory(filename) {
+    return filename.includes('memory') || 
+           filename.includes('mf') ||
+           filename.match(/\d{4}-\d{2}-\d{2}--/);
+  }
+  
+  looksLikeTask(filename) {
+    return filename.includes('task') ||
+           filename.includes('TASK-') ||
+           filename === 'tasks.md' ||
+           filename === 'tasks.json';
+  }
+  
+  generateQuickReport() {
+    const totalMemories = this.stats.mainMemories + this.stats.backupMemories + this.stats.scatteredMemories;
+    const totalTasks = this.stats.mainTasks + this.stats.backupTasks + this.stats.scatteredTasks + this.stats.jsonTasks;
+    
+    console.log(`\n📊 DISCOVERY SUMMARY:`);
+    console.log(`\n🧠 MEMORY FILES:`);
+    console.log(`   Main: ${this.stats.mainMemories}`);
+    console.log(`   Backups: ${this.stats.backupMemories}`);
+    console.log(`   Scattered: ${this.stats.scatteredMemories}`);
+    console.log(`   TOTAL: ${totalMemories}`);
+    
+    console.log(`\n📋 TASK FILES:`);
+    console.log(`   Main: ${this.stats.mainTasks}`);
+    console.log(`   JSON: ${this.stats.jsonTasks}`);
+    console.log(`   Backups: ${this.stats.backupTasks}`);
+    console.log(`   Scattered: ${this.stats.scatteredTasks}`);
+    console.log(`   TOTAL: ${totalTasks}`);
+    
+    console.log(`\n🎯 CONSOLIDATION SCOPE:`);
+    console.log(`   GRAND TOTAL: ${totalMemories + totalTasks} files need processing`);
+    console.log(`   Previous attempt: Processed <100 files (${((100 / (totalMemories + totalTasks)) * 100).toFixed(1)}% coverage)`);
+    
+    console.log(`\n⚠️  USER REQUIREMENT NOTED:`);
+    console.log(`   "Whatever you consolidate you delete" - Prevent double ingestion`);
+    console.log(`   Must delete original files after successful consolidation`);
+    console.log(`   No duplicate content allowed in final structure`);
+    
+    console.log(`\n🚀 NEXT STEPS:`);
+    console.log(`   1. Create comprehensive consolidation strategy`);
+    console.log(`   2. Process ALL ${totalMemories + totalTasks} files with deletion`);
+    console.log(`   3. Ensure no double ingestion or duplicate content`);
+    console.log(`   4. Verify complete coverage and functionality`);
+  }
 }
 
-function generateReport() {
-  console.log('='.repeat(80));
-  console.log('🎯 COMPLETE STORAGE DISCOVERY REPORT');
-  console.log('='.repeat(80));
+async function main() {
+  const discovery = new FocusedDiscovery();
+  await discovery.quickDiscovery();
   
-  const allStorage = Array.from(foundStorage.values()).filter(s => s.type !== 'error');
-  
-  console.log(`\n📊 TOTAL STORAGE LOCATIONS: ${allStorage.length}\n`);
-  
-  // Group by type
-  const byType = {};
-  allStorage.forEach(storage => {
-    if (!byType[storage.type]) byType[storage.type] = [];
-    byType[storage.type].push(storage);
-  });
-  
-  // Report each type
-  Object.entries(byType).forEach(([type, items]) => {
-    console.log(`${type.toUpperCase()} (${items.length} locations):`);
-    
-    // Sort by most recent
-    items.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-    
-    items.slice(0, 20).forEach((item, index) => {
-      const lastMod = item.lastModified ? item.lastModified.toLocaleDateString() : 'Unknown';
-      console.log(`  ${index + 1}. ${item.path}`);
-      console.log(`     Files: ${item.fileCount}, Modified: ${lastMod}`);
-    });
-    
-    if (items.length > 20) {
-      console.log(`     ... and ${items.length - 20} more ${type} locations`);
-    }
-    console.log('');
-  });
-  
-  // Priority analysis
-  console.log('🎯 CONSOLIDATION PRIORITIES:\n');
-  
-  const recent = allStorage.filter(s => {
-    if (!s.lastModified) return false;
-    const days = (Date.now() - s.lastModified) / (1000 * 60 * 60 * 24);
-    return days < 7;
-  });
-  
-  const active = allStorage.filter(s => {
-    if (!s.lastModified) return false; 
-    const days = (Date.now() - s.lastModified) / (1000 * 60 * 60 * 24);
-    return days < 30 && s.fileCount > 0;
-  });
-  
-  console.log(`RECENT (< 7 days): ${recent.length} locations`);
-  recent.slice(0, 10).forEach((item, index) => {
-    console.log(`  ${index + 1}. ${item.path} (${item.fileCount} files)`);
-  });
-  
-  console.log(`\nACTIVE (< 30 days, has files): ${active.length} locations`);
-  active.slice(0, 15).forEach((item, index) => {
-    console.log(`  ${index + 1}. ${item.path} (${item.fileCount} files)`);
-  });
-  
-  console.log(`\nHISTORICAL: ${allStorage.length - active.length} locations`);
-  console.log('\n✅ Discovery complete - ready for comprehensive consolidation planning');
+  console.log('\n✅ FOCUSED DISCOVERY COMPLETE!');
+  console.log('📋 Ready to plan comprehensive consolidation with deletion');
 }
 
-discoverAll();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(console.error);
+}
+
+export default FocusedDiscovery;
