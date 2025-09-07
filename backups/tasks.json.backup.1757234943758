@@ -1,0 +1,156 @@
+[
+  {
+    "id": "TASK-58678",
+    "title": "Implement Current Time Tracking with Visual Red Line Indicator",
+    "description": "Add real-time clock system with setInterval updates every minute, calculate current time position on calendar grid based on hour and minute, display red horizontal line indicator showing current time, implement auto-scroll to current time when changing calendar views, and add \"Go to Now\" button for instant navigation to current time slot",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:24:41.502Z"
+  },
+  {
+    "id": "TASK-46468",
+    "title": "Migrate TaskCard Component with Full Hierarchy Support",
+    "description": "Extract and migrate complete TaskCard component from original Pomo with unlimited subtask nesting, visual indentation levels, expansion/collapse functionality, inline subtask creation UI replacing prompt(), drag-drop within hierarchy, and proper task card styling with priority indicators and due date displays",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:24:52.775Z"
+  },
+  {
+    "id": "TASK-77540",
+    "title": "Add Time Block Resizing with Conflict Detection",
+    "description": "Implement drag handles on bottom edge of time blocks, mouse event handling for smooth resizing, conflict detection with adjacent blocks, duration constraints (0.25-8 hours), visual feedback during resize operations, and proper state updates with validation",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:25:14.432Z"
+  },
+  {
+    "id": "TASK-92398",
+    "title": "Implement Task-to-Calendar Drag-Drop System",
+    "description": "Enable dragging tasks from sidebar and kanban columns to calendar time slots, automatic time block creation with task linking (taskId), visual drop zones with hover feedback, data transfer object management with task metadata, and bidirectional sync between tasks and created time blocks",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:25:24.435Z"
+  },
+  {
+    "id": "TASK-87125",
+    "title": "Add Advanced Timer Auto-Progression Logic",
+    "description": "Implement autoStartBreaks and autoStartWork settings, long break interval calculation (every 4th session), timer mode progression (work→short→work→short→work→short→work→long), session completion callbacks, and timer state persistence across browser sessions with proper break enforcement",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:25:34.519Z"
+  },
+  {
+    "id": "TASK-50402",
+    "title": "🧪 CLI Fix Verification - External Project Test",
+    "description": "Testing if tasks from Pomo-TaskFlow context now save to unified storage instead of local project directory",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:43:11.756Z"
+  },
+  {
+    "id": "TASK-63184",
+    "title": "Test Task to Check Physical Storage Location",
+    "description": "This is a test task to verify where Like-I-Said memory system is saving tasks physically on the file system",
+    "status": "todo",
+    "priority": "low",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:58:52.224Z"
+  },
+  {
+    "id": "TASK-16921",
+    "title": "Add Real-Time Current Time Tracking to Calendar",
+    "description": "Implement currentTime and currentTimePosition state variables, add setInterval for minute-by-minute clock updates, calculate time position on calendar grid (hour + minutes/60 * hourHeight), display red horizontal line indicator positioned absolutely on calendar, add auto-scroll to current time when switching calendar views, implement \"Go to Now\" button for instant navigation to current time slot",
+    "status": "in_progress",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:11:43.053Z",
+    "updated": "2025-09-07T08:27:08.783Z"
+  },
+  {
+    "id": "TASK-79227",
+    "title": "Migrate Complete TaskCard Component with Unlimited Subtask Hierarchy",
+    "description": "Extract TaskCard component from original Pomo (line ~307), implement unlimited subtask nesting with visual indentation (level * 16px), add expansion/collapse state management (expandedTasks Set), create inline subtask creation UI to replace prompt(), implement subtask drag-drop reordering, add priority icons and due date displays, handle recursive rendering for nested subtasks",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:11:54.593Z"
+  },
+  {
+    "id": "TASK-28617",
+    "title": "Implement Timer Auto-Progression and Break Management",
+    "description": "Add autoStartBreaks and autoStartWork boolean settings, implement long break interval logic (every 4th Pomodoro based on longBreakInterval setting), create timer mode progression sequence (work→shortBreak→work→shortBreak→work→shortBreak→work→longBreak), add session completion callbacks, implement proper break enforcement, add timer state persistence across browser sessions",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:12:09.553Z"
+  },
+  {
+    "id": "TASK-78789",
+    "title": "Add Time Block Resizing with Mouse Event Handling",
+    "description": "Implement resize handles on bottom edge of time blocks, add mouse event handling (mousedown/mousemove/mouseup), calculate duration changes based on mouse delta, implement conflict detection with adjacent time blocks, add duration constraints and validation (0.25-8 hours), provide visual feedback during resize operations, update time block state with new duration",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:12:20.384Z"
+  },
+  {
+    "id": "TASK-92780",
+    "title": "Implement Complete Project Management System",
+    "description": "Add selectedProject state for filtering, implement dynamic project creation from task assignment, create auto-suggest dropdowns showing existing projects, add project filtering across all views (Dashboard, Tasks, Board, Calendar), implement project color coding system, add showNewProjectInput and newProjectName state variables, create project analytics and task grouping",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:12:30.460Z"
+  },
+  {
+    "id": "TASK-45362",
+    "title": "Add Enhanced Sound System with AudioContext Management",
+    "description": "Improve useSoundSystem hook to handle AudioContext suspended state (common in browsers), implement user gesture requirement compliance, add sound cleanup and memory management to prevent audio leaks, implement error recovery for audio failures, add volume controls and sound selection options, ensure cross-browser audio compatibility",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:12:52.092Z"
+  },
+  {
+    "id": "TASK-52248",
+    "title": "Implement Calendar Week/Day View Toggle with Responsive Layouts",
+    "description": "Add calendarView state management for week/day switching, implement different time slot heights for each view (80px for week, 144px for day), add date navigation with previous/next week buttons, create responsive grid layouts that adapt to view mode, persist calendar view preference in localStorage, update time position calculations for different view heights",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:13:02.956Z"
+  },
+  {
+    "id": "TASK-90891",
+    "title": "Add Block Pomodoro Session Tracking and Visual Indicators",
+    "description": "Implement blockPomodoros state object to track session counts per time block, add session count badges displaying on time blocks, create visual indicators (⏱️ for active blocks, ✅ for completed sessions, ⚠️ for overdue), implement session analytics per block, add Pomodoro count persistence with time blocks, update timer completion logic to increment block-specific counters",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:13:14.457Z"
+  },
+  {
+    "id": "TASK-16513",
+    "title": "Add User Preferences System with Priority Icons",
+    "description": "Implement userPreferences state with customizable priority icons (🔥 high, ⚡ medium, 🌱 low, 📄 default), add preference persistence in localStorage, create getPriorityIcon and getPriorityColor functions, display priority icons throughout app (task cards, kanban, lists), implement theme preference persistence, add language preference storage",
+    "status": "todo",
+    "priority": "low",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:13:24.862Z"
+  },
+  {
+    "id": "TASK-15566",
+    "title": "Implement Mobile and Responsive Design Optimization",
+    "description": "Optimize TaskFlow design for mobile devices, implement touch-friendly time block interactions, optimize kanban board for mobile screens with touch drag-drop, create responsive calendar grid for small screens, add mobile timer controls with larger touch targets, implement mobile navigation patterns, ensure proper viewport scaling",
+    "status": "todo",
+    "priority": "low",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T08:13:35.862Z"
+  }
+]

@@ -1,0 +1,61 @@
+[
+  {
+    "id": "TASK-93222",
+    "title": "Implement seamless Artifacts-to-Remotion workflow",
+    "description": "COMPLETED: Implemented streamlined approach - convert_artifact_to_video MCP tool handles Artifact conversion reliably. Removed complex automatic detection systems.",
+    "status": "done",
+    "priority": "high",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T16:11:59.723Z",
+    "updated": "2025-09-04T17:52:01.179Z"
+  },
+  {
+    "id": "TASK-27855",
+    "title": "Build React-to-Remotion translation engine",
+    "description": "COMPLETED: Built convert_artifact_to_video MCP tool with proven conversion patterns. Approach changed from complex translation engine to simple systematic transformations.",
+    "status": "done",
+    "priority": "high",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T16:12:13.426Z",
+    "updated": "2025-09-04T17:51:54.741Z"
+  },
+  {
+    "id": "TASK-50469",
+    "title": "Create smart editing with Artifact-Remotion sync",
+    "description": "When user edits, Claude updates the React Artifact and MCP intelligently adjusts related Remotion elements (spacing, timing, colors). Maintain design coherence across edits without manual conversion steps.",
+    "status": "todo",
+    "priority": "medium",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T16:12:26.477Z"
+  },
+  {
+    "id": "TASK-94109",
+    "title": "Test basic Artifacts-to-Remotion conversion manually",
+    "description": "COMPLETED: Successfully tested Artifact-to-Remotion conversion. Manual testing proved approach works, quality preserved. Ready for automation.",
+    "status": "done",
+    "priority": "urgent",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T16:12:39.340Z",
+    "updated": "2025-09-04T17:51:48.403Z"
+  },
+  {
+    "id": "TASK-13771",
+    "title": "Rebuild MCP server with streamlined 3-tool architecture",
+    "description": "Removed broken create_project/edit_project tools, kept only: convert_artifact_to_video, launch_studio, read_project. Need Windows build and Claude Desktop restart.",
+    "status": "done",
+    "priority": "high",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T17:49:33.808Z",
+    "updated": "2025-09-04T17:49:53.342Z"
+  },
+  {
+    "id": "TASK-92128",
+    "title": "Test Artifact-to-Remotion conversion workflow in Claude Desktop",
+    "description": "Updated: Test streamlined 3-tool MCP (convert_artifact_to_video, launch_studio, read_project) in Claude Desktop. Removed broken create_project tool. Should now show only reliable Artifact conversion workflow.",
+    "status": "todo",
+    "priority": "high",
+    "project": "rough-cut-mcp-artifacts",
+    "created": "2025-09-04T17:49:41.835Z",
+    "updated": "2025-09-04T17:49:59.659Z"
+  }
+]

@@ -544,6 +544,10 @@ async function startUnifiedServer() {
   const pluginManager = new PluginManager(services, logger);
 
   // Load plugins based on configuration
+  
+  // Always load relationship tools (core functionality)
+  await pluginManager.loadPlugin('./plugins/relationship-tools.js');
+  
   if (CONFIG.plugins['ai-tools']) {
     await pluginManager.loadPlugin('./plugins/ai-tools-complete.js');
   }
@@ -740,7 +744,7 @@ async function startUnifiedServer() {
       switch (name) {
         // Memory tools
         case 'add_memory':
-          result = await memoryStorage.saveMemory(args.content, args);
+          result = await memoryStorage.addMemory(args.content, args.project, args.category, args.tags, args.priority);
           break;
         case 'list_memories':
           result = await memoryStorage.listMemories(args);

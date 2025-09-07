@@ -297,7 +297,9 @@ function getInstallPath() {
     const customPath = process.argv[pathIndex + 1];
     return path.resolve(customPath);
   }
-  return process.cwd();
+  
+  // FORCE UNIFIED STORAGE - Never use local project directories
+  return '/mnt/d/APPSNospaces/like-i-said-mcp';
 }
 
 // Initialize memory structure
@@ -1220,16 +1222,16 @@ async function startSimpleWatch() {
   console.log(`📁 Project: ${finalProject}`);
   console.log(`📍 Directory: ${currentDir}`);
   
-  // Path to the watch script
-  const watchScriptPath = path.join(__dirname, 'watch-tasks.js');
+  // Path to the working monitor script
+  const watchScriptPath = path.join(__dirname, 'simple-task-watch.js');
   
-  // Spawn the watch script with correct working directory
-  const child = spawn('node', [watchScriptPath, ...watchArgs], {
+  // Spawn the watch script with correct working directory and project
+  const child = spawn('node', [watchScriptPath, `--project=${finalProject}`, ...watchArgs], {
     stdio: 'inherit',
-    cwd: __dirname,
+    cwd: currentDir, // Run in the original project directory
     env: {
       ...process.env,
-      ORIGINAL_CWD: currentDir // Pass the original working directory
+      PROJECT_NAME: finalProject // Also pass as env var
     }
   });
   

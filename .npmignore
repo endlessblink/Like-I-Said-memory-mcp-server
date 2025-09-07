@@ -16,6 +16,9 @@ __tests__/
 
 # Development scripts (keep essential ones)
 scripts/testing/
+scripts/migration/
+scripts/utilities/
+scripts/deployment/
 scripts/maintenance/debug-*
 scripts/v3/
 
@@ -25,7 +28,8 @@ Docs/
 *.md
 !README.md
 
-# Configuration files
+# Configuration files (moved to configs/)
+configs/
 .env
 .env.*
 claude_desktop_config.json
@@ -107,6 +111,19 @@ data/
 vectors/
 data-backups/
 backup-*/
+
+# Generated reports and consolidation files
+docs/reports/
+*-report*.md
+*-consolidation*.md
+*-dry-run*.md
+true-consolidation-report*.md
+
+# Complete backup directories
+COMPLETE-BACKUP-*/
+complete-task-backups/
+emergency-backups/
+restoration-backups/
 
 # User tasks and memories
 tasks/

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "TASK-26525",
+    "title": "Initialize Git Repository for TaskFlow Project",
+    "description": "Set up git repository in TaskFlow folder and commit clean baseline",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:30:09.349Z"
+  },
+  {
+    "id": "TASK-12260",
+    "title": "Implement Sound System Hook",
+    "description": "Migrate useSoundSystem() hook with Web Audio API for Pomodoro timer feedback (start tick, completion bell, break chime)",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:34:45.998Z"
+  },
+  {
+    "id": "TASK-81438",
+    "title": "Implement Pomodoro Timer Hook",
+    "description": "Migrate usePomodoroTimer() with timer state, work/break modes, session tracking, and active block integration",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:34:55.284Z"
+  },
+  {
+    "id": "TASK-28379",
+    "title": "Implement Task Management Hook",
+    "description": "Migrate useTaskManager() with full CRUD operations, hierarchical subtasks, projects, priorities, and kanban status management",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:04.178Z"
+  },
+  {
+    "id": "TASK-54169",
+    "title": "Implement Time Blocking Hook",
+    "description": "Migrate useTimeBlocks() hook for calendar functionality with week/day calculations, time block CRUD, and task-block linking",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:13.059Z"
+  },
+  {
+    "id": "TASK-71190",
+    "title": "Implement TaskCard Component",
+    "description": "Migrate TaskCard component with hierarchical subtask display, drag-drop functionality, priority indicators, and completion states",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:21.999Z"
+  },
+  {
+    "id": "TASK-20496",
+    "title": "Implement Kanban Board Drag-Drop Functionality",
+    "description": "Add working drag-drop between kanban columns with task status updates, visual feedback, and data transfer",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:31.408Z"
+  },
+  {
+    "id": "TASK-26469",
+    "title": "Implement Calendar Time-Blocking View",
+    "description": "Migrate full calendar functionality with time slots, week/day views, current time indicator, click-to-create blocks, and drag-drop integration",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:40.920Z"
+  },
+  {
+    "id": "TASK-80269",
+    "title": "Implement Task Creation Modal System",
+    "description": "Build task creation/editing modal with project assignment, priority selection, due dates, and form validation",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:35:50.856Z"
+  },
+  {
+    "id": "TASK-73988",
+    "title": "Implement localStorage Data Persistence",
+    "description": "Add localStorage integration for tasks ('pomo-tasks') and time blocks ('pomo-blocks') with data validation and migration support",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:36:01.089Z"
+  },
+  {
+    "id": "TASK-52845",
+    "title": "Add Task-Block Linking System",
+    "description": "Implement bidirectional sync between tasks and time blocks, with drag-drop from tasks to calendar and visual link indicators",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:36:10.272Z"
+  },
+  {
+    "id": "TASK-28797",
+    "title": "Add Tasks View Functionality",
+    "description": "Implement full tasks view with task list display, search functionality, and task management features",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-05T11:58:45.785Z"
+  },
+  {
+    "id": "TASK-19226",
+    "title": "Replace All Hardcoded Strings with Dynamic Text System",
+    "description": "Replace hardcoded strings like \"To Do\", \"In Progress\", \"Dashboard\", etc. with dynamic getText() calls for multi-language support",
+    "status": "in_progress",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:52:03.549Z"
+  },
+  {
+    "id": "TASK-50500",
+    "title": "Add Current Time Tracking and Visual Indicator",
+    "description": "Implement real-time clock with red line indicator on calendar, auto-scroll to current time, and \"Go to Now\" button functionality",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:52:24.427Z"
+  },
+  {
+    "id": "TASK-60606",
+    "title": "Implement TaskCard Component with Hierarchical Subtasks",
+    "description": "Add TaskCard component with subtask nesting, expansion/collapse, drag-drop, priority indicators, and due date displays",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:52:45.962Z"
+  },
+  {
+    "id": "TASK-43597",
+    "title": "Add Advanced Timer Features and Auto-Progression",
+    "description": "Implement auto-start breaks/work settings, long break intervals, timer mode progression, and session completion logic",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:53:04.453Z"
+  },
+  {
+    "id": "TASK-74404",
+    "title": "Add Time Block Resizing and Drag-Drop Functionality",
+    "description": "Implement time block resize handles, drag-drop between calendar slots, conflict detection, and visual feedback during operations",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:53:20.630Z"
+  },
+  {
+    "id": "TASK-22496",
+    "title": "Add Enhanced Sound System with Browser Compatibility",
+    "description": "Implement improved sound system with AudioContext management, browser policy handling, error recovery, and sound cleanup",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:53:37.038Z"
+  },
+  {
+    "id": "TASK-93999",
+    "title": "Add Project Management System with Dynamic Creation",
+    "description": "Implement project filtering, dynamic project creation, auto-suggest dropdowns, and project assignment across all views",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:53:54.341Z"
+  },
+  {
+    "id": "TASK-79622",
+    "title": "Add Kanban Sorting and Advanced Column Features",
+    "description": "Implement kanban sorting by status/priority/date, advanced column interactions, and improved task card displays within kanban",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:54:11.619Z"
+  },
+  {
+    "id": "TASK-97193",
+    "title": "Add User Preferences and Priority Icons System",
+    "description": "Implement customizable priority icons (🔥⚡🌱), user preferences state management, and icon display throughout the app",
+    "status": "todo",
+    "priority": "low",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:54:29.287Z"
+  },
+  {
+    "id": "TASK-67863",
+    "title": "Add Task-to-Calendar Drag-Drop System",
+    "description": "Implement drag tasks from sidebar/kanban to calendar slots to create linked time blocks, with visual feedback and proper data transfer",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:54:48.174Z"
+  },
+  {
+    "id": "TASK-45515",
+    "title": "Add Block Pomodoro Session Tracking and Visual Indicators",
+    "description": "Implement blockPomodoros state tracking, session count badges on time blocks, and visual indicators for active/completed blocks",
+    "status": "todo",
+    "priority": "medium",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-06T06:55:06.194Z"
+  }
+]

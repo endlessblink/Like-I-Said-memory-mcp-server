@@ -1,0 +1,38 @@
+[
+  {
+    "id": "TASK-58678",
+    "title": "Implement Current Time Tracking with Visual Red Line Indicator",
+    "description": "Add real-time clock system with setInterval updates every minute, calculate current time position on calendar grid based on hour and minute, display red horizontal line indicator showing current time, implement auto-scroll to current time when changing calendar views, and add \"Go to Now\" button for instant navigation to current time slot",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:24:41.502Z"
+  },
+  {
+    "id": "TASK-46468",
+    "title": "Migrate TaskCard Component with Full Hierarchy Support",
+    "description": "Extract and migrate complete TaskCard component from original Pomo with unlimited subtask nesting, visual indentation levels, expansion/collapse functionality, inline subtask creation UI replacing prompt(), drag-drop within hierarchy, and proper task card styling with priority indicators and due date displays",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:24:52.775Z"
+  },
+  {
+    "id": "TASK-77540",
+    "title": "Add Time Block Resizing with Conflict Detection",
+    "description": "Implement drag handles on bottom edge of time blocks, mouse event handling for smooth resizing, conflict detection with adjacent blocks, duration constraints (0.25-8 hours), visual feedback during resize operations, and proper state updates with validation",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:25:14.432Z"
+  },
+  {
+    "id": "TASK-92398",
+    "title": "Implement Task-to-Calendar Drag-Drop System",
+    "description": "Enable dragging tasks from sidebar and kanban columns to calendar time slots, automatic time block creation with task linking (taskId), visual drop zones with hover feedback, data transfer object management with task metadata, and bidirectional sync between tasks and created time blocks",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:25:24.435Z"
+  }
+]

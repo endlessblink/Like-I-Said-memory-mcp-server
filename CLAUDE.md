@@ -9,6 +9,53 @@ Guidance for Claude Code when working with the Like-I-Said MCP Server v2 reposit
 - **Description**: MCP memory management system with React dashboard
 - **Status**: Active Development
 
+## 🚨 CRITICAL SYSTEM SAFETY - Like-I-Said MCP
+
+### **⚠️ MANDATORY SAFETY PROTOCOL FOR SERVER EDITS**
+**NEVER edit server-unified.js or dashboard-server-bridge.js without following this checklist.**
+**Reason**: Broken syntax creates infinite restart loops consuming 100% CPU for hours.
+
+**SAFETY CHECKLIST (REQUIRED before ANY server changes):**
+1. ✅ **Kill existing processes**: `pkill -f "server-unified|dashboard-server" && sleep 2`
+2. ✅ **Syntax validation**: `node --check dashboard-server-bridge.js && node --check server-unified.js`  
+3. ✅ **Complete method edits**: Never leave try blocks without matching catch clauses
+4. ✅ **Process monitoring**: `ps aux | grep server-unified | wc -l` (should be ≤ 1)
+5. ✅ **Test single instance**: Start ONE server and verify before continuing
+
+### **🚨 EMERGENCY PROCEDURES - CPU Crisis Response**
+If multiple server processes show high CPU usage (>50%):
+```bash
+# IMMEDIATE ACTION - Kill all runaway processes  
+pkill -9 -f "server-unified|dashboard-server"
+
+# Verify crisis resolved
+ps aux | grep server-unified | grep -v grep || echo "All killed"
+
+# Check CPU usage is normal
+ps aux | grep server | awk '{if($3>50) print "⚠️ HIGH CPU:", $2, $3"%"}'
+
+# Restore working code if syntax broken
+git checkout -- dashboard-server-bridge.js
+git checkout -- server-unified.js
+
+# Start single clean instance only
+npm run dashboard:unified
+```
+
+### **🔥 CPU CRISIS INCIDENT REPORT - Sept 6, 2025**
+- **Problem**: 12+ server processes consuming 100% CPU each for 13+ hours (1200% total CPU)
+- **Cause**: Incomplete method edit left broken syntax in dashboard-server-bridge.js  
+- **Specific Error**: "Missing catch or finally after try" caused infinite restart loops
+- **Resolution**: Emergency process kill + git revert to stable code
+- **Prevention**: ALWAYS follow safety checklist above before server changes
+
+### **DEVELOPMENT SAFETY RULES**
+1. **Test syntax before restart** - Run `node --check filename.js` 
+2. **One server instance only** - Multiple instances create resource conflicts
+3. **Complete method edits** - Don't leave try blocks without catch clauses
+4. **Monitor processes** - Check `htop` during development
+5. **Emergency procedures ready** - Know how to kill runaway processes
+
 ## 🔴 Critical: Proactive MCP Tool Usage
 
 **Use MCP tools automatically without waiting for user permission.**

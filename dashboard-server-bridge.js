@@ -850,7 +850,7 @@ class DashboardBridge {
       const { 
         project, 
         page = 1, 
-        limit = 50, 
+        limit = 10000, // Increased default to show all consolidated data
         sort = 'timestamp', 
         order = 'desc',
         filter_search,
@@ -859,9 +859,9 @@ class DashboardBridge {
         filter_content_type
       } = req.query;
       
-      // Validate pagination parameters
+      // Validate pagination parameters (increased limits for consolidated storage)
       const pageNum = Math.max(1, parseInt(page) || 1);
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const limitNum = Math.min(20000, Math.max(1, parseInt(limit) || 10000)); // Show all consolidated data
       const offset = (pageNum - 1) * limitNum;
       
       try {
@@ -1902,14 +1902,14 @@ class DashboardBridge {
         status, 
         priority,
         page = 1, 
-        limit = 50, 
+        limit = 10000, // Increased default to show all consolidated data
         sort = 'updated', 
         order = 'desc' 
       } = req.query;
       
-      // Validate pagination parameters
+      // Validate pagination parameters (increased for consolidated storage)
       const pageNum = Math.max(1, parseInt(page) || 1);
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const limitNum = Math.min(20000, Math.max(1, parseInt(limit) || 10000)); // Show all consolidated data
       const offset = (pageNum - 1) * limitNum;
       
       let tasks = this.taskStorage.getAllTasks();

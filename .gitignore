@@ -1,5 +1,5 @@
-# CRITICAL: The following file MUST remain in root directory:
-# - mcp-server-wrapper.js (MCP clients depend on this exact path)
+# CRITICAL: The following file has been moved to scripts/utilities/
+# - mcp-server-wrapper.js (now in scripts/utilities/mcp-server-wrapper.js)
 
 # Dependencies
 node_modules/
@@ -86,6 +86,19 @@ debugging/
 docs/debugging/*.log
 docs/temp/
 docs/drafts/
+
+# Generated reports and consolidation files
+docs/reports/*-report*.md
+docs/reports/*-consolidation*.md
+*-dry-run*.md
+*consolidation-report*.md
+true-consolidation-report*.md
+
+# Complete backup directories  
+COMPLETE-BACKUP-*/
+complete-task-backups/
+emergency-backups/
+restoration-backups/
 
 # Keep essential files
 !README.md

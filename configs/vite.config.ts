@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { viteServePort } from './scripts/vite-plugins/vite-serve-port.js'
+import { viteServePort } from '../scripts/vite-plugins/vite-serve-port.js'
 
 export default defineConfig({
   plugins: [react(), viteServePort()],
+  root: path.resolve(__dirname, '..'),
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, '../src')
     }
   },
   server: {
@@ -25,6 +26,7 @@ export default defineConfig({
     sourcemap: true,
     // Simplified build config to avoid React import issues
     rollupOptions: {
+      input: path.resolve(__dirname, '../public/index.html'),
       output: {
         // Use content hash for better caching
         chunkFileNames: 'assets/[name]-[hash].js',

@@ -159,30 +159,80 @@ async function loadTasks() {
     const currentProjectDir = process.env.ORIGINAL_CWD || process.cwd();
     const projectName = path.basename(currentProjectDir);
     
-    // Look for tasks in the project's own task directory
+    // HYBRID MODE: Check both local files AND central MCP system
+    console.log(`🔍 Checking both local files and central MCP system`);
+    
+    let allProjectTasks = [];
+    
+    // METHOD 1: Check local project files (for real-time updates like TASK-96112)
     const localTasksDir = path.join(currentProjectDir, 'tasks');
+    if (fs.existsSync(localTasksDir)) {
+      console.log(`📁 Reading local task files from: ${localTasksDir}`);
+      
+      try {
+        const subDirs = fs.readdirSync(localTasksDir, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(dirent => dirent.name);
+        
+        for (const subDir of subDirs) {
+          const tasksFile = path.join(localTasksDir, subDir, 'tasks.json');
+          if (fs.existsSync(tasksFile)) {
+            const tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf8'));
+            const tasks = Array.isArray(tasksData) ? tasksData : [tasksData];
+            console.log(`📄 Local: Found ${tasks.length} tasks in ${subDir}`);
+            allProjectTasks.push(...tasks);
+          }
+        }
+      } catch (error) {
+        console.log(`❌ Error reading local files: ${error.message}`);
+      }
+    }
     
-    // UNIVERSAL MODE: Always use consolidated Like-I-Said MCP system
-    console.log(`🔍 Connecting to consolidated Like-I-Said MCP system`);
-    console.log(`📁 Project filter: ${config.project}`);
+    // METHOD 2: Also check central MCP system (for tasks stored centrally)
+    try {
+      const { TaskStorage } = await import('./lib/task-storage.js').catch(e => {
+        throw new Error(`Failed to import task storage: ${e.message}`);
+      });
+      
+      const taskStorage = new TaskStorage();
+      const allTaskData = await taskStorage.listTasks({});
+      const allTasks = Array.isArray(allTaskData) ? allTaskData : (allTaskData?.tasks || []);
+      
+      // Find tasks from central system that match our project
+      const centralTasks = allTasks.filter(task => {
+        if (!task.project) return false;
+        const taskProject = task.project.toLowerCase();
+        const ourProject = config.project.toLowerCase();
+        return taskProject.includes(ourProject) || ourProject.includes(taskProject);
+      });
+      
+      if (centralTasks.length > 0) {
+        console.log(`🌐 Central: Found ${centralTasks.length} tasks in ${[...new Set(centralTasks.map(t => t.project))].join(', ')}`);
+        
+        // Merge central tasks, avoiding duplicates by ID
+        const localIds = new Set(allProjectTasks.map(t => t.id));
+        const newCentralTasks = centralTasks.filter(t => !localIds.has(t.id));
+        allProjectTasks.push(...newCentralTasks);
+      }
+    } catch (error) {
+      console.log(`⚠️ Could not check central system: ${error.message}`);
+    }
     
-    const { TaskStorage } = await import('./lib/task-storage.js').catch(e => {
-      throw new Error(`Failed to import task storage: ${e.message}`);
-    });
+    console.log(`📊 Total tasks found: ${allProjectTasks.length} (local + central)`);
     
-    const taskStorage = new TaskStorage();
-    const filterArgs = {
-      project: config.project,
-      ...(config.filter !== 'active' && { status: config.filter })
-    };
-    
-    let taskData = await taskStorage.listTasks(filterArgs);
-    let tasks = Array.isArray(taskData) ? taskData : (taskData?.tasks || []);
+    // Show which projects we found tasks in
+    const allProjects = [...new Set(allProjectTasks.map(task => task.project))];
+    console.log(`📋 Projects: ${allProjects.join(', ')}`);
     
     // Apply active filter if needed
+    let tasks = allProjectTasks;
     if (config.filter === 'active') {
-      tasks = tasks.filter(task => ['todo', 'in_progress'].includes(task.status));
+      tasks = allProjectTasks.filter(task => ['todo', 'in_progress'].includes(task.status));
+    } else if (config.filter && config.filter !== 'all') {
+      tasks = allProjectTasks.filter(task => task.status === config.filter);
     }
+    
+    console.log(`📊 Found ${tasks.length} tasks matching filter '${config.filter}'`);
     
     // Apply optimal sorting
     const sortedTasks = sortTasks(tasks, config.sort);

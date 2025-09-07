@@ -47,6 +47,7 @@ import { ToastProvider, useToast, toastHelpers } from '@/components/ToastNotific
 import { ProgressProvider, useOperationProgress } from '@/components/ProgressIndicators'
 import { SettingsDropdown } from '@/components/SettingsDropdown'
 import { EnterpriseMemoryDashboard } from '@/components/EnterpriseMemoryDashboard'
+import { RelationshipDashboard } from '@/components/RelationshipDashboard'
 
 // Lazy loaded heavy components
 const Editor = lazy(() => import('@monaco-editor/react'))

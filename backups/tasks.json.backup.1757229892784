@@ -1,0 +1,11 @@
+[
+  {
+    "id": "TASK-58678",
+    "title": "Implement Current Time Tracking with Visual Red Line Indicator",
+    "description": "Add real-time clock system with setInterval updates every minute, calculate current time position on calendar grid based on hour and minute, display red horizontal line indicator showing current time, implement auto-scroll to current time when changing calendar views, and add \"Go to Now\" button for instant navigation to current time slot",
+    "status": "todo",
+    "priority": "high",
+    "project": "Pomo-TaskFlow",
+    "created": "2025-09-07T07:24:41.502Z"
+  }
+]
