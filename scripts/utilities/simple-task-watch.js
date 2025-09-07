@@ -41,53 +41,75 @@ const colors = {
   gray: '\x1b[90m', redBg: '\x1b[41m', yellowBg: '\x1b[43m', inverse: '\x1b[7m'
 };
 
-// Get tasks using MCP server JSON-RPC call
+// Get tasks using direct filesystem reading of unified storage
 async function getTasks(projectName) {
-  return new Promise((resolve) => {
-    const mcpCommand = {
-      jsonrpc: "2.0",
-      id: Date.now(),
-      method: "tools/call", 
-      params: {
-        name: "list_tasks",
-        arguments: { project: projectName }
-      }
-    };
+  const fs = await import('fs');
+  const path = await import('path');
+  
+  try {
+    // Read directly from unified storage location
+    const unifiedStoragePath = '/mnt/d/APPSNospaces/like-i-said-mcp';
+    const projectTasksPath = path.join(unifiedStoragePath, 'tasks', projectName);
     
-    const child = spawn('node', ['server-unified.js'], {
-      cwd: __dirname,
-      env: { ...process.env, MCP_MODE: 'full', MCP_QUIET: 'true' },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    // Check for both JSON and Markdown formats
+    const jsonPath = path.join(projectTasksPath, 'tasks.json');
+    const mdPath = path.join(projectTasksPath, 'consolidated-tasks.md');
     
-    let stdout = '';
-    child.stdin.write(JSON.stringify(mcpCommand) + '\n');
-    child.stdin.end();
+    // Try JSON format first (newer format)
+    if (fs.existsSync(jsonPath)) {
+      const tasksData = fs.readFileSync(jsonPath, 'utf8');
+      const tasks = JSON.parse(tasksData);
+      console.log(`📊 [DEBUG] Found ${tasks.length} tasks in JSON format`);
+      return Array.isArray(tasks) ? tasks : [];
+    }
     
-    child.stdout.on('data', (data) => { stdout += data.toString(); });
-    child.stderr.on('data', () => {}); // Ignore stderr
-    
-    child.on('close', () => {
-      try {
-        const lines = stdout.split('\n');
-        for (const line of lines) {
-          if (line.trim().startsWith('{') && line.includes('"result"')) {
-            const response = JSON.parse(line.trim());
-            if (response.result && response.result.content) {
-              const tasks = JSON.parse(response.result.content[0]?.text || '[]');
-              resolve(Array.isArray(tasks) ? tasks : []);
-              return;
+    // Try consolidated markdown format (YAML frontmatter format)
+    if (fs.existsSync(mdPath)) {
+      const tasksData = fs.readFileSync(mdPath, 'utf8');
+      // Parse YAML frontmatter format tasks
+      const taskBlocks = tasksData.split(/\n---\n/).filter(block => 
+        block.includes('id: TASK-') && block.includes('title:')
+      );
+      
+      const tasks = taskBlocks.map(taskBlock => {
+        const lines = taskBlock.split('\n');
+        const task = { project: projectName };
+        
+        lines.forEach(line => {
+          const [key, ...valueParts] = line.split(':');
+          if (key && valueParts.length > 0) {
+            const value = valueParts.join(':').trim();
+            switch(key.trim()) {
+              case 'id': task.id = value; break;
+              case 'title': task.title = value; break;
+              case 'status': task.status = value; break;
+              case 'priority': task.priority = value; break;
+              case 'created': task.created = value; break;
+              case 'updated': task.updated = value; break;
             }
           }
+        });
+        
+        // Get description from content after frontmatter
+        const contentMatch = taskBlock.match(/---\n\n(.+)$/s);
+        if (contentMatch) {
+          task.description = contentMatch[1].trim();
         }
-        resolve([]);
-      } catch (e) {
-        resolve([]);
-      }
-    });
+        
+        return task;
+      }).filter(task => task.id && task.title);
+      
+      console.log(`📊 [DEBUG] Found ${tasks.length} tasks in YAML frontmatter format`);
+      return tasks;
+    }
     
-    setTimeout(() => { child.kill(); resolve([]); }, 5000);
-  });
+    console.log(`📊 [DEBUG] No tasks found for project: ${projectName}`);
+    return [];
+    
+  } catch (error) {
+    console.error(`❌ [DEBUG] Error reading tasks for ${projectName}:`, error.message);
+    return [];
+  }
 }
 
 // Format tasks for display

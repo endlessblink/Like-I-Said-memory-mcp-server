@@ -1912,7 +1912,7 @@ class DashboardBridge {
       const limitNum = Math.min(20000, Math.max(1, parseInt(limit) || 10000)); // Show all consolidated data
       const offset = (pageNum - 1) * limitNum;
       
-      let tasks = this.taskStorage.getAllTasks();
+      let tasks = await this.taskStorage.getAllTasks();
       
       // Apply filters
       if (project) {
